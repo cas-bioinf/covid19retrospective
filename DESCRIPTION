@@ -15,7 +15,11 @@ Imports:
     brms,
     rstan,
     cmdstanr (>= 0.0.0.9000),
-    here
+    here,
+    readxl,
+    readr,
+    dplyr,
+    tidyr
 Remotes: 
     stan-dev/cmdstanr
 Roxygen: list(markdown = TRUE)

@@ -1,0 +1,152 @@
+---
+title: "Tests and development of fake data simulations"
+output: html_notebook
+---
+
+
+```{r}
+devtools::load_all()
+library(tidyverse)
+```
+
+Add a new chunk by clicking the *Insert Chunk* button on the toolbar or by pressing *Ctrl+Alt+I*.
+
+When you save the notebook, an HTML file containing the code and output will be saved alongside it (click the *Preview* button or press *Ctrl+Shift+K* to preview the HTML file).
+
+The preview shows you a rendered HTML copy of the contents of the editor. Consequently, unlike *Knit*, *Preview* does not run any R code chunks. Instead, the output of the chunk when it was last run in the editor is displayed.
+
+```{r}
+breathing_data <- readxl::read_excel(here::here("public_data", "Grein_et_al.xlsx"), na = c("")) %>% 
+  select(-Remdesivir_Last_Day) %>%
+  pivot_longer(starts_with("Day_"), names_prefix = "Day_", names_to = "day", values_to = "breathing") %>%
+  filter(!is.na(breathing)) %>%
+  transmute(
+    patient = Patient,
+    breathing = if_else(breathing %in% c("LoO2", "HiO2"), "Oxygen", breathing),
+    day = as.integer(day)) %>%
+  group_by(patient) %>% 
+  mutate(breathing = if_else(breathing == "ND", breathing[which.max(day[breathing %in% c("AA", "Oxygen", "NIPPV", "MV", "ECMO")])], breathing)) %>%
+  ungroup() %>%                           
+  mutate(    
+    breathing = factor(breathing, levels = c("Discharge", "AA", "Oxygen", "NIPPV", "MV", "ECMO", "Death"), ordered = TRUE)
+  )
+
+
+if(any(is.na(breathing_data$breathing)) || any(is.na(breathing_data$day))){
+  stop("Error")
+}
+
+breathing_summary <- breathing_data %>% group_by(patient) %>% 
+  summarise(worst_condition = max(breathing), 
+            first_day_icu = as.integer(min(c(1e4, day[breathing >= "MV" & breathing < "Death"]))),
+            last_day_icu = as.integer(max(c(-1, day[breathing >= "MV" & breathing < "Death"])))
+            ) %>%
+  mutate(first_day_icu = if_else(first_day_icu > 1e3, NA_integer_, first_day_icu),
+         last_day_icu = if_else(last_day_icu < 0, NA_integer_, last_day_icu))
+
+patient_data <- data_grein %>% group_by(patient) %>%
+  top_n(1, day) %>%
+  inner_join(breathing_summary, by = c("patient" = "patient")) %>%
+  group_by(patient) %>%
+  mutate(outcome = case_when(breathing == "Discharge" ~ "Dischared",
+                             breathing == "Death" ~ "Death",
+                             runif(n()) < 0.01 ~ "Transferred",
+                             TRUE ~ "Hospitalized"),
+         site = sample(c("A","B","C"), size = n(), replace = TRUE, prob = c(0.7,0.2,0.1)),
+         sex = if_else(runif(n()) < 0.5, "M", "F" ),
+         days_from_symptom_onset = rnbinom(n(), mu = 4, size = 1),
+         myocardial_infarction = rpois(n(), 0.05 + (site != "A") * 0.08),
+         hypertension_drugs = rnbinom(n(), mu = 0.1 + (site == "B") * 0.6 , size = 0.3),
+         smoking = runif(n()) < 0.4 + (site == "C") * 0.15,
+         bmi = rnorm(n(), 28, 4) + case_when(site == "A" ~ 0, site == "B" ~ 2.7, site == "C" ~ -0.5) ,
+         took_hcq = runif(n()) < 0.6,
+         took_az = took_hcq & runif(n()) < 0.8,
+         took_kaletra = !took_hcq & site == "B" & runif(n()) < 0.2,
+         first_day_antivirals = if_else(took_az | took_kaletra, as.integer(rdunif(n(), a = 0, b = 3)), NA_integer_),
+         took_tocilizumab = worst_condition >= "MV" & site == "A" & runif(n()) < 0.1,
+         first_day_tocilizumab = first_day_icu + as.integer(rdunif(n(), a = 0, b = 1))
+  ) %>% 
+  ungroup() %>%
+  select(-breathing, )
+
+breathing_data <- breathing_data %>% filter(!(breathing %in% c("Discharge", "Death"))) %>%
+  mutate(breathing = droplevels(breathing))
+
+
+marker_data_list <- list()
+next_id <- 1
+for(p in patient_data$patient) {
+  breathing_p <- breathing_data %>% filter(patient == p)
+  patient_p <- patient_data %>% filter(patient == p)
+  
+  #Fit a spline to breathing status
+  sp <- smooth.spline(breathing_p$day, as.integer(breathing_p$breathing), nknots = 6)
+  
+  oxygen_days <- breathing_p %>% filter(breathing == "Oxygen") %>% pull(day)
+  if(length(oxygen_days) > 0) {
+    oxygen_flow <- round( (runif(1, 0, 3) + runif(length(oxygen_days)) + predict(sp, oxygen_days)$y - 3) * 2 ) / 2 + 2
+    marker_data_list[[next_id]] <- data.frame(patient = p, day = oxygen_days, marker = "oxygen_flow", value = oxygen_flow)
+    next_id <- next_id + 1
+  } 
+  
+  if(patient_p$took_hcq) {
+    hcq_days <- patient_p$first_day_antivirals:min(patient_p$first_day_antivirals + 5, max(breathing_p$day))
+    if(patient_p$site == "B") {
+      hcq_dose <- rep(400, length(hcq_days))
+      hcq_dose[1] <- 800
+    } else {
+      hcq_dose <- rep(200, length(hcq_days))
+      hcq_dose[1] <- 400
+    }
+    marker_data_list[[next_id]] <- data.frame(patient = p, day = hcq_days, marker = "hcq", value = hcq_dose,  censored = "none")
+    next_id <- next_id + 1
+    
+                   
+    if(patient_p$took_az) {
+      az_dose <- rep(250, length(hcq_days))
+      az_dose[1] <- 500                     
+      marker_data_list[[next_id]] <- data.frame(patient = p, day = hcq_days, marker = "az", value = az_dose,  censored = "none")
+      next_id <- next_id + 1
+    }
+  }
+  if(patient_p$took_kaletra) {
+    kaletra_max_days <- rdunif(1, a = 4, b = 8)
+    kaletra_days <- patient_p$first_day_antivirals:min(patient_p$first_day_antivirals + kaletra_max_days, max(breathing_p$day))
+    if(patient_p$took_kaletra) {
+      marker_data_list[[next_id]] <- data.frame(patient = p, day = kaletra_days, marker = "kaletra", value = 400,  censored = "none")
+      next_id <- next_id + 1
+    }
+  }
+  if(patient_p$took_tocilizumab) {
+      marker_data_list[[next_id]] <- data.frame(patient = p, day = patient_p$first_day_tocilizumab, marker = "tocilizumab", value = if_else(site == "C", 6, 7),  censored = "none")
+      next_id <- next_id + 1
+  }
+  
+  pcr_days <- c(rbinom(1, size = 2, prob = 0.3), which(runif(max(breathing_p$day) - 5) < 0.1) + 2) 
+  pcr_positive <- runif(pcr_days) < 0.93 
+  if(site == "A") {
+    pcr_value <- 35 - (((predict(sp, pcr_days[pcr_positive] - 2)$y / 5) * 21) + 12 + rnorm(sum(pcr_positive), sd = 9))
+    pcr_value[pcr_value < 8] <- runif(length(pcr_value < 8), 8, 10)
+    pcr_value[pcr_value > 35] <- runif(length(pcr_value > 35), 33, 35)
+
+    marker_data_list[[next_id]] <- data.frame(patient = p, day = pcr_days, marker = "pcr_value", value = pcr_value,  censored = "none")
+      next_id <- next_id + 1
+    
+  } 
+  
+  if(patient_p$outcome == "Discharged") {
+    first_negative <- rdunif(1, max(pcr_days) + 1, max(breathing_p$day) - 2)
+    pcr_days <- c(pcr_days, first_negative, first_negative + 1 + (runif(1) < 0.4))
+    pcr_positive <- c(pcr_positive, FALSE, FALSE)
+  }
+  
+  marker_data_list[[next_id]] <- data.frame(patient = p, day = pcr_positive, marker = "pcr_positive", value = pcr_positive,  censored = "none")
+      next_id <- next_id + 1
+  
+}
+
+marker_data <- do.call(rbind, marker_data_list)
+marker_data_wide 
+
+```
+
