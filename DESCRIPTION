@@ -19,7 +19,9 @@ Imports:
     readxl,
     readr,
     dplyr,
-    tidyr
+    tidyr,
+    magrittr,
+    purrr
 Remotes: 
     stan-dev/cmdstanr
 Roxygen: list(markdown = TRUE)
