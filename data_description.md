@@ -31,7 +31,7 @@ Patient data is stored in the `patient_data` list element.
 - `sex` sex, `M` or `F`
 - `bmi` the body mass index at hospital admission
 - `outcome` final outcome of the patient, one of `Discharged`, `Hospitalized` (still hospitalized at the date of data collection), `Transferred` (when transferred to a different hospital) and `Death`. For most purposes `Transferred` can be considered as the same as `Hospitalized`
-- `days_from_symptom_onset` number of days between symptom onset and hospitalization, "symptom onset" is defined as the day  the patient or their carer subjectively first noticed any symptoms associated with Covid-19.
+- `days_from_symptom_onset` number of days between symptom onset and hospitalization, "symptom onset" is defined as the day  the patient or their carer subjectively first noticed any symptoms associated with Covid-19. It might not be available and is not a very reliable marker, but is relevant to determine if the patient was treated very early in their disease or not.
 
 #### Comorbidites:
 
@@ -46,6 +46,7 @@ Those are  quantities derived from disease progression data that might be useful
 
 - `worst_condition` the worst breathing level recorded or `Death` for deceased patients
 - `first_day_invasive`, `last_day_invasive` the first and last days the patient was recorded as having invasive breathing support (`MV` or `ECMO`) - note that if the patient is removed from invasive ventilation and then deteriorates once more, this range will included some days without invasive ventilation.
+- `days_hospitalized` total number of days hospitalized until death, discharge or data collection, ie. is right censored if `outcome` is `Hospitalized` or `Transferred`.
 - `took_hcq` Took Hydroxychloroquine at least once? Boolean
 - `took_az` Took Azithromycin at least once? Boolean
 - `took_kaletra` Took Kaletra (Lopinavir/Ritonavir) at least once? Boolean
@@ -59,8 +60,10 @@ The most important part of the disease progression data is the breathing data wh
 Breathing data is stored in the `breathing_data` list element. The columns are:
 
 - `patient` ID of the patient, matching `patient_data`
-- `day` day of hospitalization (starting with 0)
+- `day` day of hospitalization (starting with 0 - first day at hospital)
 - `breathing` an ordered factor representing the breathing level as described above
+
+Note that `day` can in some rare cases be negative when some data is availabe before hospitalization (this would almost certainly be only PCR test results).
 
 Finally we collect a bunch of clinical markers of which most important are the drugs the patient used. Those are available in both long and wide formats (as `marker_data` and `marker_data_wide`). Markers are not measured every day and can be systematically missing for a whole site. The frequency of measurement of different markers can differ.
 

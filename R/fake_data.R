@@ -65,7 +65,8 @@ fake_data_grein <- function() {
   breathing_summary <- breathing_data %>% group_by(patient) %>%
     summarise(worst_condition = max(breathing),
               first_day_invasive = as.integer(min(c(1e4, day[breathing >= "MV" & breathing < "Death"]))),
-              last_day_invasive = as.integer(max(c(-1, day[breathing >= "MV" & breathing < "Death"])))
+              last_day_invasive = as.integer(max(c(-1, day[breathing >= "MV" & breathing < "Death"]))),
+              days_hospitalized = max(day) + 1
     ) %>%
     mutate(first_day_invasive = if_else(first_day_invasive > 1e3, NA_integer_, first_day_invasive),
            last_day_invasive = if_else(last_day_invasive < 0, NA_integer_, last_day_invasive))
