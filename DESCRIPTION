@@ -21,7 +21,8 @@ Imports:
     dplyr,
     tidyr,
     magrittr,
-    purrr
+    purrr,
+    expm
 Remotes: 
     stan-dev/cmdstanr
 Roxygen: list(markdown = TRUE)

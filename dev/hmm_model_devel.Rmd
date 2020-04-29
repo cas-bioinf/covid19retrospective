@@ -1,0 +1,29 @@
+---
+title: "HMM Model development"
+output: html_notebook
+---
+
+
+```{r setup}
+library(rstan)
+library(tidyverse)
+devtools::load_all()
+```
+
+```{r}
+model <- stan_model(here::here("hmm.stan"))
+```
+
+```{r}
+data <- hmm_simulator(10, 20, 2)
+
+improving_data <- data$true$true_improving %>% as.data.frame() %>% mutate(day = 1:n()) %>% pivot_longer(starts_with("V"), names_to = "patient", values_to = "improving") %>% filter(improving)
+
+data$true$true_base_states %>% as.data.frame() %>% mutate(day = 1:n()) %>% pivot_longer(starts_with("V"), names_to = "patient", values_to = "breathing") %>% mutate(breathing = factor(breathing, 1:data$observed$N_states_observed, ordered = TRUE)) %>%
+  ggplot(aes(x = day, y = patient, fill = breathing)) + geom_tile(width = 1, height = 0.5) + geom_tile(data = improving_data, width = 1, height = 0.1, fill = "gray") + ggtitle("True - gray lines for improving")
+
+
+data$observed$observations %>% as.data.frame() %>% mutate(day = 1:n()) %>% pivot_longer(starts_with("V"), names_to = "patient", values_to = "breathing") %>% mutate(breathing = factor(breathing, 1:data$observed$N_states_observed, ordered = TRUE)) %>%
+  ggplot(aes(x = day, y = patient, fill = breathing)) + geom_tile(width = 1, height = 0.5) + ggtitle("Observed")
+```
+
