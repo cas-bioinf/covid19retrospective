@@ -66,7 +66,7 @@ model {
     if(is_state_noisy[corresponding_obs]) {
       int noisy_id = noisy_state_id[corresponding_obs];
 
-      observation_probs[s_hidden, corresponding_obs] = sensitivity[corresponding_obs];
+      observation_probs[s_hidden, corresponding_obs] = sensitivity[noisy_id];
       for(s2_raw in 1:(N_noisy_states - 1)){
         int s2;
         if(s2_raw < noisy_id) {
