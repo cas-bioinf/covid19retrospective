@@ -44,11 +44,11 @@ data {
 
   // Observations
   int<lower=1> N_observations;
-  int<lower=1> N_patients;
+  int<lower=1> N_series;
   int<lower=1> N_time;
   int<lower=1> N_predictor_sets;
 
-  int<lower=1, upper=N_patients> patients[N_observations];
+  int<lower=1, upper=N_series> series[N_observations];
   int<lower=1, upper=N_time> times[N_observations];
   //0 for unobserved states
   int<lower=0, upper=N_states_observed> obs_states[N_observations];
@@ -62,9 +62,9 @@ transformed data {
   int<lower=0,upper=N_noisy_states> noisy_state_id[N_states_observed] = rep_array(0, N_states_observed);
 
   //Rectangule observations and predictors. 0 for missing data
-  int<lower=0, upper=N_states_observed> obs_states_rect[N_patients, N_time] = rep_array(0, N_patients, N_time);
-  int<lower=0, upper=N_predictor_sets> predictor_sets_rect[N_patients, N_time] = rep_array(0, N_patients, N_time);
-  int<lower=0, upper=N_time> max_time[N_patients] = rep_array(0,N_patients);
+  int<lower=0, upper=N_states_observed> obs_states_rect[N_series, N_time] = rep_array(0, N_series, N_time);
+  int<lower=0, upper=N_predictor_sets> predictor_sets_rect[N_series, N_time] = rep_array(0, N_series, N_time);
+  int<lower=0, upper=N_time> max_time[N_series] = rep_array(0,N_series);
 
   for(s_index in 1:N_noisy_states) {
     is_state_noisy[noisy_states[s_index]] = 1;
@@ -72,21 +72,21 @@ transformed data {
   }
 
   for(o in 1:N_observations) {
-    obs_states_rect[patients[o], times[o]] = obs_states[o];
-    predictor_sets_rect[patients[o], times[o]] = predictor_sets[o];
+    obs_states_rect[series[o], times[o]] = obs_states[o];
+    predictor_sets_rect[series[o], times[o]] = predictor_sets[o];
     if(obs_states[o] != 0) {
-      max_time[patients[o]] = max(max_time[patients[o]], times[o]);
+      max_time[series[o]] = max(max_time[series[o]], times[o]);
     }
   }
 
   //Check data validity
-  for(p in 1:N_patients) {
+  for(p in 1:N_series) {
     if(max_time[p] == 0) {
-      reject("Patient ", p, " has no osbservations");
+      reject("serie ", p, " has no osbservations");
     }
     for(t in 1:(max_time[p] - 1)) {
       if(predictor_sets_rect[p, t] == 0) {
-        reject("Patient ", p, " has missing predictors for time ", t);
+        reject("serie ", p, " has missing predictors for time ", t);
       }
     }
   }
@@ -127,7 +127,7 @@ model {
     }
   }
 
-  for(p in 1:N_patients) {
+  for(p in 1:N_series) {
     matrix[N_states_hidden, max_time[p]] alpha;
     vector[max_time[p]] alpha_log_norms;
     alpha[, 1] = initial_states_prob .* observation_probs[, obs_states_rect[p, 1]];

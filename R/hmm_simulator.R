@@ -1,4 +1,4 @@
-hmm_simulator <- function(N_patients, N_time, N_mid_states, use_noisy_states = FALSE) {
+hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FALSE) {
 
   # States and transitions
   if(N_mid_states < 1) {
@@ -136,8 +136,8 @@ hmm_simulator <- function(N_patients, N_time, N_mid_states, use_noisy_states = F
 
 
   # The actual Markov chain
-  N_observations <- N_patients * N_time - floor(N_patients / 2)
-  patients <- array(NA_integer_, N_observations)
+  N_observations <- N_series * N_time - floor(N_series / 2)
+  series <- array(NA_integer_, N_observations)
   times <- array(NA_integer_, N_observations)
   obs_states <- array(NA_integer_, N_observations)
   predictor_sets <- array(NA_integer_, N_observations)
@@ -148,7 +148,7 @@ hmm_simulator <- function(N_patients, N_time, N_mid_states, use_noisy_states = F
   true_base_states <- array(NA_integer_, N_observations)
   true_improving <- array(FALSE, N_observations)
   next_observation <- 1
-  for(p in 1:N_patients) {
+  for(p in 1:N_series) {
     if(p %% 2 == 1) {
       max_time <- N_time
     } else {
@@ -156,7 +156,7 @@ hmm_simulator <- function(N_patients, N_time, N_mid_states, use_noisy_states = F
     }
     state <- sample(1:N_states_hidden, 1, prob = initial_states_prob)
     for(t in 1:max_time) {
-      patients[next_observation] <- p
+      series[next_observation] <- p
       times[next_observation] <- t
 
       cor_obs <- corresponding_observation[state]
@@ -190,49 +190,64 @@ hmm_simulator <- function(N_patients, N_time, N_mid_states, use_noisy_states = F
     }
   }
 
-list(
-  observed = list(
-    N = N,
-    intercept_prior_logmean = intercept_prior_logmean,
-    intercept_prior_sd = intercept_prior_sd,
+  list(
+    observed = list(
+      N = N,
+      intercept_prior_logmean = intercept_prior_logmean,
+      intercept_prior_sd = intercept_prior_sd,
 
-    N_states_hidden = N_states_hidden,
-    N_states_observed = N_states_observed,
+      N_states_hidden = N_states_hidden,
+      N_states_observed = N_states_observed,
 
-    N_rates = N_rates,
-    rates_from = rates_from,
-    rates_to = rates_to,
+      N_rates = N_rates,
+      rates_from = rates_from,
+      rates_to = rates_to,
 
-    corresponding_observation = corresponding_observation,
+      corresponding_observation = corresponding_observation,
 
-    N_noisy_states = N_noisy_states,
-    noisy_states = noisy_states,
-    N_other_observations = N_other_observations,
-    noisy_states_other_obs = noisy_states_other_obs,
+      N_noisy_states = N_noisy_states,
+      noisy_states = noisy_states,
+      N_other_observations = N_other_observations,
+      noisy_states_other_obs = noisy_states_other_obs,
 
-    sensitivity_low_bound = sensitivity_low_bound,
+      sensitivity_low_bound = sensitivity_low_bound,
 
-    initial_states_prob = initial_states_prob,
+      initial_states_prob = initial_states_prob,
 
-    N_observations = N_observations,
-    N_patients = N_patients,
-    N_time = N_time,
-    N_predictor_sets = N_predictor_sets,
+      N_observations = N_observations,
+      N_series = N_series,
+      N_time = N_time,
+      N_predictor_sets = N_predictor_sets,
 
-    patients = patients,
-    times = times,
-    obs_states = obs_states,
+      series = series,
+      times = times,
+      obs_states = obs_states,
 
-    predictor_sets = predictor_sets,
-    rate_predictors = rate_predictors
-  ),
-  true = list(
-    mu = mu,
-    sensitivity = sensitivity,
-    other_observations_probs = other_observations_probs,
-    transition_matrices = transition_matrices,
-    true_base_states = true_base_states,
-    true_improving = true_improving
+      predictor_sets = predictor_sets,
+      rate_predictors = rate_predictors
+    ),
+    observed_structured = list(
+      formula = ~ .rate_id * treated,
+      serie_data = data.frame(
+        .serie = series,
+        .time = times,
+        .observed = obs_states,
+        treated = factor(predictor_sets)),
+      rate_data = data.frame(
+        .from = rates_from,
+        .to = rates_to
+      ),
+      state_data = data.frame(.id = 1:N_states_hidden,
+                              .corresponding_obs = corresponding_observation,
+                              .initial_prob = initial_states_prob)
+    ),
+    true = list(
+      mu = mu,
+      sensitivity = sensitivity,
+      other_observations_probs = other_observations_probs,
+      transition_matrices = transition_matrices,
+      true_base_states = true_base_states,
+      true_improving = true_improving
+    )
   )
-)
 }

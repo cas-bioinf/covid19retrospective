@@ -20,14 +20,14 @@ devtools::load_all()
 ```{r}
 data <- hmm_simulator(10, 20, 4, use_noisy_states = TRUE)
 
-improving_data <- data.frame(day = data$observed$times, patient = data$observed$patients, improving = data$true$true_improving) %>% filter(improving)
+improving_data <- data.frame(day = data$observed$times, patient = data$observed$series, improving = data$true$true_improving) %>% filter(improving)
 
-data.frame(day = data$observed$times, patient = data$observed$patients, breathing = data$true$true_base_states) %>%
+data.frame(day = data$observed$times, patient = data$observed$series, breathing = data$true$true_base_states) %>%
   mutate(breathing = factor(breathing, 1:data$observed$N_states_observed, ordered = TRUE)) %>%
   ggplot(aes(x = day, y = patient, fill = breathing)) + geom_tile(width = 1, height = 0.5) + geom_tile(data = improving_data, width = 1, height = 0.1, fill = "gray") + ggtitle("True - gray lines for improving")
 
 
-data.frame(day = data$observed$times, patient = data$observed$patients, breathing = data$observed$obs_states) %>%
+data.frame(day = data$observed$times, patient = data$observed$series, breathing = data$observed$obs_states) %>%
   mutate(breathing = factor(breathing, 1:data$observed$N_states_observed, ordered = TRUE)) %>%
   ggplot(aes(x = day, y = patient, fill = breathing)) + geom_tile(width = 1, height = 0.5) + ggtitle("Observed")
 ```
@@ -56,7 +56,7 @@ sbc_res <- sbc(model, generator = function() {hmm_simulator(10, 20, 2, use_noisy
 
 saveRDS(sbc_res, "sbc.rds")
 
-sbc_res$params %>% filter(grepl("rates", param_name)) %>% plot_sbc_params()
+sbc_res$params %>% filter(grepl("mu", param_name)) %>% plot_sbc_params()
 sbc_res$params %>% filter(grepl("sensitivity", param_name)) %>% plot_sbc_params()
 sbc_res$params %>% filter(grepl("other_observations_probs", param_name)) %>% plot_sbc_params()
 
@@ -67,11 +67,46 @@ sbc_res$diagnostics
 ```
 
 
+
 ```{r}
 library(brms)
+```
+
+```{r}
+data <- hmm_simulator(10, 20, 2, use_noisy_states = TRUE)
+cc <- make_stancode_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data)
+
+model2 <- stan_model(model_code = cc)
+
+prep_data <- make_data_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data)
+
+all_data <- c(make_standata( make_brms_formula_hmm(data$observed_structured$formula), data = prep_data$brmsdata),
+              prep_data$standata)
+
+sampling(model2, data = all_data)
+
+```
+
+
+```{r}
+
 test_data <- data.frame(a = c(1,2,3), b = c(0.5,1.0,1.5), x1 = c("A"), x2 = c(0,1,2))
-f <- cbind(a,b) ~ 0 + (0 + x2 | a | x1)
-make_stancode(f, data = test_data)
-make_standata(f, data = test_data)
+# f <- cbind(a,b) ~ 0 + (0 + x2 | a | x1)
+# make_stancode(f, data = test_data)
+# make_standata(f, data = test_data)
+
+stan_llh.rate_hmm <- function( ... ) {
+  ""
+}
+
+.family_rate_hmm <- function() {
+  
+}
+
+ff <- 
+
+make_stancode(a ~ 0 + x2, family = ff, data = test_data)
+
+
 ```
 
