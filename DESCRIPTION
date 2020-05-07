@@ -22,7 +22,8 @@ Imports:
     tidyr,
     magrittr,
     purrr,
-    expm
+    expm,
+    MCMCpack
 Remotes: 
     stan-dev/cmdstanr
 Roxygen: list(markdown = TRUE)

@@ -31,8 +31,10 @@ data {
 
   int<lower=1, upper=N_states_observed> corresponding_observation[N_states_hidden];
 
-  int<lower=2> N_noisy_states;
+  int<lower=0> N_noisy_states;
   int<lower=1, upper=N_states_observed> noisy_states[N_noisy_states];
+  int<lower=1> N_other_observations;
+  int<lower=1, upper=N_states_observed> noisy_states_other_obs[N_noisy_states, N_other_observations];
 
   real<lower=0, upper=1> sensitivity_low_bound;
 
@@ -54,6 +56,7 @@ transformed data {
 parameters {
   vector<lower=0>[N_rates] rates;
   vector<lower=sensitivity_low_bound, upper=1>[N_noisy_states] sensitivity;
+  simplex[N_other_observations] other_observations_probs[N_noisy_states];
 }
 
 model {
@@ -65,16 +68,11 @@ model {
     int corresponding_obs = corresponding_observation[s_hidden];
     if(is_state_noisy[corresponding_obs]) {
       int noisy_id = noisy_state_id[corresponding_obs];
-
       observation_probs[s_hidden, corresponding_obs] = sensitivity[noisy_id];
-      for(s2_raw in 1:(N_noisy_states - 1)){
-        int s2;
-        if(s2_raw < noisy_id) {
-          s2 = s2_raw;
-        } else {
-          s2 = s2_raw + 1;
-        }
-        observation_probs[s_hidden, noisy_states[s2]] = (1 - sensitivity[noisy_id]) / (N_noisy_states - 1);
+      for(other_index in 1:N_other_observations) {
+        int s_observed = noisy_states_other_obs[noisy_id, other_index];
+        observation_probs[s_hidden, s_observed] =
+          (1 - sensitivity[noisy_id]) * other_observations_probs[noisy_id, other_index];
       }
     } else {
       observation_probs[s_hidden, corresponding_obs] = 1;

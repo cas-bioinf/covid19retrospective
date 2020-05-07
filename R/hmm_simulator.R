@@ -1,7 +1,9 @@
-hmm_simulator <- function(N_patients, N_time, N_mid_states) {
+hmm_simulator <- function(N_patients, N_time, N_mid_states, use_noisy_states = FALSE) {
 
   # States and transitions
-
+  if(N_mid_states < 1) {
+    stop("Need at least one mid state")
+  }
   N_states_hidden <- 2 + N_mid_states * 2
   N_states_observed <- 2 + N_mid_states
 
@@ -75,17 +77,41 @@ hmm_simulator <- function(N_patients, N_time, N_mid_states) {
 
 
   # Observation model
-  sensitivity_low_bound <- 0.9
+  sensitivity_low_bound <- 0.8
   sensitivity <- runif(N_mid_states, min = sensitivity_low_bound, max = 1)
   corresponding_observation <- array(NA_integer_, N_states_hidden)
   corresponding_observation[s_discharged_hid] <- s_discharged_obs
   corresponding_observation[s_worsening_hid] <- s_mid_obs
   corresponding_observation[s_improving_hid] <- s_mid_obs
   corresponding_observation[s_death_hid] <-  s_death_obs
-  N_noisy_states <- N_mid_states
-  noisy_states <- s_mid_obs
-  noisy_state_id <- array(NA_integer_, N_states_observed)
-  noisy_state_id[noisy_states] <- 1:N_noisy_states
+  if(use_noisy_states) {
+    N_noisy_states <- N_mid_states
+    noisy_states <- s_mid_obs
+    noisy_state_id <- array(NA_integer_, N_states_observed)
+    noisy_state_id[noisy_states] <- 1:N_noisy_states
+
+    N_other_observations <- 2
+    noisy_states_other_obs <- array(NA_integer_, c(N_noisy_states, N_other_observations))
+    noisy_states_other_obs[1, ] <- c(noisy_states[1] + 1,noisy_states[1] + 2)
+    noisy_states_other_obs[N_noisy_states, ] <- c(noisy_states[N_noisy_states] - 2,noisy_states[N_noisy_states] - 1)
+    for(ns in 2:(N_noisy_states - 1)) {
+      noisy_states_other_obs[ns, ] <- c(noisy_states[ns] - 1, noisy_states[ns] + 1)
+    }
+
+    other_observations_probs <- array(NA_real_, c(N_noisy_states, N_other_observations))
+    for(ns in 1:N_noisy_states) {
+      other_observations_probs[ns, ] <- MCMCpack::rdirichlet(1, rep(1, N_other_observations))
+    }
+  } else {
+    N_noisy_states <- 0
+    noisy_states <- integer(0)
+    noisy_state_id <- integer(0)
+
+    N_other_observations <- 1
+    noisy_states_other_obs <- array(as.integer(0), c(0, 1))
+
+    other_observations_probs <- array(0, c(0, 1))
+  }
 
   # The actual Markov chain
   initial_states_prob <- numeric(N_states_hidden)
@@ -101,14 +127,12 @@ hmm_simulator <- function(N_patients, N_time, N_mid_states) {
       true_improving[t,p] <- state %in% s_improving_hid
 
       if(cor_obs %in% noisy_states) {
-        if(runif(1) < sensitivity[noisy_state_id[cor_obs]]) {
+        noisy_id <- noisy_state_id[cor_obs]
+        if(runif(1) < sensitivity[noisy_id]) {
           observations[t, p] <- cor_obs
         } else {
-          obs_noisy_id <- purrr::rdunif(1, a = 1, b = length(noisy_states) - 1)
-          if(obs_noisy_id >= noisy_state_id[cor_obs]) {
-            obs_noisy_id <- obs_noisy_id + 1
-          }
-          observations[t, p] <- noisy_states[obs_noisy_id]
+          observations[t, p] <- sample(noisy_states_other_obs[noisy_id, ], size = 1,
+                                       prob = other_observations_probs[noisy_id, ])
         }
       } else {
         observations[t, p] <- cor_obs
@@ -136,6 +160,9 @@ list(
 
     N_noisy_states = N_noisy_states,
     noisy_states = noisy_states,
+    N_other_observations = N_other_observations,
+    noisy_states_other_obs = noisy_states_other_obs,
+
     sensitivity_low_bound = sensitivity_low_bound,
 
     initial_states_prob = initial_states_prob,
@@ -145,6 +172,7 @@ list(
   true = list(
     rates = rates,
     sensitivity = sensitivity,
+    other_observations_probs = other_observations_probs,
     transition_matrix = transition_matrix,
     true_base_states = true_base_states,
     true_improving = true_improving

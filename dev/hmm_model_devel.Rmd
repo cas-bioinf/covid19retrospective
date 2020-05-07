@@ -18,7 +18,7 @@ devtools::load_all()
 
 
 ```{r}
-data <- hmm_simulator(10, 20, 2)
+data <- hmm_simulator(10, 20, 2, use_noisy_states = FALSE)
 
 improving_data <- data$true$true_improving %>% as.data.frame() %>% mutate(day = 1:n()) %>% pivot_longer(starts_with("V"), names_to = "patient", values_to = "improving") %>% filter(improving)
 
@@ -37,10 +37,10 @@ model <- stan_model(here::here("hmm.stan"))
 ```{r}
 adapt_delta <- 0.8
 
-data <- hmm_simulator(10, 20, 2)
+data <- hmm_simulator(10, 20, 2, use_noisy_states = TRUE)
 
 if(inherits(model, "stanmodel")) {
-  fit <- sampling(model, data = data$observed, control = list(adapt_delta = adapt_delta))
+  fit <- sampling(model, data = data$observed, control = list(adapt_delta = adapt_delta), chains = 1)
 } else {
   cmdstan_fit <- model$sample(data = data$observed, adapt_delta = adapt_delta)
   fit <- rstan::read_stan_csv(cmdstan_fit$output_files())
@@ -50,7 +50,7 @@ evaluation_summary(fit, data$true)
 ```
 
 ```{r}
-sbc_res <- sbc(model, generator = function() {hmm_simulator(10, 20, 2) }, N_steps = 100, control = list(adapt_delta = adapt_delta))
+sbc_res <- sbc(model, generator = function() {hmm_simulator(10, 20, 2, use_noisy_states = TRUE) }, N_steps = 100, control = list(adapt_delta = adapt_delta))
 
 saveRDS(sbc_res, "sbc.rds")
 
@@ -62,5 +62,14 @@ sbc_res$params %>% filter(grepl("sensitivity", param_name)) %>% plot_sbc_params(
 summarise_sbc_diagnostics(sbc_res)
 sbc_res$diagnostics
 
+```
+
+
+```{r}
+library(brms)
+test_data <- data.frame(a = c(1,2,3), b = c(0.5,1.0,1.5), x1 = c("A"), x2 = c(0,1,2))
+f <- cbind(a,b) ~ 0 + (0 + x2 | a | x1)
+make_stancode(f, data = test_data)
+make_standata(f, data = test_data)
 ```
 
