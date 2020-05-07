@@ -18,15 +18,17 @@ devtools::load_all()
 
 
 ```{r}
-data <- hmm_simulator(10, 20, 2, use_noisy_states = FALSE)
+data <- hmm_simulator(10, 20, 4, use_noisy_states = TRUE)
 
-improving_data <- data$true$true_improving %>% as.data.frame() %>% mutate(day = 1:n()) %>% pivot_longer(starts_with("V"), names_to = "patient", values_to = "improving") %>% filter(improving)
+improving_data <- data.frame(day = data$observed$times, patient = data$observed$patients, improving = data$true$true_improving) %>% filter(improving)
 
-data$true$true_base_states %>% as.data.frame() %>% mutate(day = 1:n()) %>% pivot_longer(starts_with("V"), names_to = "patient", values_to = "breathing") %>% mutate(breathing = factor(breathing, 1:data$observed$N_states_observed, ordered = TRUE)) %>%
+data.frame(day = data$observed$times, patient = data$observed$patients, breathing = data$true$true_base_states) %>%
+  mutate(breathing = factor(breathing, 1:data$observed$N_states_observed, ordered = TRUE)) %>%
   ggplot(aes(x = day, y = patient, fill = breathing)) + geom_tile(width = 1, height = 0.5) + geom_tile(data = improving_data, width = 1, height = 0.1, fill = "gray") + ggtitle("True - gray lines for improving")
 
 
-data$observed$observations %>% as.data.frame() %>% mutate(day = 1:n()) %>% pivot_longer(starts_with("V"), names_to = "patient", values_to = "breathing") %>% mutate(breathing = factor(breathing, 1:data$observed$N_states_observed, ordered = TRUE)) %>%
+data.frame(day = data$observed$times, patient = data$observed$patients, breathing = data$observed$obs_states) %>%
+  mutate(breathing = factor(breathing, 1:data$observed$N_states_observed, ordered = TRUE)) %>%
   ggplot(aes(x = day, y = patient, fill = breathing)) + geom_tile(width = 1, height = 0.5) + ggtitle("Observed")
 ```
 
@@ -40,7 +42,7 @@ adapt_delta <- 0.8
 data <- hmm_simulator(10, 20, 2, use_noisy_states = TRUE)
 
 if(inherits(model, "stanmodel")) {
-  fit <- sampling(model, data = data$observed, control = list(adapt_delta = adapt_delta), chains = 1)
+  fit <- sampling(model, data = data$observed, control = list(adapt_delta = adapt_delta))
 } else {
   cmdstan_fit <- model$sample(data = data$observed, adapt_delta = adapt_delta)
   fit <- rstan::read_stan_csv(cmdstan_fit$output_files())
@@ -50,13 +52,13 @@ evaluation_summary(fit, data$true)
 ```
 
 ```{r}
-sbc_res <- sbc(model, generator = function() {hmm_simulator(10, 20, 2, use_noisy_states = TRUE) }, N_steps = 100, control = list(adapt_delta = adapt_delta))
+sbc_res <- sbc(model, generator = function() {hmm_simulator(10, 20, 2, use_noisy_states = FALSE) }, N_steps = 100, control = list(adapt_delta = adapt_delta))
 
 saveRDS(sbc_res, "sbc.rds")
 
 sbc_res$params %>% filter(grepl("rates", param_name)) %>% plot_sbc_params()
 sbc_res$params %>% filter(grepl("sensitivity", param_name)) %>% plot_sbc_params()
-#sbc_res$params %>% filter(grepl("initial", param_name)) %>% plot_sbc_params()
+sbc_res$params %>% filter(grepl("other_observations_probs", param_name)) %>% plot_sbc_params()
 
 #sbc_res$params %>% plot_sbc_params()
 summarise_sbc_diagnostics(sbc_res)
