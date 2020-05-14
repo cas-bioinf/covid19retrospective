@@ -30,7 +30,7 @@ rate_hmm_stanvars <- function(standata) {
   brms::stanvar(scode = rate_hmm_parameters_code, block = "parameters")
 }
 
-make_data_hmm <- function(formula_processed, serie_data, rate_data, state_data) {
+make_data_hmm <- function(formula_processed, serie_data, rate_data, state_data, sensitivity_low_bound = 0.5) {
 
   rate_data <- rate_data %>% mutate(.rate_id = factor(1:n()))
 
@@ -40,12 +40,37 @@ make_data_hmm <- function(formula_processed, serie_data, rate_data, state_data) 
 
   N_rates = nrow(rate_data)
 
-  state_data <- state_data %>% arrange(.id)
-  if(!identical(state_data$.id, 1:nrow(state_data))) {
+  state_data <- state_data %>% arrange(id)
+  if(!identical(state_data$id, 1:nrow(state_data))) {
     stop("State ids need to be consecutive and not duplicated")
   }
-  #TODO allow for noisy states
-  N_states_observed <- length(unique(state_data$.corresponding_obs))
+  possibly_observed_states <- state_data %>% select(corresponding_obs, starts_with("other_obs_")) %>%
+    as.matrix() %>% as.integer() %>% unique() %>% sort()
+  possibly_observed_states <- possibly_observed_states[!is.na(possibly_observed_states)]
+  if(!identical(possibly_observed_states, 1:length(possibly_observed_states))) {
+    stop("Possibly observed states have gaps")
+  }
+  N_states_observed <- length(possibly_observed_states)
+
+  N_noisy_states <- sum(state_data$is_noisy)
+  if(N_noisy_states > 0) {
+    noisy_states <- state_data %>% filter(is_noisy) %>% pull(id)
+
+    N_other_observations <- state_data %>% select(starts_with("other_obs_")) %>% length()
+    if(N_other_observations < 1) {
+      stop("Noisy states require other_obs_x columns")
+    }
+
+    noisy_states_other_obs <-  state_data %>%
+      filter(is_noisy) %>%
+      select(starts_with("other_obs_")) %>%
+      as.matrix()
+  } else {
+    noisy_states = numeric(0)
+    N_other_observations = 1
+    noisy_states_other_obs = array(0, c(0, 1))
+  }
+
 
   N_series <- max(serie_data$.serie)
   if(!identical(sort(unique(serie_data$.serie)), 1:N_series)) {
@@ -72,6 +97,8 @@ make_data_hmm <- function(formula_processed, serie_data, rate_data, state_data) 
   }
 
   brmsdata_all <- crossing(serie_data_distinct, rate_data)
+
+  #TODO avoid repetitions (would only apply if some rates are identical)
   # brmsdata_distinct <- brmsdata_all %>% select(one_of(all_vars_needed)) %>%
   #   dplyr::distinct() %>%
   #   mutate(.predictor_id = 1:n())
@@ -95,15 +122,15 @@ make_data_hmm <- function(formula_processed, serie_data, rate_data, state_data) 
     N_rates,
     rates_from = rate_data$.from,
     rates_to = rate_data$.to,
-    corresponding_observation = state_data$.corresponding_obs,
+    corresponding_observation = state_data$corresponding_obs,
 
-    N_noisy_states = 0,
-    noisy_states = numeric(0),
-    N_other_observations = 1,
-    noisy_states_other_obs = array(0, c(0, 1)),
+    N_noisy_states,
+    noisy_states,
+    N_other_observations,
+    noisy_states_other_obs,
 
-    sensitivity_low_bound = 0.5,
-    initial_states_prob = state_data$.initial_prob,
+    sensitivity_low_bound,
+    initial_states_prob = state_data$initial_prob,
 
     N_observations = nrow(serie_data),
     N_series,
@@ -120,11 +147,10 @@ make_data_hmm <- function(formula_processed, serie_data, rate_data, state_data) 
   loo::nlist(standata, brmsdata)
 }
 
-make_standata_hmm <- function(formula, serie_data, rate_data, state_data) {
+make_standata_hmm <- function(formula, serie_data, rate_data, state_data, sensitivity_low_bound = 0.5) {
   formula <- make_brms_formula_hmm(formula)
-  data <- make_data_hmm(formula, serie_data, rate_data, state_data)
-  c(data$standata,
-    brms::make_standata(formula, data = data$brmsdata))
+  data <- make_data_hmm(formula, serie_data, rate_data, state_data, sensitivity_low_bound = sensitivity_low_bound)
+  c(brms::make_standata(formula, data = data$brmsdata), data$standata)
 }
 
 rate_hmm_functions_code <- "
@@ -157,7 +183,7 @@ rate_hmm_data_code <- '
   int<lower=1, upper=N_states_observed> corresponding_observation[N_states_hidden];
 
   int<lower=0> N_noisy_states;
-  int<lower=1, upper=N_states_observed> noisy_states[N_noisy_states];
+  int<lower=1, upper=N_states_hidden> noisy_states[N_noisy_states];
   int<lower=1> N_other_observations;
   int<lower=1, upper=N_states_observed> noisy_states_other_obs[N_noisy_states, N_other_observations];
 
@@ -181,8 +207,8 @@ rate_hmm_data_code <- '
 '
 
 rate_hmm_tdata_code <- '
-  int<lower=0,upper=1> is_state_noisy[N_states_observed] = rep_array(0, N_states_observed);
-  int<lower=0,upper=N_noisy_states> noisy_state_id[N_states_observed] = rep_array(0, N_states_observed);
+  int<lower=0,upper=1> is_state_noisy[N_states_hidden] = rep_array(0, N_states_hidden);
+  int<lower=0,upper=N_noisy_states> noisy_state_id[N_states_hidden] = rep_array(0, N_states_hidden);
 
   //Rectangule observations and predictors. 0 for missing data
   int<lower=0, upper=N_states_observed> obs_states_rect[N_series, N_time] = rep_array(0, N_series, N_time);
@@ -235,8 +261,8 @@ stan_llh.rate_hmm <- function( ... ) {
 
   for(s_hidden in 1:N_states_hidden) {
     int corresponding_obs = corresponding_observation[s_hidden];
-    if(is_state_noisy[corresponding_obs]) {
-      int noisy_id = noisy_state_id[corresponding_obs];
+    if(is_state_noisy[s_hidden]) {
+      int noisy_id = noisy_state_id[s_hidden];
       observation_probs[s_hidden, corresponding_obs] = sensitivity[noisy_id];
       for(other_index in 1:N_other_observations) {
         int s_observed = noisy_states_other_obs[noisy_id, other_index];

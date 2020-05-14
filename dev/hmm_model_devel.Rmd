@@ -32,19 +32,26 @@ data.frame(day = data$observed$times, patient = data$observed$series, breathing 
   ggplot(aes(x = day, y = patient, fill = breathing)) + geom_tile(width = 1, height = 0.5) + ggtitle("Observed")
 ```
 
-```{r}
-model <- stan_model(here::here("hmm.stan"))
-```
 
 ```{r}
-adapt_delta <- 0.8
+adapt_delta <- 0.9
 
-data <- hmm_simulator(10, 20, 2, use_noisy_states = TRUE)
+data <- hmm_simulator(30, 20, 2, use_noisy_states = TRUE)
 
-if(inherits(model, "stanmodel")) {
-  fit <- sampling(model, data = data$observed, control = list(adapt_delta = adapt_delta))
+single_code <- make_stancode_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data, prior= data$observed_structured$prior)
+
+model_single <- stan_model(model_code = single_code)
+
+prepdata <- make_data_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data, sensitivity_low_bound = data$observed$sensitivity_low_bound)
+
+
+standata <- make_standata_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data, sensitivity_low_bound = data$observed$sensitivity_low_bound)
+
+
+if(inherits(model_single, "stanmodel")) {
+  fit <- sampling(model_single, data = standata, control = list(adapt_delta = adapt_delta))
 } else {
-  cmdstan_fit <- model$sample(data = data$observed, adapt_delta = adapt_delta)
+  cmdstan_fit <- model_single$sample(data = standata, adapt_delta = adapt_delta)
   fit <- rstan::read_stan_csv(cmdstan_fit$output_files())
 }
 evaluation_summary(fit, data$true)
@@ -52,13 +59,26 @@ evaluation_summary(fit, data$true)
 ```
 
 ```{r}
-sbc_res <- sbc(model, generator = function() {hmm_simulator(10, 20, 2, use_noisy_states = FALSE) }, N_steps = 100, control = list(adapt_delta = adapt_delta))
+noisy_states_in_sbc <- FALSE
+sbc_generator <- function() {
+  data <- hmm_simulator(50, 20, 3, use_noisy_states = noisy_states_in_sbc)
+  standata <- make_standata_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data, sensitivity_low_bound = data$observed$sensitivity_low_bound)
+
+  list(observed = standata,
+       true = data$true)
+}
+
+sbc_res <- sbc(model_single, generator = sbc_generator, N_steps = 200, control = list(adapt_delta = adapt_delta))
 
 saveRDS(sbc_res, "sbc.rds")
 
-sbc_res$params %>% filter(grepl("mu", param_name)) %>% plot_sbc_params()
-sbc_res$params %>% filter(grepl("sensitivity", param_name)) %>% plot_sbc_params()
-sbc_res$params %>% filter(grepl("other_observations_probs", param_name)) %>% plot_sbc_params()
+sbc_res$params %>% filter(grepl("b|sd", param_name)) %>% plot_sbc_params()
+sbc_res$params %>% filter(grepl("r_1", param_name)) %>% plot_sbc_params()
+sbc_res$params %>% filter(grepl("r_2", param_name)) %>% plot_sbc_params()
+if(noisy_states_in_sbc) {
+  sbc_res$params %>% filter(grepl("sensitivity", param_name)) %>% plot_sbc_params()
+  sbc_res$params %>% filter(grepl("other_observations_probs", param_name)) %>% plot_sbc_params()
+}
 
 #sbc_res$params %>% plot_sbc_params()
 summarise_sbc_diagnostics(sbc_res)
@@ -73,18 +93,6 @@ library(brms)
 ```
 
 ```{r}
-data <- hmm_simulator(5, 10, 2, use_noisy_states = FALSE)
-cc <- make_stancode_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data, prior= data$observed_structured$prior)
-
-model2 <- stan_model(model_code = cc)
-
-prep_data <- make_data_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data)
-
-all_data <- make_standata_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data)
-
-
-fit_raw <- sampling(model2, data = all_data)
-#TODO - compactification is necessary!
 ```
 
 

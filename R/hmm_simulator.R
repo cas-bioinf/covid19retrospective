@@ -23,43 +23,63 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
 
   rates_from <- array(0, N_rates)
   rates_to <- array(0, N_rates)
-  rates_prior_mean <- numeric(N_rates)
+  rates_group <- character(N_rates)
 
   next_rate <- 1
   rates_death <- next_rate:(next_rate + N_mid_states - 1)
   rates_from[rates_death] <- s_worsening_hid
   rates_to[rates_death] <- s_death_hid
-  rates_prior_mean[rates_death] <- 0.01
+  rates_group[rates_death] <- "death"
   next_rate <- next_rate + length(rates_death)
 
   rates_to_improving <- next_rate:(next_rate + N_mid_states - 1)
   rates_from[rates_to_improving] <- s_worsening_hid
   rates_to[rates_to_improving] <- s_improving_hid
-  rates_prior_mean[rates_to_improving] <- 0.1
+  rates_group[rates_to_improving] <- "to_improving"
   next_rate <- next_rate + length(rates_to_improving)
 
   rates_to_worsening <- next_rate:(next_rate + N_mid_states - 1)
   rates_from[rates_to_worsening] <- s_improving_hid
   rates_to[rates_to_worsening] <- s_worsening_hid
-  rates_prior_mean[rates_to_worsening] <- 0.1
+  rates_group[rates_to_worsening] <- "to_worsening"
   next_rate <- next_rate + length(rates_to_worsening)
 
   rates_worsen_one <- next_rate:(next_rate + N_mid_states - 2)
   rates_from[rates_worsen_one] <- s_worsening_hid[1:(length(s_worsening_hid) - 1)]
   rates_to[rates_worsen_one] <- s_worsening_hid[2:length(s_worsening_hid)]
-  rates_prior_mean[rates_worsen_one] <- 0.2
+  rates_group[rates_worsen_one] <- "worsen_one"
   next_rate <- next_rate + length(rates_worsen_one)
 
   rates_improve_one <- next_rate:(next_rate + N_mid_states - 2)
   rates_from[rates_improve_one] <- s_improving_hid[2:length(s_improving_hid)]
   rates_to[rates_improve_one] <- s_improving_hid[1:(length(s_improving_hid) - 1)]
-  rates_prior_mean[rates_improve_one] <- 0.2
+  rates_group[rates_improve_one] <- "improve_one"
   next_rate <- next_rate + length(rates_improve_one)
 
   rate_discharge <- next_rate
   rates_from[rate_discharge] <- s_improving_hid[1]
   rates_to[rate_discharge] <- s_discharged_hid
-  rates_prior_mean[rate_discharge] <- 0.1
+  rates_group[rate_discharge] <- "improve_one"
+
+  rates_group <- factor(rates_group)
+
+  # Model coefficients
+  intercept <- rnorm(1, -3, 1)
+
+  group_effects <- numeric(length(levels(rates_group)))
+  names(group_effects) <- levels(rates_group)
+
+  group_effects["death"] <- rnorm(1, -2.3, 1)
+  group_effects["to_improving"] <- 0 #Using this as the reference category
+  group_effects["to_worsening"] <- rnorm(1, 0, 1)
+  group_effects["worsen_one"] <- rnorm(1, 0.7, 1)
+  group_effects["improve_one"] <- rnorm(1, 0.7, 1)
+
+  rate_id_sd_intercept <- abs(rnorm(1,0,0.5))
+  rate_id_intercept <- rnorm(N_rates, 0, rate_id_sd_intercept)
+
+  group_sd_treated <- abs(rnorm(1,0,1))
+  group_treated <- rnorm(length(levels(rates_group)), 0, group_sd_treated)
 
 
   # Predictors
@@ -67,13 +87,15 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
   N <- N_predictor_sets * N_rates
   rate_predictors <- array(1:(N_rates * N_predictor_sets), c(N_predictor_sets,N_rates))
 
-  intercept_prior_logmean <- array(NA_real_, N)
+  mu <- array(NA_real_, N)
   for(ps in 1:N_predictor_sets) {
-    intercept_prior_logmean[rate_predictors[ps,]] <- log(rates_prior_mean)
+    mu[rate_predictors[ps,]] <- intercept + group_effects[levels(rates_group)[rates_group]] + rate_id_intercept
+    if(ps == 2) {
+      mu[rate_predictors[ps,]] <- mu[rate_predictors[ps,]] + group_treated[rates_group]
+    }
   }
-  intercept_prior_sd <- array(1, N);
-  mu <- rnorm(N, intercept_prior_logmean, intercept_prior_sd)
 
+  # Transition matrices from predictors
   transition_matrices <- array(NA_real_, c(N_predictor_sets,N_states_hidden, ncol = N_states_hidden))
 
   for(ps in 1:N_predictor_sets) {
@@ -89,32 +111,35 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
 
   # Observation model
   sensitivity_low_bound <- 0.8
-  sensitivity <- runif(N_mid_states, min = sensitivity_low_bound, max = 1)
   corresponding_observation <- array(NA_integer_, N_states_hidden)
   corresponding_observation[s_discharged_hid] <- s_discharged_obs
   corresponding_observation[s_worsening_hid] <- s_mid_obs
   corresponding_observation[s_improving_hid] <- s_mid_obs
   corresponding_observation[s_death_hid] <-  s_death_obs
   if(use_noisy_states) {
-    N_noisy_states <- N_mid_states
-    noisy_states <- s_mid_obs
-    noisy_state_id <- array(NA_integer_, N_states_observed)
+    #TODO switch to using hidden states as base
+    N_noisy_states <- 2 * N_mid_states
+    noisy_states <- c(s_worsening_hid, s_improving_hid)
+    noisy_state_id <- array(NA_integer_, N_states_hidden)
     noisy_state_id[noisy_states] <- 1:N_noisy_states
 
-    if(N_noisy_states == 1) {
+    if(N_mid_states == 1) {
       stop("Need at least 2 mid states for noisy states")
-    } else if(N_noisy_states == 2) {
+    } else if(N_mid_states == 2) {
       N_other_observations <- 1
       noisy_states_other_obs <- array(NA_integer_, c(N_noisy_states, N_other_observations))
-      noisy_states_other_obs[1, ] <- noisy_states[2]
-      noisy_states_other_obs[2, ] <- noisy_states[1]
+      noisy_states_other_obs[c(1,3), ] <- s_mid_obs[2]
+      noisy_states_other_obs[c(2,4), ] <- s_mid_obs[1]
     } else {
       N_other_observations <- 2
       noisy_states_other_obs <- array(NA_integer_, c(N_noisy_states, N_other_observations))
-      noisy_states_other_obs[1, ] <- c(noisy_states[1] + 1,noisy_states[1] + 2)
-      noisy_states_other_obs[N_noisy_states, ] <- c(noisy_states[N_noisy_states] - 2,noisy_states[N_noisy_states] - 1)
-      for(ns in 2:(N_noisy_states - 1)) {
-        noisy_states_other_obs[ns, ] <- c(noisy_states[ns] - 1, noisy_states[ns] + 1)
+      noisy_states_other_obs[noisy_state_id[s_improving_hid[1]], ] <- s_mid_obs[c(2,3)]
+      noisy_states_other_obs[noisy_state_id[s_worsening_hid[1]], ] <- s_mid_obs[c(2,3)]
+      noisy_states_other_obs[noisy_state_id[s_improving_hid[N_mid_states]], ] <- s_mid_obs[c(N_mid_states - 1,N_mid_states - 2)]
+      noisy_states_other_obs[noisy_state_id[s_worsening_hid[N_mid_states]], ] <- s_mid_obs[c(N_mid_states - 1,N_mid_states - 2)]
+      for(ns in 2:(N_mid_states - 1)) {
+        noisy_states_other_obs[noisy_state_id[s_improving_hid[ns]], ] <- s_mid_obs[c(ns - 1, ns + 1)]
+        noisy_states_other_obs[noisy_state_id[s_worsening_hid[ns]], ] <- s_mid_obs[c(ns - 1, ns + 1)]
       }
     }
 
@@ -133,6 +158,21 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
     other_observations_probs <- array(0, c(0, 1))
   }
 
+  sensitivity <- runif(N_noisy_states, min = sensitivity_low_bound, max = 1)
+
+
+  initial_states_prob <- numeric(N_states_hidden)
+  initial_states_prob[s_worsening_hid] <- 1 / N_mid_states
+
+  state_data = data.frame(id = 1:N_states_hidden,
+                          corresponding_obs = corresponding_observation,
+                          initial_prob = initial_states_prob,
+                          is_noisy = (1:N_states_hidden) %in% noisy_states)
+  if(N_noisy_states > 0) {
+    for(other_obs in 1:N_other_observations) {
+      state_data[[paste0("other_obs_", other_obs)]] <- noisy_states_other_obs[noisy_state_id[state_data$id], other_obs]
+    }
+  }
 
 
   # The actual Markov chain
@@ -141,9 +181,8 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
   times <- array(NA_integer_, N_observations)
   obs_states <- array(NA_integer_, N_observations)
   predictor_sets <- array(NA_integer_, N_observations)
+  treated <- logical(N_observations)
 
-  initial_states_prob <- numeric(N_states_hidden)
-  initial_states_prob[s_worsening_hid] <- 1 / N_mid_states
 
   true_base_states <- array(NA_integer_, N_observations)
   true_improving <- array(FALSE, N_observations)
@@ -165,13 +204,15 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
 
       if(p %% 2 == 1 && t > 4) {
         ps <- 1
+        treated[next_observation] <- FALSE
       } else {
         ps <- 2
+        treated[next_observation] <- TRUE
       }
       predictor_sets[next_observation] <- ps
 
-      if(cor_obs %in% noisy_states) {
-        noisy_id <- noisy_state_id[cor_obs]
+      if(state %in% noisy_states) {
+        noisy_id <- noisy_state_id[state]
         if(runif(1) < sensitivity[noisy_id]) {
           obs_states[next_observation] <- cor_obs
         } else if(N_other_observations == 1) {
@@ -193,9 +234,6 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
   list(
     observed = list(
       N = N,
-      intercept_prior_logmean = intercept_prior_logmean,
-      intercept_prior_sd = intercept_prior_sd,
-
       N_states_hidden = N_states_hidden,
       N_states_observed = N_states_observed,
 
@@ -227,25 +265,45 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
       rate_predictors = rate_predictors
     ),
     observed_structured = list(
-      formula = ~ .rate_id * treated,
+      formula = ~ 0 + Intercept + rate_death + rate_to_worsening + rate_improve_one + rate_worsen_one + (1 || .rate_id) + (0 + treated || group),
+      prior =
+        brms::set_prior("normal(-2.3,1)", "b", coef = "Intercept") +
+        brms::set_prior("normal(-2.3,1)", "b", coef = "rate_death") +
+        brms::set_prior("normal(0,1)", "b", coef = "rate_to_worsening") +
+        brms::set_prior("normal(0.7,1)", "b", coef = "rate_improve_one") +
+        brms::set_prior("normal(0.7,1)", "b", coef = "rate_worsen_one") +
+        brms::set_prior("normal(0, 0.5)", "sd", group = ".rate_id") +
+        brms::set_prior("normal(0, 1)", "sd", group = "group"),
       serie_data = data.frame(
         .serie = series,
         .time = times,
         .observed = obs_states,
-        treated = factor(predictor_sets)),
+        treated = as.numeric(treated)),
       rate_data = data.frame(
         .from = rates_from,
-        .to = rates_to
+        .to = rates_to,
+        group = rates_group,
+        rate_death = as.numeric(rates_group == "death"),
+        rate_to_worsening = as.numeric(rates_group == "to_worsening"),
+        rate_improve_one = as.numeric(rates_group == "improve_one"),
+        rate_worsen_one = as.numeric(rates_group == "worsen_one")
       ),
-      prior = brms::set_prior("normal(0,1)") + brms::set_prior("normal(0,1)", "Intercept"),
-      state_data = data.frame(.id = 1:N_states_hidden,
-                              .corresponding_obs = corresponding_observation,
-                              .initial_prob = initial_states_prob)
+      state_data = state_data
     ),
     true = list(
-      mu = mu,
+      # BRMS model
+      b = c(intercept, group_effects["death"], group_effects["to_worsening"], group_effects["improve_one"], group_effects["worsen_one"]),
+      sd_1 = array(rate_id_sd_intercept, 1),
+      sd_2 = array(group_sd_treated, 1),
+      r_1_1 = rate_id_intercept,
+      r_2_1 = group_treated,
+
+      # HMM model
       sensitivity = sensitivity,
       other_observations_probs = other_observations_probs,
+
+      # Derived quantitites and helpers
+      mu = mu,
       transition_matrices = transition_matrices,
       true_base_states = true_base_states,
       true_improving = true_improving
