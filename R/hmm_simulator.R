@@ -237,6 +237,7 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
         .from = rates_from,
         .to = rates_to
       ),
+      prior = brms::set_prior("normal(0,1)") + brms::set_prior("normal(0,1)", "Intercept"),
       state_data = data.frame(.id = 1:N_states_hidden,
                               .corresponding_obs = corresponding_observation,
                               .initial_prob = initial_states_prob)

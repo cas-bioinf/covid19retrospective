@@ -73,27 +73,32 @@ library(brms)
 ```
 
 ```{r}
-data <- hmm_simulator(10, 20, 2, use_noisy_states = TRUE)
-cc <- make_stancode_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data)
+data <- hmm_simulator(5, 10, 2, use_noisy_states = FALSE)
+cc <- make_stancode_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data, prior= data$observed_structured$prior)
 
 model2 <- stan_model(model_code = cc)
 
 prep_data <- make_data_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data)
 
-all_data <- c(make_standata( make_brms_formula_hmm(data$observed_structured$formula), data = prep_data$brmsdata),
-              prep_data$standata)
+all_data <- make_standata_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data)
 
-sampling(model2, data = all_data)
 
+fit_raw <- sampling(model2, data = all_data)
+#TODO - compactification is necessary!
 ```
 
 
 ```{r}
 
 test_data <- data.frame(a = c(1,2,3), b = c(0.5,1.0,1.5), x1 = c("A"), x2 = c(0,1,2))
-# f <- cbind(a,b) ~ 0 + (0 + x2 | a | x1)
+f <- a ~ 0 + (0 + x2 | a | x1)
 # make_stancode(f, data = test_data)
-# make_standata(f, data = test_data)
+#brms::make_standata(f, data = test_data)
+xx <- brms::brmsformula(f)
+
+xx$resp
+
+
 
 stan_llh.rate_hmm <- function( ... ) {
   ""

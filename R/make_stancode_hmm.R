@@ -10,7 +10,7 @@ make_stancode_hmm <- function(formula, serie_data, rate_data, state_data, prior 
   data <- make_data_hmm(formula, serie_data, rate_data, state_data)
   brms::make_stancode(formula, family = rate_hmm_family,
                       data = data$brmsdata,
-                      stanvars = rate_hmm_stanvars(data$standata))
+                      stanvars = rate_hmm_stanvars(data$standata), prior = prior)
 }
 
 rate_hmm_family <- structure(list(family = "rate_hmm", link = "identity", dpars = "mu",
@@ -30,11 +30,9 @@ rate_hmm_stanvars <- function(standata) {
   brms::stanvar(scode = rate_hmm_parameters_code, block = "parameters")
 }
 
-make_data_hmm <- function(formula, serie_data, rate_data, state_data) {
+make_data_hmm <- function(formula_processed, serie_data, rate_data, state_data) {
 
-  serie_data <- serie_data %>% mutate(.predictor_set = 1:n())
-  rate_data <- rate_data %>% mutate(.rate_id = 1:n())
-  brmsdata <- crossing(serie_data, rate_data) %>% mutate(.dummy = 0)
+  rate_data <- rate_data %>% mutate(.rate_id = factor(1:n()))
 
 
 
@@ -57,15 +55,38 @@ make_data_hmm <- function(formula, serie_data, rate_data, state_data) {
   N_time <- max(serie_data$.time)
 
   #TODO be smart about this, using allvars (probably pass something from make_standata)
-  N_predictor_sets <- nrow(serie_data)
-  predictor_sets <- 1:N_predictor_sets
+  all_vars_needed <- brms:::all_vars(formula_processed)
+
+  serie_data_vars <- intersect(all_vars_needed, names(serie_data))
+
+  serie_data_distinct <- serie_data %>% select(one_of(serie_data_vars)) %>%
+    dplyr::distinct() %>%
+    mutate(.predictor_set = 1:n())
+
+  N_predictor_sets <- nrow(serie_data_distinct)
+
+  serie_data_raw <- serie_data
+  serie_data <- serie_data %>% dplyr::left_join(serie_data_distinct, by = serie_data_vars)
+  if(any(is.na(serie_data$.predictor_set)) || nrow(serie_data_raw) != nrow(serie_data)) {
+    stop("Failed join")
+  }
+
+  brmsdata_all <- crossing(serie_data_distinct, rate_data)
+  # brmsdata_distinct <- brmsdata_all %>% select(one_of(all_vars_needed)) %>%
+  #   dplyr::distinct() %>%
+  #   mutate(.predictor_id = 1:n())
+  #
+  # brmsdata <- brmsdata_all %>% left_join(
+  brmsdata <- brmsdata_all %>%
+    arrange(.predictor_set, .rate_id) %>%
+    mutate(.predictor_id = 1:n(), .dummy = rnorm(n()))
 
   obs_states <- serie_data$.observed
   obs_states[is.na(serie_data$.observed)] <- 0
 
   rate_predictors <- array(NA_integer_, c(N_predictor_sets, N_rates))
   for(i in 1:nrow(brmsdata)) {
-    rate_predictors[brmsdata$.predictor_set[i], brmsdata$.rate_id[i]] <- i
+    rate_predictors[brmsdata$.predictor_set[i], brmsdata$.rate_id[i]] <- brmsdata$.predictor_id[i]
   }
 
   standata <- loo::nlist(
@@ -99,6 +120,12 @@ make_data_hmm <- function(formula, serie_data, rate_data, state_data) {
   loo::nlist(standata, brmsdata)
 }
 
+make_standata_hmm <- function(formula, serie_data, rate_data, state_data) {
+  formula <- make_brms_formula_hmm(formula)
+  data <- make_data_hmm(formula, serie_data, rate_data, state_data)
+  c(data$standata,
+    brms::make_standata(formula, data = data$brmsdata))
+}
 
 rate_hmm_functions_code <- "
   // Compute a single transition matrix
