@@ -38,14 +38,22 @@ adapt_delta <- 0.9
 
 data <- hmm_simulator(30, 20, 2, use_noisy_states = TRUE)
 
-single_code <- make_stancode_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data, prior= data$observed_structured$prior)
+single_code <- make_stancode_hmm(data$observed_structured$formula, 
+                                 serie_data = data$observed_structured$serie_data, 
+                                 rate_data = data$observed_structured$rate_data, 
+                                 hidden_state_data = data$observed_structured$hidden_state_data, 
+                                 observed_state_data = data$observed_structured$observed_state_data,
+                                 prior= data$observed_structured$prior)
 
 model_single <- stan_model(model_code = single_code)
 
-prepdata <- make_data_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data, sensitivity_low_bound = data$observed$sensitivity_low_bound)
 
-
-standata <- make_standata_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data, sensitivity_low_bound = data$observed$sensitivity_low_bound)
+standata <- make_standata_hmm(data$observed_structured$formula, 
+                              serie_data = data$observed_structured$serie_data, 
+                              rate_data = data$observed_structured$rate_data, 
+                              hidden_state_data = data$observed_structured$hidden_state_data, 
+                              observed_state_data = data$observed_structured$observed_state_data,
+                              sensitivity_low_bound = data$observed$sensitivity_low_bound)
 
 
 if(inherits(model_single, "stanmodel")) {
