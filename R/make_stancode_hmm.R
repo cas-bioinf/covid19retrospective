@@ -5,9 +5,13 @@ make_brms_formula_hmm <- function(formula) {
   update.formula(formula, .dummy ~ .)
 }
 
-make_stancode_hmm <- function(formula, serie_data, rate_data, hidden_state_data, observed_state_data = NULL, prior = NULL) {
+make_stancode_hmm <- function(formula,
+                              serie_data, rate_data,
+                              hidden_state_data, initial_states,
+                              observed_state_data = NULL, prior = NULL) {
   formula <- make_brms_formula_hmm(formula)
-  data <- make_data_hmm(formula, serie_data, rate_data, hidden_state_data, observed_state_data)
+  data <- make_data_hmm(formula, serie_data, rate_data,
+                        hidden_state_data, initial_states, observed_state_data)
   brms::make_stancode(formula, family = rate_hmm_family,
                       data = data$brmsdata,
                       stanvars = rate_hmm_stanvars(data$standata), prior = prior)
@@ -30,7 +34,10 @@ rate_hmm_stanvars <- function(standata) {
   brms::stanvar(scode = rate_hmm_parameters_code, block = "parameters")
 }
 
-make_data_hmm <- function(formula_processed, serie_data, rate_data, hidden_state_data, observed_state_data = NULL, sensitivity_low_bound = 0.5) {
+make_data_hmm <- function(formula_processed,
+                          serie_data, rate_data,
+                          hidden_state_data, initial_states,
+                          observed_state_data = NULL, sensitivity_low_bound = 0.5) {
 
   rate_data <- rate_data %>% mutate(.rate_id = factor(1:n()))
 
@@ -148,13 +155,13 @@ make_data_hmm <- function(formula_processed, serie_data, rate_data, hidden_state
     noisy_states_other_obs,
 
     sensitivity_low_bound,
-    initial_states_prob = hidden_state_data$initial_prob,
 
     N_observations = nrow(serie_data),
     N_series,
     N_time,
     N_predictor_sets,
 
+    initial_states,
     series = serie_data$.serie,
     times = serie_data$.time,
     obs_states,
@@ -166,10 +173,14 @@ make_data_hmm <- function(formula_processed, serie_data, rate_data, hidden_state
 }
 
 make_standata_hmm <- function(formula, serie_data, rate_data,
-                              hidden_state_data, observed_state_data = NULL,
+                              hidden_state_data, initial_states,
+                              observed_state_data = NULL,
                               sensitivity_low_bound = 0.5) {
   formula <- make_brms_formula_hmm(formula)
-  data <- make_data_hmm(formula, serie_data, rate_data, hidden_state_data, observed_state_data,
+  data <- make_data_hmm(formula, serie_data = serie_data, rate_data = rate_data,
+                        hidden_state_data = hidden_state_data,
+                        initial_states = initial_states,
+                        observed_state_data = observed_state_data,
                         sensitivity_low_bound = sensitivity_low_bound)
   c(brms::make_standata(formula, data = data$brmsdata), data$standata)
 }
@@ -210,7 +221,6 @@ rate_hmm_data_code <- '
 
   real<lower=0, upper=1> sensitivity_low_bound;
 
-  simplex[N_states_hidden] initial_states_prob;
 
   // Observations
   int<lower=1> N_observations;
@@ -218,6 +228,7 @@ rate_hmm_data_code <- '
   int<lower=1> N_time;
   int<lower=1> N_predictor_sets;
 
+  int<lower=1, upper=N_states_hidden> initial_states[N_series];
   int<lower=1, upper=N_series> series[N_observations];
   int<lower=1, upper=N_time> times[N_observations];
   //0 for unobserved states
@@ -298,7 +309,8 @@ stan_llh.rate_hmm <- function( ... ) {
   for(p in 1:N_series) {
     matrix[N_states_hidden, max_time[p]] alpha;
     vector[max_time[p]] alpha_log_norms;
-    alpha[, 1] = initial_states_prob .* observation_probs[, obs_states_rect[p, 1]];
+    alpha[, 1] = rep_vector(0, N_states_hidden);
+    alpha[initial_states[p], 1] = observation_probs[initial_states[p], obs_states_rect[p, 1]];
 
     {
       real norm = max(alpha[, 1]);

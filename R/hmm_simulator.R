@@ -157,14 +157,11 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
   sensitivity <- runif(N_noisy_states, min = sensitivity_low_bound, max = 1)
 
 
-  initial_states_prob <- numeric(N_states_hidden)
-  initial_states_prob[s_worsening_hid] <- 1 / N_mid_states
+  hidden_state_data <- data.frame(id = 1:N_states_hidden,
+                          corresponding_obs = corresponding_observation)
 
-  hidden_state_data = data.frame(id = 1:N_states_hidden,
-                          corresponding_obs = corresponding_observation,
-                          initial_prob = initial_states_prob)
 
-  observed_state_data = data.frame(id = 1:N_states_observed,
+  observed_state_data <- data.frame(id = 1:N_states_observed,
                           is_noisy = (1:N_states_observed) %in% noisy_states)
   if(N_noisy_states > 0) {
     for(other_obs in 1:N_other_observations) {
@@ -181,6 +178,8 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
   predictor_sets <- array(NA_integer_, N_observations)
   treated <- logical(N_observations)
 
+  initial_states <- sample(s_worsening_hid, N_series, replace = TRUE)
+
 
   true_base_states <- array(NA_integer_, N_observations)
   true_improving <- array(FALSE, N_observations)
@@ -191,7 +190,7 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
     } else {
       max_time <- N_time - 1
     }
-    state <- sample(1:N_states_hidden, 1, prob = initial_states_prob)
+    state <- initial_states[p]
     for(t in 1:max_time) {
       series[next_observation] <- p
       times[next_observation] <- t
@@ -231,38 +230,6 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
 
   list(
     observed = loo::nlist(
-      N,
-      N_states_hidden,
-      N_states_observed,
-
-      N_rates,
-      rates_from,
-      rates_to,
-
-      corresponding_observation,
-
-      N_noisy_states,
-      noisy_states,
-      N_other_observations,
-      noisy_states_other_obs,
-
-      sensitivity_low_bound,
-
-      initial_states_prob,
-
-      N_observations,
-      N_series,
-      N_time,
-      N_predictor_sets,
-
-      series,
-      times,
-      obs_states,
-
-      predictor_sets,
-      rate_predictors
-    ),
-    observed_structured = loo::nlist(
       formula = ~ 0 + Intercept + rate_death + rate_to_worsening + rate_improve_one + rate_worsen_one + (1 || .rate_id) + (0 + treated || group),
       prior =
         brms::set_prior("normal(-2.3,1)", "b", coef = "Intercept") +
@@ -287,6 +254,8 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
         rate_worsen_one = as.numeric(rates_group == "worsen_one")
       ),
       hidden_state_data,
+      initial_states,
+      sensitivity_low_bound,
       observed_state_data
     ),
     true = loo::nlist(

@@ -36,23 +36,25 @@ data.frame(day = data$observed$times, patient = data$observed$series, breathing 
 ```{r}
 adapt_delta <- 0.9
 
-data <- hmm_simulator(30, 20, 2, use_noisy_states = TRUE)
+data <- hmm_simulator(5, 10, 2, use_noisy_states = TRUE)
 
-single_code <- make_stancode_hmm(data$observed_structured$formula, 
-                                 serie_data = data$observed_structured$serie_data, 
-                                 rate_data = data$observed_structured$rate_data, 
-                                 hidden_state_data = data$observed_structured$hidden_state_data, 
-                                 observed_state_data = data$observed_structured$observed_state_data,
-                                 prior= data$observed_structured$prior)
+single_code <- make_stancode_hmm(data$observed$formula, 
+                                 serie_data = data$observed$serie_data, 
+                                 rate_data = data$observed$rate_data, 
+                                 hidden_state_data = data$observed$hidden_state_data, 
+                                 initial_states = data$observed$initial_states,
+                                 observed_state_data = data$observed$observed_state_data,
+                                 prior= data$observed$prior)
 
 model_single <- stan_model(model_code = single_code)
 
 
-standata <- make_standata_hmm(data$observed_structured$formula, 
-                              serie_data = data$observed_structured$serie_data, 
-                              rate_data = data$observed_structured$rate_data, 
-                              hidden_state_data = data$observed_structured$hidden_state_data, 
-                              observed_state_data = data$observed_structured$observed_state_data,
+standata <- make_standata_hmm(data$observed$formula, 
+                              serie_data = data$observed$serie_data, 
+                              rate_data = data$observed$rate_data, 
+                              hidden_state_data = data$observed$hidden_state_data, 
+                              initial_states = data$observed$initial_states,
+                              observed_state_data = data$observed$observed_state_data,
                               sensitivity_low_bound = data$observed$sensitivity_low_bound)
 
 
@@ -70,7 +72,13 @@ evaluation_summary(fit, data$true)
 noisy_states_in_sbc <- FALSE
 sbc_generator <- function() {
   data <- hmm_simulator(50, 20, 3, use_noisy_states = noisy_states_in_sbc)
-  standata <- make_standata_hmm(data$observed_structured$formula, serie_data = data$observed_structured$serie_data, rate_data = data$observed_structured$rate_data, state_data = data$observed_structured$state_data, sensitivity_low_bound = data$observed$sensitivity_low_bound)
+  standata <- make_standata_hmm(data$observed$formula, 
+                                serie_data = data$observed$serie_data, 
+                                rate_data = data$observed$rate_data, 
+                                hidden_state_data = data$observed$hidden_state_data, 
+                                initial_states = data$observed$initial_states,
+                                observed_state_data = data$observed$observed_state_data,
+                                sensitivity_low_bound = data$observed$sensitivity_low_bound)
 
   list(observed = standata,
        true = data$true)
