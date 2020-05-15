@@ -69,9 +69,9 @@ evaluation_summary(fit, data$true)
 ```
 
 ```{r}
-noisy_states_in_sbc <- FALSE
+noisy_states_in_sbc <- TRUE
 sbc_generator <- function() {
-  data <- hmm_simulator(50, 20, 3, use_noisy_states = noisy_states_in_sbc)
+  data <- hmm_simulator(20, 15, 2, use_noisy_states = noisy_states_in_sbc)
   standata <- make_standata_hmm(data$observed$formula, 
                                 serie_data = data$observed$serie_data, 
                                 rate_data = data$observed$rate_data, 
@@ -84,7 +84,7 @@ sbc_generator <- function() {
        true = data$true)
 }
 
-sbc_res <- sbc(model_single, generator = sbc_generator, N_steps = 200, control = list(adapt_delta = adapt_delta))
+sbc_res <- sbc(model_single, generator = sbc_generator, N_steps = 50, control = list(adapt_delta = adapt_delta))
 
 saveRDS(sbc_res, "sbc.rds")
 
@@ -104,38 +104,23 @@ sbc_res$diagnostics
 
 
 
-```{r}
-library(brms)
-```
-
-```{r}
-```
-
+## Apply to Grein et al. dataset
 
 ```{r}
 
-test_data <- data.frame(a = c(1,2,3), b = c(0.5,1.0,1.5), x1 = c("A"), x2 = c(0,1,2))
-f <- a ~ 0 + (0 + x2 | a | x1)
-# make_stancode(f, data = test_data)
-#brms::make_standata(f, data = test_data)
-xx <- brms::brmsformula(f)
-
-xx$resp
-
-
-
-stan_llh.rate_hmm <- function( ... ) {
-  ""
-}
-
-.family_rate_hmm <- function() {
-  
-}
-
-ff <- 
-
-make_stancode(a ~ 0 + x2, family = ff, data = test_data)
-
+  breathing_data_orig <- readxl::read_excel(here::here("public_data", "Grein_et_al.xlsx"), na = c("")) %>%
+    select(-Remdesivir_Last_Day) %>%
+    pivot_longer(starts_with("Day_"), names_prefix = "Day_", names_to = "day", values_to = "breathing") %>%
+    filter(!is.na(breathing)) %>%
+    transmute(
+      patient = Patient,
+      breathing = if_else(breathing %in% c("LoO2", "HiO2"), "Oxygen", breathing),
+      day = as.integer(day)) %>%
+    group_by(patient) %>%
+    mutate(breathing = if_else(breathing == "ND", breathing[which.max(day[breathing %in% c("AA", "Oxygen", "NIPPV", "MV", "ECMO")])], breathing)) %>%
+    ungroup() %>%
+    mutate(
+      breathing = factor(breathing, levels = c("Discharge", "AA", "Oxygen", "NIPPV", "MV", "ECMO", "Death"), ordered = TRUE)
+    )
 
 ```
-
