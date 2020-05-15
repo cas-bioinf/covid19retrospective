@@ -69,6 +69,29 @@ evaluation_summary(fit, data$true)
 ```
 
 ```{r}
+
+prepdata <- make_data_hmm(data$observed$formula, 
+                              serie_data = data$observed$serie_data, 
+                              rate_data = data$observed$rate_data, 
+                              hidden_state_data = data$observed$hidden_state_data, 
+                              initial_states = data$observed$initial_states,
+                              observed_state_data = data$observed$observed_state_data,
+                              sensitivity_low_bound = data$observed$sensitivity_low_bound)
+
+bfit <- brm(formula = make_brms_formula_hmm(data$observed$formula), family = rate_hmm_family, data = prepdata$brmsdata, prior = data$observed$prior, stanvars = rate_hmm_stanvars(prepdata$standata))
+
+bfit <- brms:::brmsfit(formula = make_brms_formula_hmm(data$observed$formula), data = prepdata$brmsdata, prior = data$observed$prior, stanvars = rate_hmm_stanvars(prepdata$standata), fit = fit)
+
+bfit
+
+posterior_epred(bfit)
+
+brms::make_standata(formula = make_brms_formula_hmm(data$observed$formula), family = rate_hmm_family, data = prepdata$brmsdata, prior = data$observed$prior, stanvars = rate_hmm_stanvars(prepdata$standata))
+
+```
+
+
+```{r}
 noisy_states_in_sbc <- TRUE
 sbc_generator <- function() {
   data <- hmm_simulator(20, 15, 2, use_noisy_states = noisy_states_in_sbc)

@@ -2,7 +2,8 @@ make_brms_formula_hmm <- function(formula) {
   if(!is.null(brms:::lhs(formula))) {
     stop("Formula needs to be one-sided")
   }
-  update.formula(formula, .dummy ~ .)
+
+  brms::brmsformula(update.formula(formula, .dummy ~ .), family = rate_hmm_family)
 }
 
 make_stancode_hmm <- function(formula,
@@ -19,6 +20,7 @@ make_stancode_hmm <- function(formula,
 
 rate_hmm_family <- structure(list(family = "rate_hmm", link = "identity", dpars = "mu",
                            lb = NA, ub = NA, type = "real", vars = NULL, specials = NULL,
+                           ybounds = c(-Inf, Inf),
                            log_lik = NULL, posterior_predict = NULL, posterior_epred = NULL),
                       class = c("rate_hmm", "brmsfamily"))
 
@@ -29,7 +31,7 @@ rate_hmm_family <- structure(list(family = "rate_hmm", link = "identity", dpars 
 rate_hmm_stanvars <- function(standata) {
 
   brms::stanvar(scode = rate_hmm_functions_code, block = "functions") +
-  brms::stanvar(x = standata, scode = rate_hmm_data_code, block = "data") +
+  rate_hmm_stanvars_data(standata) +
   brms::stanvar(scode = rate_hmm_tdata_code, block = "tdata") +
   brms::stanvar(scode = rate_hmm_parameters_code, block = "parameters") +
   brms::stanvar(scode = rate_hmm_genquant_code, block = "genquant")
@@ -80,41 +82,38 @@ rate_hmm_functions_code <- "
   }
 "
 
-rate_hmm_data_code <- '
-  // HMM data
-  int<lower=1> N_states_hidden;
-  int<lower=1> N_states_observed;
+rate_hmm_stanvars_data  <- function(standata) {
+  brms::stanvar(x = standata$N_states_hidden, name = "N_states_hidden", scode = "  // HMM data\n  int<lower=1> N_states_hidden;", block = "data") +
+  brms::stanvar(x = standata$N_states_observed, name = "N_states_observed", scode = "  int<lower=1> N_states_observed;", block = "data") +
 
-  int<lower=1> N_rates;
-  int<lower=1, upper=N_states_hidden> rates_from[N_rates];
-  int<lower=1, upper=N_states_hidden> rates_to[N_rates];
+  brms::stanvar(x = standata$N_rates, name = "N_rates", scode = "  int<lower=1> N_rates;", block = "data") +
+  brms::stanvar(x = standata$rates_from, name = "rates_from", scode = "  int<lower=1, upper=N_states_hidden> rates_from[N_rates];", block = "data") +
+  brms::stanvar(x = standata$rates_to, name = "rates_to", scode = "  int<lower=1, upper=N_states_hidden> rates_to[N_rates];", block = "data") +
 
-  int<lower=1, upper=N_states_observed> corresponding_observation[N_states_hidden];
+  brms::stanvar(x = standata$corresponding_observation, name = "corresponding_observation", scode = "  int<lower=1, upper=N_states_observed> corresponding_observation[N_states_hidden];", block = "data") +
 
-  int<lower=0> N_noisy_states;
-  int<lower=1, upper=N_states_observed> noisy_states[N_noisy_states];
-  int<lower=1> N_other_observations;
-  int<lower=1, upper=N_states_observed> noisy_states_other_obs[N_noisy_states, N_other_observations];
+  brms::stanvar(x = standata$N_noisy_states, name = "N_noisy_states", scode = "  int<lower=0> N_noisy_states;", block = "data") +
+  brms::stanvar(x = standata$noisy_states, name = "noisy_states", scode = "  int<lower=1, upper=N_states_observed> noisy_states[N_noisy_states];", block = "data") +
+  brms::stanvar(x = standata$N_other_observations, name = "N_other_observations", scode = "  int<lower=1> N_other_observations;", block = "data") +
+  brms::stanvar(x = standata$noisy_states_other_obs, name = "noisy_states_other_obs", scode = "  int<lower=1, upper=N_states_observed> noisy_states_other_obs[N_noisy_states, N_other_observations];", block = "data") +
 
-  real<lower=0, upper=1> sensitivity_low_bound;
+  brms::stanvar(x = standata$sensitivity_low_bound, name = "sensitivity_low_bound", scode = "  real<lower=0, upper=1> sensitivity_low_bound;", block = "data") +
 
 
-  // Observations
-  int<lower=1> N_observations;
-  int<lower=1> N_series;
-  int<lower=1> N_time;
-  int<lower=1> N_predictor_sets;
+  brms::stanvar(x = standata$N_observations, name = "N_observations", scode = "  // Observations\n  int<lower=1> N_observations;", block = "data") +
+  brms::stanvar(x = standata$N_series, name = "N_series", scode = "  int<lower=1> N_series;", block = "data") +
+  brms::stanvar(x = standata$N_time, name = "N_time", scode = "  int<lower=1> N_time;", block = "data") +
+  brms::stanvar(x = standata$N_predictor_sets, name = "N_predictor_sets", scode = "  int<lower=1> N_predictor_sets;", block = "data") +
 
-  int<lower=1, upper=N_states_hidden> initial_states[N_series];
-  int<lower=1, upper=N_series> series[N_observations];
-  int<lower=1, upper=N_time> times[N_observations];
-  //0 for unobserved states
-  int<lower=0, upper=N_states_observed> obs_states[N_observations];
+  brms::stanvar(x = standata$initial_states, name = "initial_states", scode = "  int<lower=1, upper=N_states_hidden> initial_states[N_series];", block = "data") +
+  brms::stanvar(x = standata$series, name = "series", scode = "  int<lower=1, upper=N_series> series[N_observations];", block = "data") +
+  brms::stanvar(x = standata$times, name = "times", scode = "  int<lower=1, upper=N_time> times[N_observations];", block = "data") +
+  brms::stanvar(x = standata$obs_states, name = "obs_states", scode = "      //0 for unobserved states
+\n  int<lower=0, upper=N_states_observed> obs_states[N_observations];", block = "data") +
 
-  int<lower=1, upper=N_predictor_sets> predictor_sets[N_observations];
-  int<lower=1, upper=N> rate_predictors[N_predictor_sets, N_rates];
-
-'
+  brms::stanvar(x = standata$predictor_sets, name = "predictor_sets", scode = "  int<lower=1, upper=N_predictor_sets> predictor_sets[N_observations];", block = "data") +
+  brms::stanvar(x = standata$rate_predictors, name = "rate_predictors", scode = "  int<lower=1, upper=N> rate_predictors[N_predictor_sets, N_rates];", block = "data")
+}
 
 rate_hmm_tdata_code <- '
   int<lower=0,upper=1> is_state_noisy[N_states_observed] = rep_array(0, N_states_observed);
