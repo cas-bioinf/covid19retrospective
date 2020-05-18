@@ -229,34 +229,34 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
   }
 
   list(
-    observed = loo::nlist(
-      formula = ~ 0 + Intercept + rate_death + rate_to_worsening + rate_improve_one + rate_worsen_one + (1 || .rate_id) + (0 + treated || group),
-      prior =
-        brms::set_prior("normal(-2.3,1)", "b", coef = "Intercept") +
-        brms::set_prior("normal(-2.3,1)", "b", coef = "rate_death") +
-        brms::set_prior("normal(0,1)", "b", coef = "rate_to_worsening") +
-        brms::set_prior("normal(0.7,1)", "b", coef = "rate_improve_one") +
-        brms::set_prior("normal(0.7,1)", "b", coef = "rate_worsen_one") +
-        brms::set_prior("normal(0, 0.5)", "sd", group = ".rate_id") +
-        brms::set_prior("normal(0, 1)", "sd", group = "group"),
-      serie_data = data.frame(
-        .serie = series,
-        .time = times,
-        .observed = obs_states,
-        treated = as.numeric(treated)),
-      rate_data = data.frame(
-        .from = rates_from,
-        .to = rates_to,
-        group = rates_group,
-        rate_death = as.numeric(rates_group == "death"),
-        rate_to_worsening = as.numeric(rates_group == "to_worsening"),
-        rate_improve_one = as.numeric(rates_group == "improve_one"),
-        rate_worsen_one = as.numeric(rates_group == "worsen_one")
-      ),
-      hidden_state_data,
-      initial_states,
-      sensitivity_low_bound,
-      observed_state_data
+    observed = brmshmmdata(
+        formula = ~ 0 + Intercept + rate_death + rate_to_worsening + rate_improve_one + rate_worsen_one + (1 || .rate_id) + (0 + treated || group),
+        prior =
+          brms::set_prior("normal(-2.3,1)", "b", coef = "Intercept") +
+          brms::set_prior("normal(-2.3,1)", "b", coef = "rate_death") +
+          brms::set_prior("normal(0,1)", "b", coef = "rate_to_worsening") +
+          brms::set_prior("normal(0.7,1)", "b", coef = "rate_improve_one") +
+          brms::set_prior("normal(0.7,1)", "b", coef = "rate_worsen_one") +
+          brms::set_prior("normal(0, 0.5)", "sd", group = ".rate_id") +
+          brms::set_prior("normal(0, 1)", "sd", group = "group"),
+        serie_data = data.frame(
+          .serie = series,
+          .time = times,
+          .observed = obs_states,
+          treated = as.numeric(treated)),
+        rate_data = data.frame(
+          .from = rates_from,
+          .to = rates_to,
+          group = rates_group,
+          rate_death = as.numeric(rates_group == "death"),
+          rate_to_worsening = as.numeric(rates_group == "to_worsening"),
+          rate_improve_one = as.numeric(rates_group == "improve_one"),
+          rate_worsen_one = as.numeric(rates_group == "worsen_one")
+        ),
+        hidden_state_data = hidden_state_data,
+        initial_states = initial_states,
+        sensitivity_low_bound = sensitivity_low_bound,
+        observed_state_data = observed_state_data
     ),
     true = loo::nlist(
       # BRMS model

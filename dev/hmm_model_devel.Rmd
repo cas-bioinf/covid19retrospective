@@ -20,15 +20,15 @@ devtools::load_all()
 ```{r}
 data <- hmm_simulator(10, 20, 4, use_noisy_states = TRUE)
 
-improving_data <- data.frame(day = data$observed$times, patient = data$observed$series, improving = data$true$true_improving) %>% filter(improving)
+improving_data <- data.frame(day = data$observed$serie_data$.time, patient = data$observed$serie_data$.serie, improving = data$true$true_improving) %>% filter(improving)
 
-data.frame(day = data$observed$times, patient = data$observed$series, breathing = data$true$true_base_states) %>%
-  mutate(breathing = factor(breathing, 1:data$observed$N_states_observed, ordered = TRUE)) %>%
+data.frame(day = data$observed$serie_data$.time, patient = data$observed$serie_data$.serie, breathing = data$true$true_base_states) %>%
+  mutate(breathing = factor(breathing, 1:nrow(data$observed$observed_state_data), ordered = TRUE)) %>%
   ggplot(aes(x = day, y = patient, fill = breathing)) + geom_tile(width = 1, height = 0.5) + geom_tile(data = improving_data, width = 1, height = 0.1, fill = "gray") + ggtitle("True - gray lines for improving")
 
 
-data.frame(day = data$observed$times, patient = data$observed$series, breathing = data$observed$obs_states) %>%
-  mutate(breathing = factor(breathing, 1:data$observed$N_states_observed, ordered = TRUE)) %>%
+data.frame(day = data$observed$serie_data$.time, patient = data$observed$serie_data$.serie, breathing = data$observed$serie_data$.observed) %>%
+  mutate(breathing = factor(breathing, 1:nrow(data$observed$observed_state_data), ordered = TRUE)) %>%
   ggplot(aes(x = day, y = patient, fill = breathing)) + geom_tile(width = 1, height = 0.5) + ggtitle("Observed")
 ```
 
@@ -38,24 +38,12 @@ adapt_delta <- 0.9
 
 data <- hmm_simulator(5, 10, 2, use_noisy_states = TRUE)
 
-single_code <- make_stancode_hmm(data$observed$formula, 
-                                 serie_data = data$observed$serie_data, 
-                                 rate_data = data$observed$rate_data, 
-                                 hidden_state_data = data$observed$hidden_state_data, 
-                                 initial_states = data$observed$initial_states,
-                                 observed_state_data = data$observed$observed_state_data,
-                                 prior= data$observed$prior)
+single_code <- make_stancode_hmm(data$observed)
 
 model_single <- stan_model(model_code = single_code)
 
 
-standata <- make_standata_hmm(data$observed$formula, 
-                              serie_data = data$observed$serie_data, 
-                              rate_data = data$observed$rate_data, 
-                              hidden_state_data = data$observed$hidden_state_data, 
-                              initial_states = data$observed$initial_states,
-                              observed_state_data = data$observed$observed_state_data,
-                              sensitivity_low_bound = data$observed$sensitivity_low_bound)
+standata <- make_standata_hmm(data$observed)
 
 
 if(inherits(model_single, "stanmodel")) {
@@ -69,45 +57,32 @@ evaluation_summary(fit, data$true)
 ```
 
 ```{r}
+data <- hmm_simulator(5, 10, 2, use_noisy_states = TRUE)
 
-prepdata <- make_data_hmm(data$observed$formula, 
-                              serie_data = data$observed$serie_data, 
-                              rate_data = data$observed$rate_data, 
-                              hidden_state_data = data$observed$hidden_state_data, 
-                              initial_states = data$observed$initial_states,
-                              observed_state_data = data$observed$observed_state_data,
-                              sensitivity_low_bound = data$observed$sensitivity_low_bound)
 
-bfit <- brm(formula = make_brms_formula_hmm(data$observed$formula), family = rate_hmm_family, data = prepdata$brmsdata, prior = data$observed$prior, stanvars = rate_hmm_stanvars(prepdata$standata))
+bfit <- brmhmm(data$observed)
 
-bfit <- brms:::brmsfit(formula = make_brms_formula_hmm(data$observed$formula), data = prepdata$brmsdata, prior = data$observed$prior, stanvars = rate_hmm_stanvars(prepdata$standata), fit = fit)
+summary(bfit)
 
-bfit
-
-posterior_epred(bfit)
-
-brms::make_standata(formula = make_brms_formula_hmm(data$observed$formula), family = rate_hmm_family, data = prepdata$brmsdata, prior = data$observed$prior, stanvars = rate_hmm_stanvars(prepdata$standata))
-
+xx <- brms::posterior_epred(bfit)
+dim(xx)
 ```
 
 
 ```{r}
 noisy_states_in_sbc <- TRUE
 sbc_generator <- function() {
-  data <- hmm_simulator(20, 15, 2, use_noisy_states = noisy_states_in_sbc)
-  standata <- make_standata_hmm(data$observed$formula, 
-                                serie_data = data$observed$serie_data, 
-                                rate_data = data$observed$rate_data, 
-                                hidden_state_data = data$observed$hidden_state_data, 
-                                initial_states = data$observed$initial_states,
-                                observed_state_data = data$observed$observed_state_data,
-                                sensitivity_low_bound = data$observed$sensitivity_low_bound)
+  data <- hmm_simulator(40, 25, 2, use_noisy_states = noisy_states_in_sbc)
+  standata <- make_standata_hmm(data$observed)
 
   list(observed = standata,
-       true = data$true)
+       true = data$true,
+       observed_raw = data$observed)
 }
 
-sbc_res <- sbc(model_single, generator = sbc_generator, N_steps = 50, control = list(adapt_delta = adapt_delta))
+model_sbc <-  stan_model(model_code = make_stancode_hmm(sbc_generator()$observed_raw))
+
+sbc_res <- sbc(model_sbc, generator = sbc_generator, N_steps = 50, control = list(adapt_delta = adapt_delta))
 
 saveRDS(sbc_res, "sbc.rds")
 
@@ -130,20 +105,27 @@ sbc_res$diagnostics
 ## Apply to Grein et al. dataset
 
 ```{r}
+data_grein <- readxl::read_excel(here::here("public_data", "Grein_et_al.xlsx"), na = c("")) %>%
+  select(-Remdesivir_Last_Day) %>%
+  pivot_longer(starts_with("Day_"), names_prefix = "Day_", names_to = "day", values_to = "breathing") %>%
+  filter(!is.na(breathing)) %>%
+  transmute(
+    patient = Patient,
+    breathing = breathing,
+    day = as.integer(day)) %>%
+  group_by(patient) %>%
+  mutate(breathing = if_else(breathing == "ND", breathing[which.max(day[breathing %in% c("AA", "LoO2", "HiO2", "NIPPV", "MV", "ECMO")])], breathing)) %>%
+  ungroup() %>%
+  mutate(
+    breathing = factor(breathing, levels = c("Discharge", "AA", "LoO2", "HiO2", "NIPPV", "MV", "ECMO", "Death"), ordered = TRUE)
+  )
 
-  breathing_data_orig <- readxl::read_excel(here::here("public_data", "Grein_et_al.xlsx"), na = c("")) %>%
-    select(-Remdesivir_Last_Day) %>%
-    pivot_longer(starts_with("Day_"), names_prefix = "Day_", names_to = "day", values_to = "breathing") %>%
-    filter(!is.na(breathing)) %>%
-    transmute(
-      patient = Patient,
-      breathing = if_else(breathing %in% c("LoO2", "HiO2"), "Oxygen", breathing),
-      day = as.integer(day)) %>%
-    group_by(patient) %>%
-    mutate(breathing = if_else(breathing == "ND", breathing[which.max(day[breathing %in% c("AA", "Oxygen", "NIPPV", "MV", "ECMO")])], breathing)) %>%
-    ungroup() %>%
-    mutate(
-      breathing = factor(breathing, levels = c("Discharge", "AA", "Oxygen", "NIPPV", "MV", "ECMO", "Death"), ordered = TRUE)
-    )
+
 
 ```
+
+
+```{r}
+
+```
+

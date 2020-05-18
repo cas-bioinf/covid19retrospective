@@ -6,16 +6,13 @@ make_brms_formula_hmm <- function(formula) {
   brms::brmsformula(update.formula(formula, .dummy ~ .), family = rate_hmm_family)
 }
 
-make_stancode_hmm <- function(formula,
-                              serie_data, rate_data,
-                              hidden_state_data, initial_states,
-                              observed_state_data = NULL, prior = NULL) {
-  formula <- make_brms_formula_hmm(formula)
-  data <- make_data_hmm(formula, serie_data, rate_data,
-                        hidden_state_data, initial_states, observed_state_data)
-  brms::make_stancode(formula, family = rate_hmm_family,
+make_stancode_hmm <- function(brmshmmdata) {
+  d <- validate_brmshmmdata(brmshmmdata)
+
+  data <- make_data_hmm(d)
+  brms::make_stancode(d$formula, family = rate_hmm_family,
                       data = data$brmsdata,
-                      stanvars = rate_hmm_stanvars(data$standata), prior = prior)
+                      stanvars = rate_hmm_stanvars(data$standata), prior = d$prior)
 }
 
 rate_hmm_family <- structure(list(family = "rate_hmm", link = "identity", dpars = "mu",
@@ -24,9 +21,18 @@ rate_hmm_family <- structure(list(family = "rate_hmm", link = "identity", dpars 
                            log_lik = NULL, posterior_predict = NULL, posterior_epred = NULL),
                       class = c("rate_hmm", "brmsfamily"))
 
+summary.rate_hmm <- function(f, link = FALSE) {
+  "Rate-based HMM"
+}
+
 .family_rate_hmm <- function() {
 
 }
+
+posterior_epred_rate_hmm <- function(prep) {
+  brms:::posterior_epred_gaussian(prep)
+}
+
 
 rate_hmm_stanvars <- function(standata) {
 
@@ -100,18 +106,16 @@ rate_hmm_stanvars_data  <- function(standata) {
   brms::stanvar(x = standata$sensitivity_low_bound, name = "sensitivity_low_bound", scode = "  real<lower=0, upper=1> sensitivity_low_bound;", block = "data") +
 
 
-  brms::stanvar(x = standata$N_observations, name = "N_observations", scode = "  // Observations\n  int<lower=1> N_observations;", block = "data") +
-  brms::stanvar(x = standata$N_series, name = "N_series", scode = "  int<lower=1> N_series;", block = "data") +
+  brms::stanvar(x = standata$N_series, name = "N_series", scode = "  // Observations\n  int<lower=1> N_series;", block = "data") +
   brms::stanvar(x = standata$N_time, name = "N_time", scode = "  int<lower=1> N_time;", block = "data") +
   brms::stanvar(x = standata$N_predictor_sets, name = "N_predictor_sets", scode = "  int<lower=1> N_predictor_sets;", block = "data") +
 
   brms::stanvar(x = standata$initial_states, name = "initial_states", scode = "  int<lower=1, upper=N_states_hidden> initial_states[N_series];", block = "data") +
-  brms::stanvar(x = standata$series, name = "series", scode = "  int<lower=1, upper=N_series> series[N_observations];", block = "data") +
-  brms::stanvar(x = standata$times, name = "times", scode = "  int<lower=1, upper=N_time> times[N_observations];", block = "data") +
-  brms::stanvar(x = standata$obs_states, name = "obs_states", scode = "      //0 for unobserved states
-\n  int<lower=0, upper=N_states_observed> obs_states[N_observations];", block = "data") +
+  brms::stanvar(x = standata$serie_max_time, name = "serie_max_time", scode = "  int<lower=1, upper=N_time> serie_max_time[N_series];", block = "data") +
+  brms::stanvar(x = standata$obs_states, name = "obs_states_rect", scode = "      //0 for unobserved states
+\n  int<lower=0, upper=N_states_observed> obs_states_rect[N_series, N_time];", block = "data") +
 
-  brms::stanvar(x = standata$predictor_sets, name = "predictor_sets", scode = "  int<lower=1, upper=N_predictor_sets> predictor_sets[N_observations];", block = "data") +
+  brms::stanvar(x = standata$predictor_sets_rect, name = "predictor_sets_rect", scode = "  int<lower=0, upper=N_predictor_sets> predictor_sets_rect[N_series, N_time];", block = "data") +
   brms::stanvar(x = standata$rate_predictors, name = "rate_predictors", scode = "  int<lower=1, upper=N> rate_predictors[N_predictor_sets, N_rates];", block = "data")
 }
 
@@ -119,30 +123,14 @@ rate_hmm_tdata_code <- '
   int<lower=0,upper=1> is_state_noisy[N_states_observed] = rep_array(0, N_states_observed);
   int<lower=0,upper=N_noisy_states> noisy_state_id[N_states_observed] = rep_array(0, N_states_observed);
 
-  //Rectangule observations and predictors. 0 for missing data
-  int<lower=0, upper=N_states_observed> obs_states_rect[N_series, N_time] = rep_array(0, N_series, N_time);
-  int<lower=0, upper=N_predictor_sets> predictor_sets_rect[N_series, N_time] = rep_array(0, N_series, N_time);
-  int<lower=0, upper=N_time> max_time[N_series] = rep_array(0,N_series);
-
   for(s_index in 1:N_noisy_states) {
     is_state_noisy[noisy_states[s_index]] = 1;
     noisy_state_id[noisy_states[s_index]] = s_index;
   }
 
-  for(o in 1:N_observations) {
-    obs_states_rect[series[o], times[o]] = obs_states[o];
-    predictor_sets_rect[series[o], times[o]] = predictor_sets[o];
-    if(obs_states[o] != 0) {
-      max_time[series[o]] = max(max_time[series[o]], times[o]);
-    }
-  }
-
   //Check data validity
   for(p in 1:N_series) {
-    if(max_time[p] == 0) {
-      reject("serie ", p, " has no osbservations");
-    }
-    for(t in 1:(max_time[p] - 1)) {
+    for(t in 1:(serie_max_time[p] - 1)) {
       if(predictor_sets_rect[p, t] == 0) {
         reject("serie ", p, " has missing predictors for time ", t);
       }
@@ -174,8 +162,8 @@ stan_llh.rate_hmm <- function( ... ) {
 
 
   for(s in 1:N_series) {
-    matrix[N_states_hidden, max_time[s]] alpha;
-    vector[max_time[s]] alpha_log_norms;
+    matrix[N_states_hidden, serie_max_time[s]] alpha;
+    vector[serie_max_time[s]] alpha_log_norms;
     alpha[, 1] = rep_vector(0, N_states_hidden);
     alpha[initial_states[s], 1] = observation_probs[initial_states[s], obs_states_rect[s, 1]];
 
@@ -184,7 +172,7 @@ stan_llh.rate_hmm <- function( ... ) {
       alpha[, 1] /= norm;
       alpha_log_norms[1] = log(norm);
     }
-    for(t in 2:max_time[s]) {
+    for(t in 2:serie_max_time[s]) {
       real col_norm;
       int ps = predictor_sets_rect[s, t - 1];
       alpha[, t] = observation_probs[, obs_states_rect[s, t]] .* (transition_matrices_t[ps] * alpha[, t - 1]);
@@ -192,7 +180,7 @@ stan_llh.rate_hmm <- function( ... ) {
       alpha[, t] /= col_norm;
       alpha_log_norms[t] = log(col_norm) + alpha_log_norms[t - 1];
     }
-    target += log(sum(alpha[,max_time[s]])) + alpha_log_norms[max_time[s]];
+    target += log(sum(alpha[,serie_max_time[s]])) + alpha_log_norms[serie_max_time[s]];
   }
 
 "

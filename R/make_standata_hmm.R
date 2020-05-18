@@ -1,44 +1,18 @@
-make_data_hmm <- function(formula_processed,
-                          serie_data, rate_data,
-                          hidden_state_data, initial_states,
-                          observed_state_data = NULL, sensitivity_low_bound = 0.5) {
+make_data_hmm <- function(brmshmmdata) {
+  d <- validate_brmshmmdata(brmshmmdata)
 
-  rate_data <- rate_data %>% mutate(.rate_id = factor(1:n()))
-
-
+  formula_processed <- d$formula
+  serie_data <- d$serie_data
+  rate_data <- d$rate_data
+  hidden_state_data <- d$hidden_state_data
+  observed_state_data <- d$observed_state_data
 
   N_states_hidden <- length(unique(c(rate_data$.from, rate_data$.to)))
 
   N_rates = nrow(rate_data)
 
-  hidden_state_data <- hidden_state_data %>% arrange(id)
-  if(!identical(hidden_state_data$id, 1:N_states_hidden)) {
-    stop("Hiden state ids need to be consecutive and not duplicated and span the same range as rate_data")
-  }
-
-  all_corresponding_states <- hidden_state_data %>% pull(corresponding_obs) %>%
-    unique() %>% sort()
-  if(is.null(observed_state_data)) {
-
-    if(!identical(all_corresponding_states, 1:length(all_corresponding_states))) {
-      stop("If observed_state_data is NULL, corresponding_obs cannot have gaps")
-    }
-
-    observed_state_data <- data.frame(id = all_corresponding_states, is_noisy = FALSE)
-  }
 
   N_states_observed <- nrow(observed_state_data)
-  observed_state_data <- observed_state_data %>% arrange(id)
-  if(!identical(observed_state_data$id, 1:N_states_observed)) {
-    stop("Observed state ids need to be consecutive.")
-  }
-
-  if(!all(all_corresponding_states %in% observed_state_data$id)) {
-    stop("Some corresponding observations are not in observed_state_data")
-  }
-
-
-
 
 
   N_noisy_states <- sum(observed_state_data$is_noisy)
@@ -69,7 +43,7 @@ make_data_hmm <- function(formula_processed,
   N_time <- max(serie_data$.time)
 
   #TODO be smart about this, using allvars (probably pass something from make_standata)
-  all_vars_needed <- brms:::all_vars(formula_processed)
+  all_vars_needed <- all.vars(as.formula(formula_processed))
 
   serie_data_vars <- intersect(all_vars_needed, names(serie_data))
 
@@ -105,6 +79,33 @@ make_data_hmm <- function(formula_processed,
     rate_predictors[brmsdata$.predictor_set[i], brmsdata$.rate_id[i]] <- brmsdata$.predictor_id[i]
   }
 
+  obs_states_rect <- array(0, c(N_series, N_time))
+  predictor_sets_rect <- array(0, c(N_series, N_time))
+  serie_max_time <- array(0, N_series)
+
+  for(o in 1:nrow(serie_data)) {
+    s <- serie_data$.serie[o]
+    t <- serie_data$.time[o]
+    if(!is.na(serie_data$.observed[o])) {
+      obs_states_rect[s, t] = serie_data$.observed[o];
+      serie_max_time[s] = max(serie_max_time[s], t);
+    }
+    predictor_sets_rect[s, t] = serie_data$.predictor_set[o];
+  }
+
+  for(s in 1:N_series) {
+    if(serie_max_time[s] <= 1) {
+      stop("At least two time points are needed for each serie")
+    }
+    for(t in 1:serie_max_time[s]) {
+      if(predictor_sets_rect[s, t] == 0) {
+        stop(paste0("Serie ", s, ", is missing predictors for time ", t, ".\n",
+                    "Predictors are needed for all times, observations are optional"))
+      }
+    }
+  }
+
+
   standata <- loo::nlist(
     N_states_hidden,
     N_states_observed,
@@ -118,33 +119,25 @@ make_data_hmm <- function(formula_processed,
     N_other_observations,
     noisy_states_other_obs,
 
-    sensitivity_low_bound,
+    sensitivity_low_bound = d$sensitivity_low_bound,
 
-    N_observations = nrow(serie_data),
     N_series,
     N_time,
     N_predictor_sets,
 
-    initial_states,
-    series = serie_data$.serie,
-    times = serie_data$.time,
-    obs_states,
-    predictor_sets = serie_data$.predictor_set,
+    initial_states = d$initial_states,
+    serie_max_time,
+    obs_states_rect,
+    predictor_sets_rect,
     rate_predictors
   )
 
   loo::nlist(standata, brmsdata)
 }
 
-make_standata_hmm <- function(formula, serie_data, rate_data,
-                              hidden_state_data, initial_states,
-                              observed_state_data = NULL,
-                              sensitivity_low_bound = 0.5) {
-  formula <- make_brms_formula_hmm(formula)
-  data <- make_data_hmm(formula, serie_data = serie_data, rate_data = rate_data,
-                        hidden_state_data = hidden_state_data,
-                        initial_states = initial_states,
-                        observed_state_data = observed_state_data,
-                        sensitivity_low_bound = sensitivity_low_bound)
-  c(brms::make_standata(formula, data = data$brmsdata), data$standata)
+make_standata_hmm <- function(brmshmmdata) {
+  d <- validate_brmshmmdata(brmshmmdata)
+
+  data <- make_data_hmm(d)
+  c(brms::make_standata(d$formula, data = data$brmsdata), data$standata)
 }
