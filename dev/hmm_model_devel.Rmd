@@ -64,8 +64,13 @@ bfit <- brmhmm(data$observed)
 
 summary(bfit)
 
-xx <- brms::posterior_epred(bfit)
+xx <- brms::posterior_predict(bfit)
 dim(xx)
+
+xx <- rstan::extract(bfit$brmsfit$fit, "observation_probs")$observation_probs
+dim(xx)
+colnames(xx)
+nrow(as.data.frame(t(xx)))
 ```
 
 
