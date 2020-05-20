@@ -1,4 +1,4 @@
-brmhmm <- function(brmshmmdata) {
+brmhmm <- function(brmshmmdata, ...) {
   d <- validate_brmshmmdata(brmshmmdata)
 
   prepdata <- make_data_hmm(d)
@@ -8,7 +8,8 @@ brmhmm <- function(brmshmmdata) {
     family = rate_hmm_family,
     data = prepdata$brmsdata,
     prior = d$prior,
-    stanvars = rate_hmm_stanvars(prepdata$standata)
+    stanvars = rate_hmm_stanvars(prepdata$standata),
+    ...
     )
 
   structure(list(

@@ -252,13 +252,13 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
         formula = model_formula,
         prior = prior,
         serie_data = data.frame(
-          .serie = series,
-          .time = times,
-          .observed = obs_states,
+          .serie = as.integer(series),
+          .time = as.integer(times),
+          .observed = as.integer(obs_states),
           treated = as.numeric(treated)),
         rate_data = data.frame(
-          .from = rates_from,
-          .to = rates_to,
+          .from = as.integer(rates_from),
+          .to = as.integer(rates_to),
           group = rates_group,
           rate_death = as.numeric(rates_group == "death"),
           rate_to_worsening = as.numeric(rates_group == "to_worsening"),

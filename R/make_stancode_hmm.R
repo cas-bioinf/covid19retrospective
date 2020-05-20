@@ -175,7 +175,12 @@ stan_llh.rate_hmm <- function( ... ) {
     for(t in 2:serie_max_time[s]) {
       real col_norm;
       int ps = predictor_sets_rect[s, t - 1];
-      alpha[, t] = observation_probs[, obs_states_rect[s, t]] .* (transition_matrices_t[ps] * alpha[, t - 1]);
+      vector[N_states_hidden] transition_probs = (transition_matrices_t[ps] * alpha[, t - 1]);
+      if(obs_states_rect[s,t] != 0) {
+        alpha[, t] = observation_probs[, obs_states_rect[s, t]] .* transition_probs;
+      } else {
+        alpha[, t] = transition_probs;
+      }
       col_norm = max(alpha[, t]);
       alpha[, t] /= col_norm;
       alpha_log_norms[t] = log(col_norm) + alpha_log_norms[t - 1];

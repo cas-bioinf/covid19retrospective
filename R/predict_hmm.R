@@ -15,18 +15,25 @@ posterior_epred.brmshmmfit <- function(fit, nsamples = NULL) {
 
   N_states_hidden <- data_hmm$standata$N_states_hidden
 
-  result_rect <- array(NA_integer_, c(max(pred_rawdata$serie_data$.time), max(pred_rawdata$serie_data$.serie), nsamples))
-  for(s in unique(pred_rawdata$serie_data$.serie)) {
+  result_rect <- array(NA_integer_, c(max(pred_rawdata$serie_data$.time), max(as.integer(pred_rawdata$serie_data$.serie)), nsamples))
+  for(s in unique(as.integer(pred_rawdata$serie_data$.serie))) {
 
-    result_rect[1, s, ] <- pred_rawdata$initial_states[s]
+    result_rect[1, s, ] <- as.integer(pred_rawdata$initial_states[s])
 
-    max_time <- fit$data$serie_data %>% filter(.serie == s) %>% pull(.time) %>% max()
+    max_time <- pred_rawdata$serie_data %>% filter(as.integer(.serie) == s) %>% pull(.time) %>% max()
+
     for(i in 1:nsamples) {
       state <- pred_rawdata$initial_states[s]
       for(t in 2:max_time) {
         ps <- data_hmm$standata$predictor_sets_rect[s, t]
+        if(ps == 0) {
+          stop(paste0("Element with no predictor at serie ",s,", time ", t))
+        }
         #cat(state, ":", ps, ",", i, ":", transition_matrices[state, , ps, i], "\n")
-        state <- sample(1:N_states_hidden, size = 1, prob = transition_matrices[state, , ps, i])
+        state <- sample.int(N_states_hidden, size = 1, prob = transition_matrices[state, , ps, i])
+        if(is.na(state)) {
+          stop("NA state")
+        }
         result_rect[t, s, i] <- state
       }
     }
@@ -35,9 +42,16 @@ posterior_epred.brmshmmfit <- function(fit, nsamples = NULL) {
   result <- array(NA_integer_, c(nsamples, nrow(pred_rawdata$serie_data)))
 
   for(o in 1:nrow(pred_rawdata$serie_data)) {
-    result[, o] <- result_rect[pred_rawdata$serie_data$.time[o], pred_rawdata$serie_data$.serie[o], ]
+    result_for_row <- result_rect[pred_rawdata$serie_data$.time[o], as.integer(pred_rawdata$serie_data$.serie[o]), ]
+    if(any(is.na(result_for_row))) {
+      stop(paste0("NA for row ", o))
+    }
+    result[, o] <- result_for_row
   }
 
+  if(any(is.na(result))) {
+    stop("NA in translation from rect")
+  }
   result
 }
 
@@ -56,22 +70,26 @@ posterior_predict.brmshmmfit <- function(fit, nsamples = NULL) {
   validate_brmshmmfit(fit)
   epred <- posterior_epred.brmshmmfit(fit, nsamples = nsamples)
 
+  if(any(is.na(epred))) {
+    stop("NA in epred")
+  }
+
   if(is.null(nsamples)) {
     nsamples = dim(epred)[1]
   }
 
   observation_probs_samples <- rstan::extract(fit$brmsfit$fit, "observation_probs")$observation_probs
 
-  N_hiden_states = dim(observation_probs_samples)[2]
+  N_hidden_states = dim(observation_probs_samples)[2]
   N_observed_states = dim(observation_probs_samples)[3]
 
   result <- array(NA_integer_, dim(epred))
   for(i in 1:nsamples) {
     observation_probs <- observation_probs_samples[i, ,]
     one_sample <- array(NA_integer_, dim(epred)[2])
-    for(h in 1:N_hiden_states) {
+    for(h in 1:N_hidden_states) {
       indices <- epred[i,] == h
-      one_sample[indices] <- sample(1:N_observed_states, size = sum(indices), replace = TRUE,
+      one_sample[indices] <- sample.int(N_observed_states, size = sum(indices), replace = TRUE,
                                     prob = observation_probs_samples[i, h, ])
     }
     result[i,] <- one_sample

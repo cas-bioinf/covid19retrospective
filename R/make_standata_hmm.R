@@ -21,12 +21,13 @@ make_data_hmm <- function(brmshmmdata) {
 
     N_other_observations <- observed_state_data %>% select(starts_with("other_obs_")) %>% length()
     if(N_other_observations < 1) {
-      stop("Noisy states require other_obs_x columns")
+      stop("Noisy states require other_obs_XX columns")
     }
 
     noisy_states_other_obs <- observed_state_data %>%
       filter(is_noisy) %>%
       select(starts_with("other_obs_")) %>%
+      mutate_all(as.integer) %>%
       as.matrix()
   } else {
     noisy_states = numeric(0)
@@ -35,10 +36,7 @@ make_data_hmm <- function(brmshmmdata) {
   }
 
 
-  N_series <- max(serie_data$.serie)
-  if(!identical(sort(unique(serie_data$.serie)), 1:N_series)) {
-    stop("Patient IDs need to be consecutive and not duplicated")
-  }
+  N_series <- max(as.integer(serie_data$.serie))
 
   N_time <- max(serie_data$.time)
 
@@ -73,9 +71,9 @@ make_data_hmm <- function(brmshmmdata) {
   # brmsdata <- brmsdata_all %>% left_join(
   brmsdata <- brmsdata_all %>%
     arrange(.predictor_set, .rate_id) %>%
-    mutate(.predictor_id = 1:n(), .dummy = rnorm(n()))
+    mutate(.predictor_id = 1:n(), .dummy = seq(0, 1, length.out = n()))
 
-  obs_states <- serie_data$.observed
+  obs_states <- as.integer(serie_data$.observed)
   obs_states[is.na(serie_data$.observed)] <- 0
 
   rate_predictors <- array(NA_integer_, c(N_predictor_sets, N_rates))
@@ -88,12 +86,12 @@ make_data_hmm <- function(brmshmmdata) {
   serie_max_time <- array(0, N_series)
 
   for(o in 1:nrow(serie_data)) {
-    s <- serie_data$.serie[o]
+    s <- as.integer(serie_data$.serie[o])
     t <- serie_data$.time[o]
     if(!is.na(serie_data$.observed[o])) {
-      obs_states_rect[s, t] = serie_data$.observed[o];
-      serie_max_time[s] = max(serie_max_time[s], t);
+      obs_states_rect[s, t] = as.integer(serie_data$.observed[o]);
     }
+    serie_max_time[s] = max(serie_max_time[s], t);
     predictor_sets_rect[s, t] = serie_data$.predictor_set[o];
   }
 
@@ -114,12 +112,12 @@ make_data_hmm <- function(brmshmmdata) {
     N_states_hidden,
     N_states_observed,
     N_rates,
-    rates_from = rate_data$.from,
-    rates_to = rate_data$.to,
-    corresponding_observation = hidden_state_data$corresponding_obs,
+    rates_from = as.integer(rate_data$.from),
+    rates_to = as.integer(rate_data$.to),
+    corresponding_observation = as.integer(hidden_state_data$corresponding_obs),
 
     N_noisy_states,
-    noisy_states,
+    noisy_states = as.integer(noisy_states),
     N_other_observations,
     noisy_states_other_obs,
 
@@ -129,7 +127,7 @@ make_data_hmm <- function(brmshmmdata) {
     N_time,
     N_predictor_sets,
 
-    initial_states = d$initial_states,
+    initial_states = as.integer(d$initial_states),
     serie_max_time,
     obs_states_rect,
     predictor_sets_rect,
