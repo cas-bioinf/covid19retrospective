@@ -57,20 +57,33 @@ evaluation_summary(fit, data$true)
 ```
 
 ```{r}
-data <- hmm_simulator(5, 10, 2, use_noisy_states = TRUE)
+data <- hmm_simulator(20, 15, 2, use_noisy_states = FALSE, N_treatments = 0)
 
 
 bfit <- brmhmm(data$observed)
 
 summary(bfit)
 
-xx <- brms::posterior_predict(bfit)
-dim(xx)
 
-xx <- rstan::extract(bfit$brmsfit$fit, "observation_probs")$observation_probs
-dim(xx)
-colnames(xx)
-nrow(as.data.frame(t(xx)))
+bfit$brmsfit$fit
+```
+
+
+```{r}
+#xx <- brms::posterior_epred(bfit) %>% hidden_to_corresponding_observed(bfit$data_processed, .)
+xx <- brms::posterior_predict(bfit)
+
+
+xy <- prediction_to_wide_format(bfit$data, xx)
+
+
+step_size <- 6
+for(step in 1:ceiling(bfit$data_processed$standata$N_series / step_size)) {
+  series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+  
+  posterior_state_plot(xy, series_id, bfit$data) %>% print()
+
+}
 ```
 
 

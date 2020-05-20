@@ -1,4 +1,4 @@
-hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FALSE) {
+hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FALSE, N_treatments = 1) {
 
   # States and transitions
   if(N_mid_states < 1) {
@@ -78,12 +78,15 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
   rate_id_sd_intercept <- abs(rnorm(1,0,0.5))
   rate_id_intercept <- rnorm(N_rates, 0, rate_id_sd_intercept)
 
+  if(N_treatments > 1) {
+    stop("More than one treatment currently not supported")
+  }
   group_sd_treated <- abs(rnorm(1,0,1))
   group_treated <- rnorm(length(levels(rates_group)), 0, group_sd_treated)
 
 
   # Predictors
-  N_predictor_sets <- 2
+  N_predictor_sets <- N_treatments + 1
   N <- N_predictor_sets * N_rates
   rate_predictors <- array(1:(N_rates * N_predictor_sets), c(N_predictor_sets,N_rates))
 
@@ -199,12 +202,16 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
       true_base_states[next_observation] <- cor_obs
       true_improving[next_observation] <- state %in% s_improving_hid
 
-      if(p %% 2 == 1 && t > 4) {
-        ps <- 1
-        treated[next_observation] <- FALSE
+      if(N_treatments > 0) {
+        if(p %% 2 == 1 && t > 4) {
+          ps <- 1
+          treated[next_observation] <- FALSE
+        } else {
+          ps <- 2
+          treated[next_observation] <- TRUE
+        }
       } else {
-        ps <- 2
-        treated[next_observation] <- TRUE
+        ps <- 1
       }
       predictor_sets[next_observation] <- ps
 
@@ -228,17 +235,22 @@ hmm_simulator <- function(N_series, N_time, N_mid_states, use_noisy_states = FAL
     }
   }
 
+  model_formula <- ~ 0 + Intercept + rate_death + rate_to_worsening + rate_improve_one + rate_worsen_one + (1 || .rate_id)
+  prior <- brms::set_prior("normal(-2.3,1)", "b", coef = "Intercept") +
+    brms::set_prior("normal(-2.3,1)", "b", coef = "rate_death") +
+    brms::set_prior("normal(0,1)", "b", coef = "rate_to_worsening") +
+    brms::set_prior("normal(0.7,1)", "b", coef = "rate_improve_one") +
+    brms::set_prior("normal(0.7,1)", "b", coef = "rate_worsen_one") +
+    brms::set_prior("normal(0, 0.5)", "sd", group = ".rate_id")
+
+  if(N_treatments > 0) {
+    model_formula <- update.formula(model_formula, ~ . + (0 + treated || group))
+    prior <- prior + brms::set_prior("normal(0, 1)", "sd", group = "group")
+  }
   list(
     observed = brmshmmdata(
-        formula = ~ 0 + Intercept + rate_death + rate_to_worsening + rate_improve_one + rate_worsen_one + (1 || .rate_id) + (0 + treated || group),
-        prior =
-          brms::set_prior("normal(-2.3,1)", "b", coef = "Intercept") +
-          brms::set_prior("normal(-2.3,1)", "b", coef = "rate_death") +
-          brms::set_prior("normal(0,1)", "b", coef = "rate_to_worsening") +
-          brms::set_prior("normal(0.7,1)", "b", coef = "rate_improve_one") +
-          brms::set_prior("normal(0.7,1)", "b", coef = "rate_worsen_one") +
-          brms::set_prior("normal(0, 0.5)", "sd", group = ".rate_id") +
-          brms::set_prior("normal(0, 1)", "sd", group = "group"),
+        formula = model_formula,
+        prior = prior,
         serie_data = data.frame(
           .serie = series,
           .time = times,

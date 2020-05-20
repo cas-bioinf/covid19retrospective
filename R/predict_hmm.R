@@ -1,4 +1,4 @@
-posterior_epred.brmshmmfit <- function(fit, nsamples = NULL, to_corresponding_states = FALSE) {
+posterior_epred.brmshmmfit <- function(fit, nsamples = NULL) {
   validate_brmshmmfit(fit)
   brms:::contains_samples(fit$brmsfit)
 
@@ -18,13 +18,14 @@ posterior_epred.brmshmmfit <- function(fit, nsamples = NULL, to_corresponding_st
   result_rect <- array(NA_integer_, c(max(pred_rawdata$serie_data$.time), max(pred_rawdata$serie_data$.serie), nsamples))
   for(s in unique(pred_rawdata$serie_data$.serie)) {
 
-    state <- pred_rawdata$initial_states[s]
-    result_rect[1, s, ] <- state
+    result_rect[1, s, ] <- pred_rawdata$initial_states[s]
 
     max_time <- fit$data$serie_data %>% filter(.serie == s) %>% pull(.time) %>% max()
     for(i in 1:nsamples) {
+      state <- pred_rawdata$initial_states[s]
       for(t in 2:max_time) {
         ps <- data_hmm$standata$predictor_sets_rect[s, t]
+        #cat(state, ":", ps, ",", i, ":", transition_matrices[state, , ps, i], "\n")
         state <- sample(1:N_states_hidden, size = 1, prob = transition_matrices[state, , ps, i])
         result_rect[t, s, i] <- state
       }
@@ -37,16 +38,23 @@ posterior_epred.brmshmmfit <- function(fit, nsamples = NULL, to_corresponding_st
     result[, o] <- result_rect[pred_rawdata$serie_data$.time[o], pred_rawdata$serie_data$.serie[o], ]
   }
 
-  if(to_corresponding_states) {
-    data_hmm$standata$corresponding_observation[result]
-  } else {
-    result
+  result
+}
+
+hidden_to_corresponding_observed <- function(data_processed, x) {
+  if(!is.integer(x) || any(x < 1 | x > data_processed$standata$N_states_hidden)) {
+    stop("Invalid state data")
   }
+  res_corresponding <- data_processed$standata$corresponding_observation[x]
+  dim(res_corresponding) <- dim(x)
+
+  res_corresponding
+
 }
 
 posterior_predict.brmshmmfit <- function(fit, nsamples = NULL) {
   validate_brmshmmfit(fit)
-  epred <- posterior_epred.brmshmmfit(fit, nsamples = nsamples, to_corresponding_states = FALSE)
+  epred <- posterior_epred.brmshmmfit(fit, nsamples = nsamples)
 
   if(is.null(nsamples)) {
     nsamples = dim(epred)[1]
@@ -80,8 +88,8 @@ prediction_to_wide_format <- function(data, prediction) {
   names(samples_df) <- paste0("__S", 1:nsamples)
 
   data$serie_data %>% cbind(samples_df) %>%
-    pivot_longer(matches("^__S[0-9]*$"), names_prefix = "__S", names_to = ".sample", values_to = "prediction") %>%
-    mutate(sample = as.integer(sample))
+    pivot_longer(matches("^__S[0-9]*$"), names_prefix = "__S", names_to = ".sample", values_to = ".predicted") %>%
+    mutate(.sample = as.integer(.sample))
 
 }
 
@@ -98,7 +106,7 @@ compute_all_transition_matrices <- function(data_hmm, epred_mu) {
       for(r in 1:standata$N_rates) {
         rate_matrix[standata$rates_from[r], standata$rates_to[r]] = rate_values[r]
         rate_matrix[standata$rates_from[r],standata$rates_from[r]] =
-          rate_matrix[standata$rates_from[r],standata$rates_from[r]] + rate_values[r]
+          rate_matrix[standata$rates_from[r],standata$rates_from[r]] - rate_values[r]
       }
 
       res[,, ps, i] <-  expm::expm(rate_matrix)

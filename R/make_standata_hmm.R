@@ -42,21 +42,25 @@ make_data_hmm <- function(brmshmmdata) {
 
   N_time <- max(serie_data$.time)
 
-  #TODO be smart about this, using allvars (probably pass something from make_standata)
   all_vars_needed <- all.vars(as.formula(formula_processed))
 
   serie_data_vars <- intersect(all_vars_needed, names(serie_data))
+  if(length(serie_data_vars) > 0) {
+    serie_data_distinct <- serie_data %>% select(one_of(serie_data_vars)) %>%
+      dplyr::distinct() %>%
+      mutate(.predictor_set = 1:n())
 
-  serie_data_distinct <- serie_data %>% select(one_of(serie_data_vars)) %>%
-    dplyr::distinct() %>%
-    mutate(.predictor_set = 1:n())
+    N_predictor_sets <- nrow(serie_data_distinct)
 
-  N_predictor_sets <- nrow(serie_data_distinct)
-
-  serie_data_raw <- serie_data
-  serie_data <- serie_data %>% dplyr::left_join(serie_data_distinct, by = serie_data_vars)
-  if(any(is.na(serie_data$.predictor_set)) || nrow(serie_data_raw) != nrow(serie_data)) {
-    stop("Failed join")
+    serie_data_raw <- serie_data
+    serie_data <- serie_data %>% dplyr::left_join(serie_data_distinct, by = serie_data_vars)
+    if(any(is.na(serie_data$.predictor_set)) || nrow(serie_data_raw) != nrow(serie_data)) {
+      stop("Failed join")
+    }
+  } else {
+    N_predictor_sets <- 1
+    serie_data <- serie_data %>% mutate(.predictor_set = 1)
+    serie_data_distinct <- data.frame(.predictor_set = 1)
   }
 
   brmsdata_all <- crossing(serie_data_distinct, rate_data)

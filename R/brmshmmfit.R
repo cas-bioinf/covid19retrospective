@@ -13,7 +13,8 @@ brmhmm <- function(brmshmmdata) {
 
   structure(list(
     brmsfit = bfit,
-    data = brmshmmdata
+    data = brmshmmdata,
+    data_processed = prepdata
   ), class = "brmshmmfit")
 }
 
