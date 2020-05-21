@@ -1,9 +1,10 @@
-brmhmm <- function(brmshmmdata, ...) {
+brmhmm <- function(brmshmmdata, cache_file = NULL, ...) {
   d <- validate_brmshmmdata(brmshmmdata)
 
   prepdata <- make_data_hmm(d)
 
-  bfit <- brms::brm(
+  bfit <- brm_with_cache(
+    cache_file = cache_file,
     formula = d$formula,
     family = rate_hmm_family,
     data = prepdata$brmsdata,
@@ -27,4 +28,17 @@ validate_brmshmmfit <- function(fit) {
   fit
 }
 
+summary.brmshmmfit <- function(fit) {
+  validate_brmshmmfit(fit)
+  structure(list(
+    brmssummary = summary(fit$brmsfit)#,
+    #hmmsummary = summary(fit$brmsfit$fit, pars =  c("sensitivity", "other_observations_probs"))
+    ),
+    class = "summary.brmshmmfit"
+  )
+}
 
+print.summary.brmshmmfit <- function(s) {
+  print(s$brmssummary)
+  #print(s$hmmsummary$summary)
+}

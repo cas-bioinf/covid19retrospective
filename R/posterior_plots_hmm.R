@@ -2,14 +2,35 @@ model_color <- "#3993dd"
 data_color <- "#91171f"
 decoration_color <- "#ca5310"
 
-posterior_state_plot <- function(predictions_wide, series_id = 1:max(predictions_wide$.serie), observed_data = NULL) {
-  predictions_grouped <- predictions_wide %>%
+posterior_state_plot <- function(predictions_df, series_id = 1:max(predictions_df$.serie),
+                                 observed_data = NULL,
+                                 predicted_labels = NULL) {
+
+  if(is.factor(predictions_df$.predicted) && !is.null(predicted_labels)) {
+    warning("predicted_labels ignored as .predicted is already a factor")
+  }
+
+  if(!is.factor(predictions_df$.predicted)) {
+    if(!is.null(observed_data) && is.null(predicted_labels)) {
+      predicted_labels <- levels(observed_data$serie_data$.observed)
+    }
+
+    if(!is.null(predicted_labels)) {
+      predicted_levels <- 1:length(predicted_labels)
+    } else {
+      predicted_levels <- 1:max(predictions_df$.predicted)
+      predicted_labels <- as.character(predicted_levels)
+    }
+  }
+
+  predictions_grouped <- predictions_df %>%
     select(-`.observed`) %>%
     filter(.serie %in% series_id) %>%
-    group_by_at(setdiff(names(predictions_wide), c(".sample", ".observed"))) %>%
+    group_by_at(setdiff(names(predictions_df), c(".sample", ".observed"))) %>%
     summarise(n_samples = n()) %>%
-    group_by_at(setdiff(names(predictions_wide), c(".observed", ".predicted", ".sample"))) %>%
-    mutate(state_prob = n_samples / sum(n_samples)) %>%
+    group_by_at(setdiff(names(predictions_df), c(".observed", ".predicted", ".sample"))) %>%
+    mutate(state_prob = n_samples / sum(n_samples),
+           .predicted = factor(.predicted, levels = predicted_levels, labels = predicted_labels)) %>%
     ungroup()
 
   if(!is.null(observed_data)) {
@@ -26,4 +47,110 @@ posterior_state_plot <- function(predictions_wide, series_id = 1:max(predictions
           observed_geom +
           scale_fill_gradient(low = "white", high = model_color, limits = c(0,1)) +
           facet_wrap(~.serie)
+}
+
+pp_check_last_state <- function(fit, predicted_rect) {
+  last_state_time <- function(x) {
+    max(which(!is.na(x) & x > 0))
+  }
+
+  last_state_times <- fit$data_processed$standata$obs_states_rect %>% apply(MARGIN = 1, last_state_time)
+  select_matrix <- array(NA, c(length(last_state_times), 2))
+  select_matrix[,1] <- 1:length(last_state_times)
+  select_matrix[,2] <- last_state_times
+
+  last_states_observed <- fit$data_processed$standata$obs_states_rect[select_matrix]
+
+  last_states <- apply(predicted_rect, MARGIN = 3, FUN = function(x) { x[select_matrix[, 2:1]] })
+
+  bayesplot::ppc_bars(last_states_observed, t(last_states))
+}
+
+pp_check_transitions <- function(fit, predicted_rect, states_from = NULL, states_to = NULL,
+                                 binwidth = NULL, scale = "prob", ...) {
+  N_states_observed <- fit$data_processed$standata$N_states_observed
+  if(is.null(states_from)) {
+    states_from <- 1:N_states_observed
+  }
+  if(is.null(states_to)) {
+    states_to <- 1:N_states_observed
+  }
+
+  obs_states_rect_t <- t(fit$data_processed$standata$obs_states_rect)
+  include <- obs_states_rect_t != 0
+
+  n_transitions_func <- function(rect, from, to) {
+    n_time <- dim(rect)[1]
+    from_match <- include[1:(n_time - 1),] & rect[1:(n_time - 1),] == from
+    to_match <- include[2:n_time,] & rect[2:n_time,] == to
+    sum(from_match & to_match)
+  }
+  prob_transition_func <- function(rect, from, to) {
+    n_time <- dim(rect)[1]
+    from_match <- include[1:(n_time - 1),] & rect[1:(n_time - 1),] == from
+    to_match <- include[2:n_time,] & rect[2:n_time,] == to
+    sum(from_match & to_match) / sum(from_match & include[2:n_time,])
+  }
+
+  if(scale == "prob") {
+    summary_func <- prob_transition_func
+    extra <- expand_limits(x = c(0,1))
+    if(is.null(binwidth)) {
+      binwidth = 0.02
+    }
+  } else if(scale == "count") {
+    summary_func <- n_transition_func
+    extra <- NULL
+    if(is.null(binwidth)) {
+      binwidth = 1
+    }
+  } else {
+    stop("Unrecognized scale")
+  }
+
+  N_items <- length(states_from) * length(states_to)
+  y <- array(NA_integer_, N_items)
+  yrep <- array(NA_integer_, c(dim(predicted_rect)[3], N_items))
+  group <- array(NA_character_, N_items)
+  index <- 1
+  for(from in states_from) {
+    for(to in states_to) {
+
+      y[index] <- summary_func(obs_states_rect_t, from, to)
+
+      yrep[, index] <- apply(predicted_rect, MARGIN = 3, FUN = summary_func, from = from, to = to)
+
+      group[index] <- paste0(from, " -> ", to)
+
+      index <- index + 1
+    }
+  }
+
+  group <- factor(group)
+
+  bayesplot::ppc_stat_grouped(y, yrep, group, binwidth = binwidth) + extra + theme(axis.text.x = element_blank(), strip.text = element_text(size = 7))
+}
+
+
+pp_check_transitions_direction <- function(fit, predicted_rect, states_from = NULL, binwidth = 0.02) {
+  N_states_observed <- fit$data_processed$standata$N_states_observed
+
+  obs_states_rect_t <- t(fit$data_processed$standata$obs_states_rect)
+  indices <- obs_states_rect_t == 0
+
+  compute_directions <- function(rect) {
+    rect[indices] <- NA
+    if(!is.null(states_from)) {
+      rect[! (rect %in% states_from) ] <- NA
+    }
+    n_time <- dim(rect)[1]
+    diffs <- apply(rect, MARGIN = 1, FUN = diff)
+    diffs <- as.vector(diffs[!is.na(diffs)])
+    res <- c(mean(diffs < 0), mean(diffs == 0), mean(diffs > 0))
+  }
+
+  y <- compute_directions(obs_states_rect_t)
+  yrep <- apply(predicted_rect, MARGIN = 3, FUN = compute_directions)
+
+  bayesplot::ppc_stat_grouped(y, t(yrep), group = c("< 0", "0", "> 0"), binwidth = binwidth)
 }

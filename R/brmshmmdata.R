@@ -85,13 +85,12 @@ validate_brmshmmdata <- function(d) {
 
 
   if(is.null(d$observed_state_data)) {
+
     d$hidden_state_data$corresponding_obs <-
-      validate_id(d$hidden_state_data$corresponding_obs, "corresponding_obs", force_no_gaps = TRUE)
+      validate_id(d$hidden_state_data$corresponding_obs, "corresponding_obs (without observed data)", force_no_gaps = TRUE)
 
-    all_corresponding_states <- d$hidden_state_data %>% pull(corresponding_obs) %>%
-      unique() %>% sort()
 
-    d$observed_state_data <- data.frame(id = all_corresponding_states, is_noisy = FALSE)
+    d$observed_state_data <- data.frame(id = levels(d$hidden_state_data$corresponding_obs), is_noisy = FALSE)
   } else {
     d$hidden_state_data$corresponding_obs <-
       validate_id(d$hidden_state_data$corresponding_obs, "corresponding_obs", force_no_gaps = TRUE,

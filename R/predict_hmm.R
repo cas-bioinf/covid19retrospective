@@ -1,5 +1,6 @@
-posterior_epred.brmshmmfit <- function(fit, nsamples = NULL) {
+posterior_epred_rect <- function(fit, nsamples = NULL) {
   validate_brmshmmfit(fit)
+
   brms:::contains_samples(fit$brmsfit)
 
   pred_rawdata <- fit$data
@@ -39,10 +40,20 @@ posterior_epred.brmshmmfit <- function(fit, nsamples = NULL) {
     }
   }
 
+  result_rect
+}
+
+posterior_rect_to_long <- function(fit, posterior_rect) {
+  validate_brmshmmfit(fit)
+  brms:::contains_samples(fit$brmsfit)
+
+  nsamples <- dim(posterior_rect)[3]
+  pred_rawdata <- fit$data
+
   result <- array(NA_integer_, c(nsamples, nrow(pred_rawdata$serie_data)))
 
   for(o in 1:nrow(pred_rawdata$serie_data)) {
-    result_for_row <- result_rect[pred_rawdata$serie_data$.time[o], as.integer(pred_rawdata$serie_data$.serie[o]), ]
+    result_for_row <- posterior_rect[pred_rawdata$serie_data$.time[o], as.integer(pred_rawdata$serie_data$.serie[o]), ]
     if(any(is.na(result_for_row))) {
       stop(paste0("NA for row ", o))
     }
@@ -53,6 +64,18 @@ posterior_epred.brmshmmfit <- function(fit, nsamples = NULL) {
     stop("NA in translation from rect")
   }
   result
+
+}
+
+posterior_epred.brmshmmfit <- function(fit, nsamples = NULL) {
+  validate_brmshmmfit(fit)
+  brms:::contains_samples(fit$brmsfit)
+
+  pred_rawdata <- fit$data
+
+  result_rect <- posterior_epred_rect(fit, nsamples = nsamples)
+
+  posterior_rect_to_long(fit, result_rect)
 }
 
 hidden_to_corresponding_observed <- function(data_processed, x) {
@@ -66,18 +89,17 @@ hidden_to_corresponding_observed <- function(data_processed, x) {
 
 }
 
-posterior_predict.brmshmmfit <- function(fit, nsamples = NULL) {
+posterior_epred_to_predicted <- function(fit, epred) {
   validate_brmshmmfit(fit)
-  epred <- posterior_epred.brmshmmfit(fit, nsamples = nsamples)
 
-  if(any(is.na(epred))) {
-    stop("NA in epred")
+  n_dim <- length(dim(epred))
+  if(!(n_dim %in% c(2,3))) {
+    stop("Only works for two or three dimensions of epred")
   }
 
-  if(is.null(nsamples)) {
-    nsamples = dim(epred)[1]
-  }
+  nsamples = dim(epred)[1]
 
+  # TODO: match to the same samples as epred has.
   observation_probs_samples <- rstan::extract(fit$brmsfit$fit, "observation_probs")$observation_probs
 
   N_hidden_states = dim(observation_probs_samples)[2]
@@ -86,19 +108,46 @@ posterior_predict.brmshmmfit <- function(fit, nsamples = NULL) {
   result <- array(NA_integer_, dim(epred))
   for(i in 1:nsamples) {
     observation_probs <- observation_probs_samples[i, ,]
-    one_sample <- array(NA_integer_, dim(epred)[2])
+    # Array with one less dimension than epred
+    one_sample <- array(NA_integer_, dim(epred)[2:n_dim])
+
     for(h in 1:N_hidden_states) {
-      indices <- epred[i,] == h
+      # Equivalent to using , just with the correct number of missing arguments
+      if(n_dim == 2) {
+        indices <- !(is.na(epred[i,])) & epred[i,] == h
+      } else {
+        indices <- !(is.na(epred[i,,])) & epred[i,,] == h
+      }
       one_sample[indices] <- sample.int(N_observed_states, size = sum(indices), replace = TRUE,
-                                    prob = observation_probs_samples[i, h, ])
+                                        prob = observation_probs_samples[i, h, ])
     }
-    result[i,] <- one_sample
+    if(n_dim == 2) {
+      result[i,] <- one_sample
+    } else {
+      result[i,,] <- one_sample
+    }
+  }
+
+  if(!identical(is.na(epred), is.na(result))) {
+    stop("Added NAs when computing observed")
   }
 
   result
+
 }
 
-prediction_to_wide_format <- function(data, prediction) {
+posterior_predict.brmshmmfit <- function(fit, nsamples = NULL) {
+  validate_brmshmmfit(fit)
+  epred <- posterior_epred.brmshmmfit(fit, nsamples = nsamples)
+
+  if(any(is.na(epred))) {
+    stop("NA in epred")
+  }
+
+  posterior_epred_to_predicted(fit, epred)
+}
+
+posterior_long_to_df <- function(data, prediction) {
   validate_brmshmmdata(data)
   nsamples <- dim(prediction)[1]
 

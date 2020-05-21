@@ -1,8 +1,17 @@
 missing_arg <- function() quote(expr=)
 
+n_missing_args <- function(n) {
+  res <- list()
+  for(i in 1:n) {
+    res[[i]] <- missing_arg()
+  }
+  res
+
+}
+
 order_within_samples <- function(x, samples, n_samples = 99) {
   thinned_samples <- sample(samples, n_samples)
-  # For discrete parameters, I need to uniformly samples across the positions that are equal 
+  # For discrete parameters, I need to uniformly samples across the positions that are equal
   sum(thinned_samples < x) + rdunif(1, a = 0, b = sum(thinned_samples == x)) + 1
 }
 
