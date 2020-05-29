@@ -136,7 +136,13 @@ pp_check_transitions(m1_fit, m1_predicted_rect, states_from = 5:7)
 ## Increase / decrease + noise
 
 ```{r}
-m2_hidden_state_data <- m1_hidden_state_data
+m2_hidden_state_data <- rbind(
+  tibble(base = disease_levels) %>% mutate(corresponding_obs = base) %>% 
+    crossing(tibble(state_group = c("_improving","_worsening"))) %>% 
+    mutate(id = factor(paste0(base, state_group))) %>%
+    select(-base, -state_group),
+  tibble(id = c("Death","Discharge")) %>% mutate(corresponding_obs = id)
+)
 
 m2_observed_state_data <- m1_observed_state_data
 
@@ -281,3 +287,100 @@ pp_check_transitions(m3_fit, m3_predicted_rect, states_from = 2:4)
 pp_check_transitions(m3_fit, m3_predicted_rect, states_from = 5:7)
 
 ```
+
+## Improving/worsening/stable
+
+```{r}
+m4_hidden_state_data <- rbind(
+  tibble(base = disease_levels) %>% mutate(corresponding_obs = base) %>% 
+    crossing(tibble(state_group = c("_improving", "_stable", "_worsening"))) %>% 
+    mutate(id = factor(paste0(base, state_group))) %>%
+    select(-base, -state_group),
+  tibble(id = c("Death","Discharge")) %>% mutate(corresponding_obs = id)
+)
+
+m4_observed_state_data <- m1_observed_state_data
+
+m4_rate_data <- rbind(
+  tibble(.from = paste0(disease_levels, "_worsening"), .to = "Death", rate_group = "death"),
+  tibble(.from = "AA_improving", .to = "Discharge", rate_group = "improve_one"),
+  tibble(.from = paste0(disease_levels[2 : length(disease_levels)], "_improving"), 
+             .to = paste0(disease_levels[1 : (length(disease_levels) - 1)],"_improving"), 
+             rate_group = "improve_one"),
+  tibble(.from = paste0(disease_levels[1 : (length(disease_levels) - 1)],"_worsening"), 
+             .to = paste0(disease_levels[2 : length(disease_levels)], "_worsening"), 
+             rate_group = "worsen_one"),
+  tibble(.from = paste0(disease_levels,"_stable"), 
+             .to = paste0(disease_levels, "_improving"), 
+             rate_group = "to_improving"),
+  tibble(.from = paste0(disease_levels,"_stable"), 
+             .to = paste0(disease_levels, "_worsening"), 
+             rate_group = "to_worsening"),
+  tibble(.from = paste0(disease_levels,"_worsening"), 
+             .to = paste0(disease_levels, "_stable"), 
+             rate_group = "worsening_to_stable"),
+  tibble(.from = paste0(disease_levels,"_improving"), 
+             .to = paste0(disease_levels, "_stable"), 
+             rate_group = "improving_to_stable")
+  ) %>%
+  mutate(.rate_id = factor(1:n())) %>%
+  recode_group("death") %>%
+  recode_group("improve_one") %>%
+  recode_group("worsen_one") %>%
+  recode_group("to_improving") %>%
+  recode_group("to_worsening") %>%
+  recode_group("improving_to_stable") %>%
+  recode_group("worsening_to_stable")
+ 
+
+m4_initial_states <- series_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed) %>% paste0(., "_worsening")
+
+m4_prior = m1_prior
+
+m4_formula <- update.formula(m2_formula,
+  ~ . + is_improving_to_stable + is_worsening_to_stable + (0 + is_improving_to_stable | improving_to_stable_id) + 
+    (0 + is_worsening_to_stable | worsening_to_stable_id))
+  
+m4 <- brmshmmdata(m4_formula, series_data, 
+                  m4_rate_data, m4_hidden_state_data, m4_initial_states, prior = m4_prior,
+                  observed_state_data = m1_observed_state_data)
+
+m4_fit <- brmhmm(m4, cache_file = paste0(cache_dir,"/grein_m4.rds"), control = list(adapt_delta = 0.9))
+
+summary(m4_fit$brmsfit)
+```
+
+
+```{r}
+m4_epred_rect <- posterior_epred_rect(m4_fit)
+m4_predicted_rect <- posterior_epred_to_predicted(m4_fit, m4_epred_rect)
+m4_predicted <- posterior_rect_to_long(m4_fit, m4_predicted_rect)
+```
+
+
+
+```{r}
+m4_predicted_df <- posterior_long_to_df(m4_fit$data, m4_predicted)
+
+step_size <- 6
+for(step in 1:ceiling(m4_fit$data_processed$standata$N_series / step_size)) {
+  series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+  
+  posterior_state_plot(m4_predicted_df, series_id, m4_fit$data) %>% print()
+
+}
+```
+
+```{r}
+pp_check_last_state(m4_fit, m4_predicted_rect)
+pp_check_transitions_direction(m4_fit, m4_predicted_rect)
+pp_check_transitions_direction(m4_fit, m4_predicted_rect, states_from = 2:7)
+```
+
+```{r}
+pp_check_transitions(m4_fit, m4_predicted_rect, states_from = 2:4)
+pp_check_transitions(m4_fit, m4_predicted_rect, states_from = 5:7)
+
+```
+
+
