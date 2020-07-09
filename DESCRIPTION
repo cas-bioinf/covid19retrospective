@@ -23,7 +23,8 @@ Imports:
     magrittr,
     purrr,
     expm,
-    MCMCpack
+    MCMCpack,
+    janitor
 Remotes: 
     stan-dev/cmdstanr
 Roxygen: list(markdown = TRUE)

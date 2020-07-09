@@ -1,0 +1,81 @@
+---
+title: "Developing data load and processing"
+output: html_notebook
+---
+
+```{r}
+devtools::load_all()
+library(tidyverse)
+```
+
+```{r}
+raw_data_dir <- "H:/raw/"
+if(!dir.exists(raw_data_dir)) {
+  stop("Raw data dir not found")
+}
+
+raw_data_map <- readxl::read_excel(paste0(raw_data_dir,"mapping.xlsx"), sheet = "HospitalMapping") %>% filter(!is.na(File))
+```
+
+```{r}
+file_relative <- raw_data_map$File[2]
+hospital_id <- raw_data_map$HospitalID[2]
+
+file <- paste0(raw_data_dir, file_relative)
+
+patient_col_types <- c("text","numeric","text","date","date", #ID - Date of admission
+                                   rep("text", 12), #Transferred from - Smoking
+                                   rep("numeric", 5), # BMI - Albumin
+                                   "text", "text", "date", "text", "text") #Discontinued medication - Transferred to
+
+patient_data_raw <- readxl::read_excel(file, sheet = "Patients", range = "A2:AA100", na = "NA", col_types = patient_col_types) 
+
+logical_column <- function(x) {
+  if(any( !is.na(x) && !(tolower(x) %in% c("yes","no"))) ) {
+    stop("Invalid logical column contents")
+  }
+  tolower(x) == "yes"
+}
+
+outcome_labels <- c("Discharged","Hospitalized","Transferred","Death")
+
+patient_data_typed <- patient_data_raw %>% 
+  filter(!is.na(Age), !is.na(Sex)) %>%
+  transmute(
+    hospital_id = hospital_id, 
+    age = Age, 
+    sex = factor(Sex, levels = c("M","F")), 
+    symptom_onset = `Date of symptom onset`, 
+    admission = `Date of admission`, 
+    transferred_from = `Transferred from`, 
+    admitted_for_covid = logical_column(`Admitted for Covid`), 
+    ischemic_heart_disease = logical_column(`Ischemic Heart Disease`),
+    has_hypertension_drugs = tolower(`Hypertension drugs`) != "no",
+    n_hypertension_drugs = if_else(has_hypertension_drugs,
+                                   as.integer(if_else(has_hypertension_drugs, `Hypertension drugs`, NA_character_)), #Inner if_else to avoid warning
+                                    0L),
+    heart_failure = logical_column(`Heart failure`),
+    COPD = logical_column(COPD),
+    asthma = logical_column(`Asthma Bronchiale`),
+    other_lung_disease = logical_column(`Other lung disease`),
+    diabetes = logical_column(Diabetes),
+    renal_disease = logical_column(`Renal Disease`),
+    liver_disease = logical_column(`Liver Disease`),
+    smoking = logical_column(Smoking),
+    BMI = BMI,
+    NYHA = NYHA,
+    creatinin = `Creatinin [μmol/L]`,
+    pt_inr = `PT INR (Quick)`,
+    albumin = `Albumin [g/L]`,
+    discontinued_medication = tolower(`Discontinued medication`) != "no",
+    discontinued_medication_reason = if_else(discontinued_medication, `Discontinued medication`, NA_character_),
+    best_supportive_care_from = if_else(tolower(`Best supportive care from:`) == "no", lubridate::as_date(NA), 
+                                        janitor::excel_numeric_to_date(as.numeric(
+                                          if_else(tolower(`Best supportive care from:`) == "no", NA_character_, `Best supportive care from:`) # Inner if_else to avoid warning
+                                          ))),
+    last_record = `Date of last record`,
+    outcome = factor(tolower(`Outcome (Discharged/Hospitalized/Transferred/Death)`), levels = tolower(outcome_labels), labels = outcome_labels),
+    transferred_to = `Transferred to`
+  )
+```
+
