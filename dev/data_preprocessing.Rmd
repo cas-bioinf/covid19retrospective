@@ -18,9 +18,9 @@ raw_data_map <- readxl::read_excel(paste0(raw_data_dir,"mapping.xlsx"), sheet = 
 ```
 
 ```{r}
-i <- 1
-file_relative <- raw_data_map$File[1]
-hospital_id <- raw_data_map$HospitalID[1]
+i <- 2
+file_relative <- raw_data_map$File[i]
+hospital_id <- raw_data_map$HospitalID[i]
 
 file <- paste0(raw_data_dir, file_relative)
 
@@ -42,6 +42,16 @@ logical_column <- function(x) {
 }
 
 outcome_labels <- c("Discharged","Hospitalized","Transferred","Death")
+
+# Special handling of badly filled outcomes
+if(hospital_id == "QKuFp") {
+  patient_data_raw_usable <- patient_data_raw_usable %>%
+    mutate(`Outcome (Discharged/Hospitalized/Transferred/Death)` =
+             if_else(grepl("^439[0-9]{2}$", `Outcome (Discharged/Hospitalized/Transferred/Death)`), 
+                     "Hospitalized",
+                     `Outcome (Discharged/Hospitalized/Transferred/Death)`))
+}
+
 
 patient_data_typed <- patient_data_raw_usable %>% 
   transmute(
@@ -81,6 +91,7 @@ patient_data_typed <- patient_data_raw_usable %>%
     outcome = factor(tolower(`Outcome (Discharged/Hospitalized/Transferred/Death)`), levels = tolower(outcome_labels), labels = outcome_labels),
     transferred_to = `Transferred to`
   )
+
 
 invalid_outcome <- is.na(patient_data_raw_usable$`Outcome (Discharged/Hospitalized/Transferred/Death)`) != is.na(patient_data_typed$outcome)
 if(any(invalid_outcome)) {
@@ -195,6 +206,9 @@ marker_map <- c("PCR" = "pcr_value",
                 "CRP" = "CRP",
                 "IL-6" = "IL_6",
                 "Lymphocyte count" = "lymphocyte_count",
+                "Leukocyte count" = "leukocyte_count",
+                "Leukocytes" = "leukocyte_count",
+                "Leukocyte" = "leukocyte_count",
                 "Hydroxychloroquine" = "hcq",
                 "Azithromycin" = "az",
                 "Kaletra" = "kaletra",
@@ -205,12 +219,24 @@ marker_map <- c("PCR" = "pcr_value",
                 "ofloxacin" = "ofloxacin",
                 "ceftriaxone" = "ceftriaxone",
                 "cefuroxim" = "cefuroxim",
-                "ampicillin/sulbactam" = "ampicillin_sulbactam"
+                "cefotaxim" = "cefotaxim",
+                "cefepim" = "cefepime",
+                "cefepime" = "cefepime",
+                "Vancomycin" = "vancomycin",
+                "ampicillin/sulbactam" = "ampicillin_sulbactam",
+                "zinkorot" = "zinc",
+                "sulfamethoxazol" = "sulfamethoxazol",
+                "trimethoprim" = "trimethoprim",
+                "Meropenem" = "meropenem",
+                "Fluconazol" = "fluconazol",
+                "Covalescent plasma" = "convalescent_plasma",
+                "Anidulafungin" = "anidulafungin"
                 )
 #Check NAs (TODO)
 unrecgonized_markers <- marker_data %>% filter(!(tolower(marker) %in% tolower(names(marker_map))))
 
 if(nrow(unrecgonized_markers) > 0) {
+  print(unique(unrecgonized_markers$marker))
   print(unrecgonized_markers)
   stop("Unrecognized markers")
 }
@@ -219,7 +245,66 @@ names(marker_map) <- tolower(names(marker_map))
 
 marker_data <- marker_data %>% mutate(marker = marker_map[tolower(marker)])
 
-#TODO - handle PCR specifically
+# Special handling for PCR
+pcr_data <- marker_data %>% filter(marker == "pcr_value")
+
+pcr_values_positive <- c("pos","neg", "neg and pos", "susp.", "susp", "poz")
+pcr_value_negative <- "neg"
+
+wrong_pcr <- pcr_data %>% filter(!is.na(value),!(tolower(value) %in% pcr_values_positive), !tolower(value) %in% pcr_value_negative, !grepl("^[0-9]+$",value))
+if(nrow(wrong_pcr) > 0) {
+  print(wrong_pcr)
+  stop("Wrong PCR")
+}
+
+pcr_data_long <- pcr_data %>% mutate(pcr_positive = as.numeric(tolower(value) %in% pcr_values_positive),
+                    pcr_value = as.numeric(if_else(grepl("^[0-9]+$",value), value, NA_character_))) %>%
+  select(-value, -marker) %>%
+  pivot_longer(c("pcr_value","pcr_positive"), names_to = "marker", values_to = "value") %>%
+  mutate(censored = "none")
+  
+# Handle NT for SpO2_native
+marker_data <- marker_data %>% 
+  mutate(value = if_else(marker == "SpO2_native" & value == "NT", "< 92", value) )
+
+# Some special cases
+# TODO ask at hospitel
+if(hospital_id == "QKuFp") {
+  marker_data <- marker_data %>% mutate(value = if_else(marker == "SpO2" & value == "NEG", NA_character_, value))
+}
+
+# Handle censoring on everything except PCR
+marker_data <- marker_data %>% filter(marker != "pcr_value") %>%
+  mutate(censored = case_when(startsWith(value, "<") ~ "right",
+                              startsWith(value, ">") ~ "left",
+                              TRUE ~ "none"),
+         value_parsed = as.numeric(gsub("^[<>]? *", "", value)))
+
+
+bad_parse_value <- marker_data %>% filter(is.na(value_parsed) & !is.na(value))
+if(nrow(bad_parse_value) > 0) {
+  print(bad_parse_value)
+  stop("Bad parse value")
+}
+
+
+# Join with PCR data
+marker_data <- marker_data %>%
+  mutate(value = value_parsed) %>%
+  select(-value_parsed) %>%
+  rbind(pcr_data_long)
+
+# Some special handling
+if(hospital_id == "QKuFp") {
+  marker_data <- marker_data %>% 
+    mutate(unit = if_else(marker == "leukocyte_count" & "unit" == "unit", "10^9/l", unit))
+}
+
+```
+
+```{r}
+# TODO check units (and convert if necessary)
+marker_data %>% group_by(marker) 
 
 ```
 
