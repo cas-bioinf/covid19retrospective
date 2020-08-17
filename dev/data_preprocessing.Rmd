@@ -17,28 +17,67 @@ if(!dir.exists(raw_data_dir)) {
 raw_data_map <- readxl::read_excel(paste0(raw_data_dir,"mapping.xlsx"), sheet = "HospitalMapping") %>% filter(!is.na(File))
 ```
 
+
+Notes to resolve:
+- Missing "Covid medication before hospitalization" in "Old" version.
+
 ```{r}
-i <- 2
+i <- 5
 file_relative <- raw_data_map$File[i]
 hospital_id <- raw_data_map$HospitalID[i]
+lang <- raw_data_map$Lang[i]
+file_version <- raw_data_map$Version[i]
 
 file <- paste0(raw_data_dir, file_relative)
 
-patient_col_types <- c("text","numeric","text","date","date", #ID - Date of admission
-                                   rep("text", 12), #Transferred from - Smoking
-                                   rep("numeric", 5), # BMI - Albumin
-                                   "text", "text", "date", "text", "text") #Discontinued medication - Transferred to
+if(file_version == "From Sheet") {
+  file_version <- readxl::read_excel(file, sheet = version_sheet(lang), range = "C8:C8", col_types = "text", col_names = "version")$version 
+}
 
-patient_data_raw <- readxl::read_excel(file, sheet = "Patients", range = "A2:AA100", na = "NA", col_types = patient_col_types) 
+if(!grepl("^(Old|1\\.[2-4]\\.[0-9])$", file_version)) {
+  print(file_version)
+  stop("Invalid version")
+}
+
+if(file_version == "Old") {
+  n_middle_text_columns <- 12
+  last_column <- "Z"
+} else {
+  n_middle_text_columns <- 13
+  last_column <- "AA"
+}
+
+patient_col_types <- c("text","numeric","text","date","date", #ID - Date of admission
+                                   rep("text", n_middle_text_columns), #Transferred from - Smoking
+                                   rep("numeric", 5), # BMI - Albumin
+                                   "text", "text", "date", "text") #Discontinued medication - Outcome
+
+patients_range <- paste0("A2:",last_column, "100")
+
+
+patient_data_raw <- readxl::read_excel(file, sheet = patient_sheet(lang), range = patients_range, na = "NA", col_types = patient_col_types) %>% 
+  translate_patient_columns(lang)
+
+patient_data_raw <- patient_data_raw %>%
+  mutate(`Outcome (Discharged/Hospitalized/Transferred/Death)` = translate_outcomes(`Outcome (Discharged/Hospitalized/Transferred/Death)`, lang))
+
+if(file_version == "Old") {
+  patient_data_raw <- patient_data_raw %>% mutate(`Covid Medications before admission` = NA_character_)
+}
+```
+
+
+```{r}
+
 
 patient_data_raw_usable <- patient_data_raw %>% filter(!is.na(Age), !is.na(Sex))
 
 
 logical_column <- function(x) {
-  if(any( !is.na(x) && !(tolower(x) %in% c("yes","no"))) ) {
+  if(any( !is.na(x) && !(tolower(x) %in% c(yes_variants, no_variants))) ) {
     stop("Invalid logical column contents")
   }
-  tolower(x) == "yes"
+  tolower(x) %in% yes_variants
 }
 
 outcome_labels <- c("Discharged","Hospitalized","Transferred","Death")
@@ -64,7 +103,7 @@ patient_data_typed <- patient_data_raw_usable %>%
     transferred_from = `Transferred from`, 
     admitted_for_covid = logical_column(`Admitted for Covid`), 
     ischemic_heart_disease = logical_column(`Ischemic Heart Disease`),
-    has_hypertension_drugs = tolower(`Hypertension drugs`) != "no",
+    has_hypertension_drugs = !(tolower(`Hypertension drugs`) %in% no_variants),
     n_hypertension_drugs = if_else(has_hypertension_drugs,
                                    as.integer(if_else(has_hypertension_drugs, `Hypertension drugs`, NA_character_)), #Inner if_else to avoid warning
                                     0L),
@@ -81,15 +120,14 @@ patient_data_typed <- patient_data_raw_usable %>%
     creatinin = `Creatinin [μmol/L]`,
     pt_inr = `PT INR (Quick)`,
     albumin = `Albumin [g/L]`,
-    discontinued_medication = tolower(`Discontinued medication`) != "no",
+    discontinued_medication = !(tolower(`Discontinued medication`) %in% no_variants),
     discontinued_medication_reason = if_else(discontinued_medication, `Discontinued medication`, NA_character_),
-    best_supportive_care_from = if_else(tolower(`Best supportive care from:`) == "no", lubridate::as_date(NA), 
+    best_supportive_care_from = if_else(tolower(`Best supportive care from:`) %in% no_variants, lubridate::as_date(NA), 
                                         janitor::excel_numeric_to_date(as.numeric(
-                                          if_else(tolower(`Best supportive care from:`) == "no", NA_character_, `Best supportive care from:`) # Inner if_else to avoid warning
+                                          if_else(tolower(`Best supportive care from:`) %in% no_variants, NA_character_, `Best supportive care from:`) # Inner if_else to avoid warning
                                           ))),
     last_record = lubridate::as_date(`Date of last record`),
-    outcome = factor(tolower(`Outcome (Discharged/Hospitalized/Transferred/Death)`), levels = tolower(outcome_labels), labels = outcome_labels),
-    transferred_to = `Transferred to`
+    outcome = factor(tolower(`Outcome (Discharged/Hospitalized/Transferred/Death)`), levels = tolower(outcome_labels), labels = outcome_labels)
   )
 
 
@@ -101,11 +139,13 @@ if(any(invalid_outcome)) {
 ```
 
 ```{r}
-progression_data_raw <- readxl::read_excel(file, sheet = "Disease Progression", range = "A1:CU2539", na = c("NA",""), col_types = c(c("text","text", "skip", "text", "text"), rep("text", 94)), col_names = TRUE) 
+progression_data_raw <- readxl::read_excel(file, sheet = progression_sheet(lang), range = "A1:CU2539", na = c("NA",""), col_types = c(c("text","text", "skip", "text", "text"), rep("text", 94)), col_names = TRUE) 
 
 progression_data <- progression_data_raw %>% 
+  translate_progression_columns(lang) %>%
   rename(patient_id = `Patient ID`, indicator = Indicator, first_day = First_Day, unit = Unit) %>%
-  filter(!is.na(indicator))
+  filter(!is.na(indicator)) %>%
+  mutate(indicator = translate_markers(indicator, lang))
 
 # Remove the "Don't edit examples" comment
 progression_data$patient_id[2:9] <- NA_character_
@@ -146,10 +186,16 @@ if(nrow(test_dates) > 0) {
   
 
 breathing_data <- progression_data %>% filter(indicator == "Breathing") %>%
-  mutate(breathing = factor(tolower(value), levels = tolower(c("AA","Oxygen", "NIPPV","MV","ECMO")),labels = c("AA","Oxygen", "NIPPV","MV","ECMO"), ordered = TRUE))
+  mutate(
+    # Special cases
+    value = case_when(value == "Oxygen/NIPPV" ~ "NIPPV",
+                      TRUE ~ value),
+    # Translate to factor
+    breathing = factor(tolower(value), levels = tolower(c("AA","Oxygen", "NIPPV","MV","ECMO")),labels = c("AA","Oxygen", "NIPPV","MV","ECMO"), ordered = TRUE))
          
 breathing_unrecognized <- breathing_data %>% filter(is.na(breathing) != is.na(value))
 if(nrow(breathing_unrecognized) > 0) {
+  print(unique(breathing_unrecognized$value))
   stop("Breathing NAs check failed")
 }
 
@@ -205,6 +251,7 @@ marker_map <- c("PCR" = "pcr_value",
                 "D-dimer" = "d_dimer",
                 "CRP" = "CRP",
                 "IL-6" = "IL_6",
+                "PCT" = "procalcitonin",
                 "Lymphocyte count" = "lymphocyte_count",
                 "Leukocyte count" = "leukocyte_count",
                 "Leukocytes" = "leukocyte_count",
@@ -230,7 +277,8 @@ marker_map <- c("PCR" = "pcr_value",
                 "Meropenem" = "meropenem",
                 "Fluconazol" = "fluconazol",
                 "Covalescent plasma" = "convalescent_plasma",
-                "Anidulafungin" = "anidulafungin"
+                "Anidulafungin" = "anidulafungin",
+                "Isoprinosine" = "isoprinosine"
                 )
 #Check NAs (TODO)
 unrecgonized_markers <- marker_data %>% filter(!(tolower(marker) %in% tolower(names(marker_map))))
@@ -265,12 +313,14 @@ pcr_data_long <- pcr_data %>% mutate(pcr_positive = as.numeric(tolower(value) %i
   
 # Handle NT for SpO2_native
 marker_data <- marker_data %>% 
-  mutate(value = if_else(marker == "SpO2_native" & value == "NT", "< 92", value) )
+  mutate(value = if_else(marker == "SpO2_native" & tolower(value) == "nt", "< 92", value) )
 
 # Some special cases
-# TODO ask at hospitel
+# TODO ask at hospital
 if(hospital_id == "QKuFp") {
   marker_data <- marker_data %>% mutate(value = if_else(marker == "SpO2" & value == "NEG", NA_character_, value))
+} else if(hospital_id == "YqNbe") {
+  marker_data <- marker_data %>% mutate(value = if_else(marker %in% c("hcq","az") & value == "ano", ">100", value))
 }
 
 # Handle censoring on everything except PCR
