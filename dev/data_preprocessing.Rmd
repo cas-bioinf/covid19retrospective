@@ -32,23 +32,12 @@ for(i in 1:nrow(raw_data_map)) {
   
   cat("Processing ", i, "-", hospital_id, "\n")
   
-  read_raw_data(file, hospital_id, lang, file_version)
+  res <- read_raw_data(file, hospital_id, lang, file_version)
 }
 
 
 ```
 
-
-```{r}
-
-
-
-```
-
-```{r}
-
-
-```
 
 ```{r}
 # TODO check units (and convert if necessary)

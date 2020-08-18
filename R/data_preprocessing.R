@@ -1,13 +1,16 @@
 #Throughout we use global variables from data_mapping.R
 
-read_raw_data <- function(file, hospital_id, lang, file_version) {
+read_raw_data <- function(file, hospital_id, lang, file_version, remove_examples = TRUE) {
   file_version <- update_and_check_version(file, lang, file_version)
-  patient_data <- read_patient_data(file, hospital_id, lang, file_version)
+  patient_data <- read_patient_data(file, hospital_id, lang, file_version, remove_examples)
+
   progression_data <- read_progression_data(file, hospital_id, lang, file_version, patient_data)
 
+  # TODO code adverse events
   loo::nlist(patient_data,
              breathing_data = progression_data$breathing_data,
-             marker_data = progression_data$marker_data)
+             marker_data = progression_data$marker_data,
+             adverse_events_data = progression_data$adverse_events_data)
 }
 
 
@@ -24,10 +27,15 @@ update_and_check_version <- function(file, lang, file_version) {
   file_version
 }
 
-read_patient_data <- function(file, hospital_id, lang, file_version) {
+read_patient_data <- function(file, hospital_id, lang, file_version, remove_examples) {
   patient_data_raw <- read_patient_data_raw(file, hospital_id, lang, file_version)
 
   patient_data_raw_usable <- patient_data_raw %>% filter(!is.na(Age), !is.na(Sex))
+
+  if(remove_examples) {
+    patient_data_raw_usable <- patient_data_raw_usable %>%
+      filter(!startsWith(`Patient ID`, "Example"), !grepl("^P.*klad", `Patient ID`))
+  }
 
 
   logical_column <- function(x) {
@@ -135,7 +143,8 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
     translate_progression_columns(lang) %>%
     rename(patient_id = `Patient ID`, indicator = Indicator, first_day = First_Day, unit = Unit) %>%
     filter(!is.na(indicator)) %>%
-    mutate(indicator = translate_markers(indicator, lang))
+    mutate(indicator = translate_markers(indicator, lang),
+           hospital_id = hospital_id)
 
   # Remove the "Don't edit examples" comment
   progression_data$patient_id[2:9] <- NA_character_
@@ -209,7 +218,7 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
 
   breathing_data <- correct_first_day_admission(patient_data_typed, breathing_data) %>% filter(!is.na(breathing))
 
-  adverse_event_data <- progression_data %>%
+  adverse_events_data <- progression_data %>%
     filter(indicator == "Adverse events")
 
 
@@ -299,6 +308,18 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
     }
   }
 
-  loo::nlist(marker_data, breathing_data, adverse_event_data)
+  loo::nlist(marker_data, breathing_data, adverse_events_data)
 }
 
+anonymize_for_analysis <- function(data) {
+  # TODO
+
+  # Create new more anonymized IDs
+  patient_data_typed <- patient_data_typed %>%
+    mutate(patient_id_rnd = paste0(hospital_id, sample(1:nrow(patient_data_typed), replace = FALSE)))
+
+  if(length(unique(patient_data_typed$patient_id_rnd)) != nrow(patient_data_typed)) {
+    stop("Bad Random IDs")
+  }
+
+}
