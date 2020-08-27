@@ -66,6 +66,7 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
       symptom_onset = lubridate::as_date(`Date of symptom onset`),
       admission = lubridate::as_date(`Date of admission`),
       transferred_from = `Transferred from`,
+      transferred_to = `Transferred to`,
       admitted_for_covid = logical_column(`Admitted for Covid`),
       ischemic_heart_disease = logical_column(`Ischemic Heart Disease`),
       has_hypertension_drugs = !(tolower(`Hypertension drugs`) %in% no_variants),
@@ -102,22 +103,29 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
     stop("Invalid outcome")
   }
 
+  should_not_be_NA <- c("age", "sex")
+  for(no_NAs in should_not_be_NA) {
+    if(any(is.na(patient_data_typed[[no_NAs]]))) {
+      stop(paste0("NAs in ", no_NAs))
+    }
+  }
+
   patient_data_typed
 }
 
 read_patient_data_raw <- function(file, hospital_id, lang, file_version) {
   if(file_version == "Old") {
     n_middle_text_columns <- 12
-    last_column <- "Z"
+    last_column <- "AA"
   } else {
     n_middle_text_columns <- 13
-    last_column <- "AA"
+    last_column <- "AB"
   }
 
   patient_col_types <- c("text","numeric","text","date","date", #ID - Date of admission
                          rep("text", n_middle_text_columns), #Transferred from - Smoking
                          rep("numeric", 5), # BMI - Albumin
-                         "text", "text", "date", "text") #Discontinued medication - Outcome
+                         "text", "text", "date", "text", "text") #Discontinued medication - Transferred to
 
   patients_range <- paste0("A2:",last_column, "100")
 
@@ -137,17 +145,29 @@ read_patient_data_raw <- function(file, hospital_id, lang, file_version) {
 
 
 read_progression_data <- function(file, hospital_id, lang, file_version, patient_data_typed) {
-  progression_data_raw <- readxl::read_excel(file, sheet = progression_sheet(lang), range = "A1:CU2539", na = c("NA",""), col_types = c(c("text","text", "skip", "text", "text"), rep("text", 94)), col_names = TRUE)
+  max_day <- 172
+  progression_data_raw <- readxl::read_excel(file, sheet = progression_sheet(lang), range = "A1:FU2539", na = c("NA",""),
+                                             col_types = c(c("text","text", "skip", "text", "text"), rep("text", max_day)),
+                                             col_names = c("patient_id", "first_day","indicator", "unit", paste0("Day_", 1:max_day)))
+
+  if(!all(is.na(progression_data_raw[[paste0("Day_", max_day)]]))) {
+    stop("Potentially too few days read")
+  }
 
   progression_data <- progression_data_raw %>%
-    translate_progression_columns(lang) %>%
-    rename(patient_id = `Patient ID`, indicator = Indicator, first_day = First_Day, unit = Unit) %>%
-    filter(!is.na(indicator)) %>%
+    #translate_progression_columns(lang) %>%
+    #rename(patient_id = `Patient ID`, indicator = Indicator, first_day = First_Day, unit = Unit) %>%
+    filter(!is.na(indicator) | !is.na(unit)) %>%
     mutate(indicator = translate_markers(indicator, lang),
            hospital_id = hospital_id)
 
   # Remove the "Don't edit examples" comment
   progression_data$patient_id[2:9] <- NA_character_
+
+  if(hospital_id == "QKuFp") {
+    progression_data <- progression_data %>% mutate(indicator = if_else(unit == "IgG", "IgG", indicator))
+  }
+
 
   # Spread Patient ID and Start date
   last_patient_id <- progression_data$patient_id[1]
@@ -301,14 +321,149 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
     rbind(pcr_data_long)
 
   # Some special handling
+  all_overwrites <- unit_overwrites$all
   if(hospital_id %in% names(unit_overwrites)) {
-    for(overwrite in unit_overwrites[[hospital_id]]) {
-      marker_data <- marker_data %>%
-        mutate(unit = if_else(marker == overwrite$marker & unit == overwrite$old_unit, overwrite$new_unit, unit))
-    }
+    all_overwrites <- c(all_overwrites, unit_overwrites[[hospital_id]])
   }
 
+  for(overwrite in all_overwrites) {
+    marker_data <- marker_data %>%
+      mutate(unit = if_else(marker == overwrite$marker & unit == overwrite$old_unit, overwrite$new_unit, unit))
+  }
+
+
+
+  # Default unit translations
+  target_rows <- marker_data$unit %in% names(unit_map)
+  marker_data$unit[target_rows] <- unit_map[marker_data$unit[target_rows]]
+
+  #Default unit conversions
+  for(conversion in unit_conversions) {
+      marker_data <- marker_data %>%
+        mutate(value = if_else(marker %in% conversion$markers & unit == conversion$old_unit, conversion$mult * value, value),
+               unit =  if_else(marker %in% conversion$markers & unit == conversion$old_unit, conversion$new_unit, unit))
+  }
+
+
   loo::nlist(marker_data, breathing_data, adverse_events_data)
+}
+
+
+join_hospital_data <- function(hospital_data) {
+  res <- list()
+  components <- c("patient_data", "breathing_data", "marker_data", "adverse_events_data")
+  for(component in components) {
+    component_list <- list()
+    for(i in 1:length(hospital_data)) {
+      component_list[[i]] <- hospital_data[[i]][[component]]
+    }
+    res[[component]] <- do.call(rbind, component_list)
+  }
+  res
+}
+
+check_patient_overlap <- function(hospital_data_1, hospital_data_2, patients_to_merge, hospitals_to_merge) {
+  pts1 <- hospital_data_1$patient_data
+  pts2 <- hospital_data_2$patient_data
+
+  hospital_id1 <- unique(pts1$hospital_id)
+  hospital_id2 <- unique(pts2$hospital_id)
+  if(length(hospital_id1) > 1 || length(hospital_id2) > 1) {
+    stop("Non-unique hospital_id in hospital")
+  }
+
+  should_merge <- nrow(
+    hospitals_to_merge %>% filter(hospital_id1 == !!hospital_id1 & hospital_id2 == !!hospital_id2)
+  ) > 0
+
+  # if(should_merge) {
+  #  cat("Should merge", hospital_id1, hospital_id2)
+  # }
+
+  merged_ids <- patients_to_merge %>%
+    mutate(merged = paste0(hospital_id1, "_", patient_id1, "::", hospital_id2, "_", patient_id2)) %>%
+    pull(merged)
+
+  pts1 %>% inner_join(pts2, by = "sex", suffix = c("1","2")) %>%
+    filter(
+      should_merge | !is.na(transferred_from1) | !is.na(transferred_from2) |
+        !is.na(transferred_to1) | !is.na(transferred_to2),
+
+      abs(age1 - age2) <= 1,
+      is.na(BMI1) | is.na(BMI2) | abs(BMI1 - BMI2) < 5,
+      is.na(outcome1) | is.na(outcome2) |  !(outcome1 == "Death" & outcome2 == "Discharged"),
+      is.na(outcome1) | is.na(outcome2) |  !(outcome2 == "Death" & outcome1 == "Discharged"),
+      is.na(symptom_onset1) | is.na(symptom_onset2) |
+        abs(symptom_onset2 - symptom_onset1) <  lubridate::make_difftime(day = 5),
+      # # Filter those already merged
+      !(paste0(hospital_id1, "_", patient_id1, "::", hospital_id2, "_", patient_id2) %in% merged_ids),
+      !(paste0(hospital_id2, "_", patient_id2, "::", hospital_id1, "_", patient_id1) %in% merged_ids)
+
+    )
+
+  # Matches by breathing - unreliable
+  # breathe1 <- hospital_data_1$breathing_data %>%
+  #   filter(!is.na(breathing)) %>%
+  #   inner_join(pts1 %>% select(patient_id, admission), by = "patient_id") %>%
+  #   mutate(date = admission + lubridate::make_difftime(day = day))
+  #
+  # breathe2 <- hospital_data_2$breathing_data %>%
+  #   filter(!is.na(breathing)) %>%
+  #   inner_join(pts2 %>% select(patient_id, admission), by = "patient_id") %>%
+  #   mutate(date = admission + lubridate::make_difftime(day = day))
+  #
+  # breathe1 %>%
+  #   inner_join(breathe2, by = c("date"), suffix = c("1","2")) %>%
+  #   group_by(hospital_id1,hospital_id2, patient_id1, patient_id2) %>%
+  #   summarise(n_matches = sum(breathing1 == breathing2), n_overlap = n(), .groups = "drop") %>%
+  #   #filter(n_matches > 5)
+  #   filter(n_overlap > 5, n_matches > pmax(0.8 * n_overlap, n_overlap - 2))
+
+}
+
+merge_patients <- function(complete_data, patients_to_merge) {
+  actually_merge <- patients_to_merge %>% filter(resolution != "ignore")
+  for(i in 1:nrow(actually_merge)) {
+    row <- actually_merge[i, ]
+    if(row$resolution == "use2") {
+      complete_data <- complete_data %>%
+        filter_complete_data(!(hospital_id  == row$hospital_id1 & patient_id == row$patient_id1))
+    } else {
+      stop(paste0("Unknown resolution: ", row$resolution))
+    }
+  }
+  complete_data
+}
+
+merge_hospitals <- function(complete_data, hospitals_to_merge) {
+  for(i in 1:nrow(hospitals_to_merge)) {
+    row <- hospitals_to_merge[i, ]
+    complete_data <- complete_data %>%
+      mutate_complete_data(patient_id = if_else(hospital_id == row$hospital_id2,
+                                                paste0(row$hospital_id2,"_", patient_id),
+                                                patient_id),
+                           hospital_id = if_else(hospital_id == row$hospital_id2,
+                                                 row$hospital_id1,
+                                                 hospital_id)
+      )
+  }
+  complete_data
+}
+
+filter_complete_data <- function(complete_data, ...) {
+  for(n in names(complete_data)) {
+    complete_data[[n]] <- complete_data[[n]] %>% filter(...)
+  }
+
+  complete_data
+}
+
+mutate_complete_data <- function(complete_data, ...) {
+  for(n in names(complete_data)) {
+    complete_data[[n]] <- complete_data[[n]] %>% mutate(...)
+  }
+
+  complete_data
 }
 
 anonymize_for_analysis <- function(data) {
