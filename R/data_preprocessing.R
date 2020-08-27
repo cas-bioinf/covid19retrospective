@@ -65,6 +65,7 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
       sex = factor(Sex, levels = c("M","F")),
       symptom_onset = lubridate::as_date(`Date of symptom onset`),
       admission = lubridate::as_date(`Date of admission`),
+      days_from_symptom_onset = as.double(admission - symptom_onset, unit = "days"),
       transferred_from = `Transferred from`,
       transferred_to = `Transferred to`,
       admitted_for_covid = logical_column(`Admitted for Covid`),
@@ -88,10 +89,11 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
       albumin = `Albumin [g/L]`,
       discontinued_medication = !(tolower(`Discontinued medication`) %in% no_variants),
       discontinued_medication_reason = if_else(discontinued_medication, `Discontinued medication`, NA_character_),
-      best_supportive_care_from = if_else(tolower(`Best supportive care from:`) %in% no_variants, lubridate::as_date(NA),
+      best_supportive_care_from_date = if_else(tolower(`Best supportive care from:`) %in% no_variants, lubridate::as_date(NA),
                                           janitor::excel_numeric_to_date(as.numeric(
                                             if_else(tolower(`Best supportive care from:`) %in% no_variants, NA_character_, `Best supportive care from:`) # Inner if_else to avoid warning
                                           ))),
+      best_supportive_care_from = as.double(best_supportive_care_from_date - admission, unit = "days"),
       last_record = lubridate::as_date(`Date of last record`),
       outcome = factor(tolower(`Outcome (Discharged/Hospitalized/Transferred/Death)`), levels = tolower(outcome_labels), labels = outcome_labels)
     )
@@ -103,7 +105,7 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
     stop("Invalid outcome")
   }
 
-  should_not_be_NA <- c("age", "sex")
+  should_not_be_NA <- c("age", "sex", "outcome","patient_id")
   for(no_NAs in should_not_be_NA) {
     if(any(is.na(patient_data_typed[[no_NAs]]))) {
       stop(paste0("NAs in ", no_NAs))
@@ -189,7 +191,7 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
     mutate(day = as.integer(day))
 
   progression_data <- progression_data %>%
-    filter(!is.na(indicator))
+    filter(!is.na(indicator), !is.na(value))
 
 
   # Check dates
@@ -466,15 +468,33 @@ mutate_complete_data <- function(complete_data, ...) {
   complete_data
 }
 
-anonymize_for_analysis <- function(data) {
-  # TODO
 
-  # Create new more anonymized IDs
-  patient_data_typed <- patient_data_typed %>%
-    mutate(patient_id_rnd = paste0(hospital_id, sample(1:nrow(patient_data_typed), replace = FALSE)))
+anonymize_for_analysis <- function(complete_data) {
+  complete_data <- complete_data %>% mutate_complete_data(patient_id_full = paste0(hospital_id,"_", patient_id))
 
-  if(length(unique(patient_data_typed$patient_id_rnd)) != nrow(patient_data_typed)) {
-    stop("Bad Random IDs")
+  n_pts <- nrow(complete_data$patient_data)
+  repeat {
+    new_ids <- stringi::stri_rand_strings(n_pts, 10)
+    if(length(unique(new_ids)) == n_pts) {
+      break
+    }
+  }
+  names(new_ids) <- complete_data$patient_data$patient_id_full
+
+  anonymized_data <- complete_data %>% mutate_complete_data(patient_id = new_ids[patient_id_full])
+
+  # TODO - once coded, adverse events can be included in anonymized
+  anonymized_data$adverse_events_data <- NULL
+
+  for(n in names(anonymized_data)) {
+    anonymized_data[[n]]$patient_id_full <- NULL
   }
 
+  cols_to_remove <- c("symptom_onset", "admission", "transferred_from", "transferred_to",
+                      "last_record", "best_supportive_care_from_date", "discontinued_medication_reason")
+  for(c in cols_to_remove) {
+    anonymized_data$patient_data[[c]] <- NULL
+  }
+
+  anonymized_data
 }

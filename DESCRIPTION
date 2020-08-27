@@ -24,7 +24,8 @@ Imports:
     purrr,
     expm,
     MCMCpack,
-    janitor
+    janitor,
+    stringi
 Remotes: 
     stan-dev/cmdstanr
 Roxygen: list(markdown = TRUE)

@@ -43,9 +43,17 @@ translate_outcomes <- function(outcomes, lang) {
     outcomes
   } else {
     translation <- outcome_translations$Outcome
-    names(translation) <- outcome_translations$Cz
+    names(translation) <- tolower(outcome_translations$Cz)
 
-    translation[outcomes]
+    res <- translation[tolower(as.character(outcomes))]
+
+    badly_translated <- is.na(res) != is.na(outcomes)
+    if(any(badly_translated)) {
+      print(outcomes[badly_translated])
+      stop("Badly translated outcome")
+    }
+
+    res
   }
 
 }

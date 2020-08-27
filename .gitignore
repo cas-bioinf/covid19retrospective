@@ -40,3 +40,5 @@ vignettes/*.pdf
 *.pdf
 *.rds
 ~*
+
+/private_data/

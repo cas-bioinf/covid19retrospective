@@ -8,6 +8,8 @@ devtools::load_all()
 library(tidyverse)
 ```
 
+TODO: code adverse events, code discontinued_medication_reason
+
 ```{r}
 raw_data_dir <- "H:/raw/"
 if(!dir.exists(raw_data_dir)) {
@@ -43,10 +45,8 @@ for(i in 1:nrow(raw_data_map)) {
 
 ```{r}
 complete_data <- join_hospital_data(hospital_data)
-# TODO transfers
 # TODO check:last day vs. breathing data
 # MAx. day vs. read columns
-# TODO check units (and convert if necessary)
 differing_units <- complete_data$marker_data %>% group_by(marker) %>% filter(length(unique(unit)) > 1) %>% 
   group_by(marker, unit) %>% summarise(count = n(), .groups = "drop")
 
@@ -134,5 +134,29 @@ complete_data$patient_data %>% filter(hospital_id == "Oriik", patient_id == 3)
 complete_data <- merge_hospitals(complete_data, hospitals_to_merge)
 
 complete_data$patient_data %>% filter(hospital_id == "Oriik")
+```
+
+## Final processing steps
+
+```{r}
+no_data_pts <- 
+  complete_data$breathing_data %>% group_by(hospital_id, patient_id) %>%
+  summarise(count = n(), .groups = "drop") %>%
+  filter(count < 1)
+
+if(nrow(no_data_pts) > 0) {
+  print(no_data_pts)
+  stop("Some patients have no data")
+}
+```
+
+```{r}
+anonymized_data <- anonymize_for_analysis(complete_data)
+```
+
+```{r}
+for(n in names(anonymized_data) ) {
+  write_csv(anonymized_data[[n]], path = here::here("private_data", paste0(n,".csv")))
+}
 ```
 
