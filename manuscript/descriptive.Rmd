@@ -1,0 +1,42 @@
+---
+title: "Descriptive stats and visuals"
+output: html_notebook
+---
+
+```{r}
+devtools::load_all()
+library(tidyverse)
+theme_set(cowplot::theme_cowplot())
+data <- read_data_for_analysis()
+```
+
+```{r}
+nrow(data$patient_data)
+data$breathing_data %>% group_by(patient_id) %>% summarise(n_days_data = n(), .groups = "drop") %>%
+  ggplot(aes(x = n_days_data)) + geom_histogram(binwidth = 5)
+```
+
+
+```{r}
+disease_levels <- c("Discharged", breathing_levels, "Death")
+outcome_data <- data$patient_data %>% 
+  filter(outcome %in% c("Discharged", "Death")) %>%
+  transmute(patient_id = patient_id, 
+            hospital_id = hospital_id,
+            day = last_record,
+            breathing = as.character(outcome))
+                                                
+data_for_plot <- data$breathing_data %>% 
+  mutate(breathing = as.character(breathing)) %>%
+  rbind(outcome_data) %>%
+  mutate(breathing = factor(breathing, levels = disease_levels, ordered = TRUE))
+
+data_for_plot %>% ggplot(aes(x = day, y = patient_id, fill = breathing)) + 
+  geom_tile() + 
+  scale_fill_viridis_d(direction = -1) +
+  theme(axis.text.y = element_blank())
+```
+```{r}
+
+```
+

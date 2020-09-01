@@ -29,6 +29,7 @@ marker_map <- c(
       ## Antibiotics
         "Amoxicillin/Clavulanic" = "amoxiclav",
         "Amoxicillin/Clavulanate" = "amoxiclav",
+        "amoxiclin/klavulanat" = "amoxiclav",
         "Augmentin" = "amoxiclav",
         "Piperacilin/tazobactam" = "piperacilin_tazobactam",
         "Piperacillin/Tazobactam" = "piperacilin_tazobactam",
@@ -74,7 +75,13 @@ unit_overwrites <- list(
     #list(marker = "d_dimer", old_unit = "ng/ml DDU", new_unit = "\U03BCg/l"),
     list(marker = "d_dimer", old_unit = "ug/l", new_unit = "ng/ml DDU"),
     list(marker = "procalcitonin", old_unit = "unit", new_unit = "\U03BCg/l")
+  ),
+  KXqam = list(
+    list(marker = "CRP", old_unit = "mg/j", new_unit = "mg/l"),
+    list(marker = "d_dimer", old_unit = "ug/l", new_unit = "ng/ml DDU"),
+    list(marker = "procalcitonin", old_unit = "ng/l", new_unit = "\U03BCg/l")
   )
+
 
 )
 
@@ -85,6 +92,7 @@ unit_map <- c(
   "% or NT" = "%"
   )
 
+breathing_levels <- c("AA","Oxygen", "NIPPV","MV","ECMO")
 
 unit_conversions <- list(
   list(markers = c("cefotaxime","cefuroxime", "ampicillin_sulbactam", "amoxiclav"),
