@@ -5,8 +5,7 @@ brmhmm <- function(brmshmmdata, cache_file = NULL, ...) {
 
   bfit <- brm_with_cache(
     cache_file = cache_file,
-    formula = d$formula,
-    family = rate_hmm_family,
+    formula = brms::brmsformula(d$formula, family = rate_hmm_family),
     data = prepdata$brmsdata,
     prior = d$prior,
     stanvars = rate_hmm_stanvars(prepdata$standata),

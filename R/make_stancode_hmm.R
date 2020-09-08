@@ -15,11 +15,15 @@ make_stancode_hmm <- function(brmshmmdata) {
                       stanvars = rate_hmm_stanvars(data$standata), prior = d$prior)
 }
 
-rate_hmm_family <- structure(list(family = "rate_hmm", link = "identity", dpars = "mu",
+rate_hmm_family <- function() {
+  structure(list(family = "rate_hmm",
+                                  link = "identity", dpars = "mu",
                            lb = NA, ub = NA, type = "real", vars = NULL, specials = NULL,
                            ybounds = c(-Inf, Inf),
                            log_lik = NULL, posterior_predict = NULL, posterior_epred = NULL),
+                      #class = c("rate_hmm", "brmsfamily", "family"))
                       class = c("rate_hmm", "brmsfamily"))
+}
 
 summary.rate_hmm <- function(f, link = FALSE) {
   "Rate-based HMM"
@@ -28,6 +32,10 @@ summary.rate_hmm <- function(f, link = FALSE) {
 .family_rate_hmm <- function() {
 
 }
+
+# family_info.rate_hmm <- function(x, y, ...) {
+#   NULL
+# }
 
 posterior_epred_rate_hmm <- function(prep) {
   brms:::posterior_epred_gaussian(prep)
@@ -43,7 +51,6 @@ rate_hmm_stanvars <- function(standata) {
   brms::stanvar(scode = rate_hmm_genquant_code, block = "genquant")
 
 }
-
 
 rate_hmm_functions_code <- "
   // Compute a single transition matrix
@@ -138,11 +145,15 @@ rate_hmm_tdata_code <- '
   }
 '
 
+##' @export rate_hmm_parameters_code
 rate_hmm_parameters_code <- "
   vector<lower=sensitivity_low_bound, upper=1>[N_noisy_states] sensitivity;
   simplex[N_other_observations] other_observations_probs[N_noisy_states];
 "
 
+##' @export stan_llh.rate_hmm
+##' @method stan_llh rate_hmm
+##' @importFrom brms stan_llh
 stan_llh.rate_hmm <- function( ... ) {
 "
   matrix[N_states_hidden, N_states_observed] observation_probs = compute_observation_matrix(
@@ -190,6 +201,7 @@ stan_llh.rate_hmm <- function( ... ) {
 
 "
 }
+
 
 rate_hmm_genquant_code <- '
     matrix[N_states_hidden, N_states_observed] observation_probs = compute_observation_matrix(

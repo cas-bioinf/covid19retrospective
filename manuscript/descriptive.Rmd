@@ -18,25 +18,93 @@ data$breathing_data %>% group_by(patient_id) %>% summarise(n_days_data = n(), .g
 
 
 ```{r}
-disease_levels <- c("Discharged", breathing_levels, "Death")
-outcome_data <- data$patient_data %>% 
-  filter(outcome %in% c("Discharged", "Death")) %>%
-  transmute(patient_id = patient_id, 
-            hospital_id = hospital_id,
-            day = last_record,
-            breathing = as.character(outcome))
-                                                
-data_for_plot <- data$breathing_data %>% 
-  mutate(breathing = as.character(breathing)) %>%
-  rbind(outcome_data) %>%
-  mutate(breathing = factor(breathing, levels = disease_levels, ordered = TRUE))
+# disease_levels <- c("Discharged", breathing_levels, "Death")
+# outcome_data <- data$patient_data %>% 
+#   filter(outcome %in% c("Discharged", "Death")) %>%
+#   transmute(patient_id = patient_id, 
+#             hospital_id = hospital_id,
+#             day = last_record,
+#             breathing = as.character(outcome))
+#                                                 
+# data_for_plot <- data$breathing_data %>% 
+#   mutate(breathing = as.character(breathing)) %>%
+#   rbind(outcome_data) %>%
+#   mutate(breathing = factor(breathing, levels = disease_levels, ordered = TRUE))
+# 
+# if(any(is.na(data_for_plot$day)) || any(is.na(data_for_plot$breathing))) {
+#   stop("Problem")
+# }
 
-data_for_plot %>% ggplot(aes(x = day, y = patient_id, fill = breathing)) + 
+data$breathing_data %>% ggplot(aes(x = day, y = patient_id, fill = breathing)) + 
   geom_tile() + 
   scale_fill_viridis_d(direction = -1) +
-  theme(axis.text.y = element_blank())
-```
-```{r}
+  theme(axis.text.y = element_blank()) +
+  facet_wrap(~hospital_id, scales = "free")
+
 
 ```
+```{r}
+data$breathing_data %>% group_by(hospital_id, patient_id) %>%
+  summarise(first = min(day, na.rm = TRUE)) %>%
+  filter(first > 0)
+```
+
+
+```{r}
+wide <- prepare_marker_data_wide(data)
+wide  %>% ggplot(aes(x = day, y = patient_id, fill = took_convalescent_plasma)) + 
+  geom_tile() + 
+  scale_fill_viridis_d(direction = -1) +
+  theme(axis.text.y = element_blank()) +
+  facet_wrap(~hospital_id, scales = "free")
+
+wide  %>% ggplot(aes(x = day, y = patient_id, fill = breathing)) + 
+  geom_tile() + 
+  scale_fill_viridis_d(direction = -1) +
+  theme(axis.text.y = element_blank()) +
+  facet_wrap(~hospital_id, scales = "free")
+
+
+```
+
+
+
+```{r}
+outcome_data %>% filter(day > 30)
+data$patient_data %>% filter(patient_id == "kOw52xii4l")
+data_for_plot %>% filter(is.na(day))
+```
+```{r}
+data$patient_data %>% filter(is.na(last_record))
+```
+
+
+```{r}
+data$patient_data %>% group_by(hospital_id) %>% summarise(count = n())
+```
+Where do we have measurements for the individual markers (tiles show where we have breathing data, study sites are coded via fill color, crosses show available data).
+```{r}
+all_markers <- data$marker_data %>% group_by(marker) %>% summarise(n_obs = n(), .groups = "drop") %>%
+  arrange(desc(n_obs)) %>% filter(n_obs > 10) %>% pull(marker)
+
+breathing_data_ordered <- data$breathing_data %>%  mutate(patient_id = factor(patient_id) %>% fct_reorder(hospital_id, .fun = unique))
+
+n_markers <- length(all_markers)
+step_size <- 4
+for(i in 1:ceiling(n_markers / step_size)) {
+  markers_to_show <- all_markers[((i - 1) * step_size + 1):min(n_markers, i * step_size)]
+  print(
+    data$marker_data %>%
+      filter(marker %in% markers_to_show)  %>%
+      ggplot(aes(x = day, y = patient_id)) +
+        geom_tile(data = breathing_data_ordered, aes(fill = hospital_id)) +
+        geom_point(shape = "cross") +
+        theme(axis.text.y = element_blank()) +
+        scale_fill_brewer(type = "qual", palette = 2, guide = FALSE) +
+        facet_wrap(~marker, nrow = 1, scales = "free_x")
+      
+  )
+}
+```
+
 

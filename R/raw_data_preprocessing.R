@@ -52,11 +52,19 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
 
   # Special handling of badly filled outcomes
   if(hospital_id == "QKuFp") {
+    mismatched_outcomes <- grepl("^439[0-9]{2}$", patient_data_raw_usable$`Outcome (Discharged/Hospitalized/Transferred/Death)`)
     patient_data_raw_usable <- patient_data_raw_usable %>%
-      mutate(`Outcome (Discharged/Hospitalized/Transferred/Death)` =
-               if_else(grepl("^439[0-9]{2}$", `Outcome (Discharged/Hospitalized/Transferred/Death)`),
+      mutate(
+        `Date of last record` =
+          if_else(mismatched_outcomes,
+                  janitor::excel_numeric_to_date(
+                    as.integer(if_else(mismatched_outcomes, `Outcome (Discharged/Hospitalized/Transferred/Death)`, "0"))),
+                  lubridate::as_date(`Date of last record`)),
+        `Outcome (Discharged/Hospitalized/Transferred/Death)` =
+               if_else(mismatched_outcomes,
                        "Hospitalized",
-                       `Outcome (Discharged/Hospitalized/Transferred/Death)`))
+                       `Outcome (Discharged/Hospitalized/Transferred/Death)`)
+        )
   }
 
 
@@ -109,7 +117,7 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
     stop("Invalid outcome")
   }
 
-  should_not_be_NA <- c("age", "sex", "outcome","patient_id")
+  should_not_be_NA <- c("age", "sex", "outcome","patient_id", "last_record")
   for(no_NAs in should_not_be_NA) {
     if(any(is.na(patient_data_typed[[no_NAs]]))) {
       stop(paste0("NAs in ", no_NAs))
@@ -152,7 +160,7 @@ read_patient_data_raw <- function(file, hospital_id, lang, file_version) {
 
 read_progression_data <- function(file, hospital_id, lang, file_version, patient_data_typed) {
   max_day <- 172
-  progression_data_raw <- readxl::read_excel(file, sheet = progression_sheet(lang), range = "A1:FU2539", na = c("NA",""),
+  progression_data_raw <- readxl::read_excel(file, sheet = progression_sheet(lang), range = "A2:FU2539", na = c("NA",""),
                                              col_types = c(c("text","text", "skip", "text", "text"), rep("text", max_day)),
                                              col_names = c("patient_id", "first_day","indicator", "unit", paste0("Day_", 1:max_day)))
 
@@ -171,7 +179,7 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
   progression_data$patient_id[2:9] <- NA_character_
 
   if(hospital_id == "QKuFp") {
-    progression_data <- progression_data %>% mutate(indicator = if_else(unit == "IgG", "IgG", indicator))
+    progression_data <- progression_data %>% mutate(indicator = if_else(!is.na(unit) & unit == "IgG", "IgG", indicator))
   }
 
 
@@ -189,6 +197,7 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
   }
 
   progression_data <- progression_data %>% filter(patient_id %in% patient_data_typed$patient_id)
+
 
   progression_data <- progression_data %>%
     pivot_longer(starts_with("Day_"), names_to = "day", values_to = "value", names_prefix = "Day_") %>%
@@ -214,17 +223,42 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
     mutate(
       # Special cases
       value = case_when(value == "Oxygen/NIPPV" ~ "NIPPV",
-                        TRUE ~ value),
-      # Translate to factor
-      breathing = factor(tolower(value), levels = tolower(breathing_levels),labels = breathing_levels, ordered = TRUE))
+                        TRUE ~ value)
+    ) %>%
+    select(-indicator, -unit)
 
-  breathing_unrecognized <- breathing_data %>% filter(is.na(breathing) != is.na(value))
-  if(nrow(breathing_unrecognized) > 0) {
-    print(unique(breathing_unrecognized$value))
-    stop("Breathing NAs check failed")
+  #When there is "Supp. O2" but no Breathing, we can infer "Oxygen"
+  suppO2_unknown_breathing <- progression_data %>% filter(indicator == "Supp. O2") %>%
+    anti_join(breathing_data, by = c("patient_id","day"))
+
+  if(nrow(suppO2_unknown_breathing) > 0) {
+    cat(nrow(suppO2_unknown_breathing), " breathing Oxygen imputed from Supp. O2\n")
+    breathing_data <- rbind(breathing_data,
+                            suppO2_unknown_breathing %>%
+                              mutate(value = "Oxygen") %>%
+                              select(-indicator, -unit)
+                            )
   }
 
-  breathing_data <- breathing_data %>% select(-value, -indicator, -unit)
+
+
+  duplicate_days <- breathing_data %>% group_by(patient_id, day) %>%
+    summarise(count = n(), .groups = "drop") %>%
+    filter(count > 1)
+
+  if(nrow(duplicate_days) > 0) {
+    print(duplicate_days)
+    stop("Duplicate days")
+  }
+
+
+  if(nrow(breathing_data) < 5) {
+    stop("Too few breathing data")
+  }
+
+
+
+
 
   correct_first_day_admission <- function(patient_data, progression_data) {
     nrow_before <- nrow(progression_data)
@@ -242,7 +276,48 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
       select(-admission, -first_day, -correction)
   }
 
-  breathing_data <- correct_first_day_admission(patient_data_typed, breathing_data) %>% filter(!is.na(breathing))
+  breathing_data <- correct_first_day_admission(patient_data_typed, breathing_data)
+
+
+  # Add final outcomes from patient data
+  max_breathing_data <- breathing_data %>% group_by(hospital_id, patient_id) %>%
+    summarise(max_day = max(day))
+
+  final_outcomes <- patient_data_typed %>% filter(outcome %in% c("Discharged", "Death")) %>%
+    inner_join(max_breathing_data, by = c("hospital_id", "patient_id")) %>%
+    transmute(hospital_id = hospital_id,
+              patient_id = patient_id,
+              value = outcome,
+              day = if_else(outcome == "Death", # Death can overwrite last breathing (in the spirit of taking the "worse" case
+                            pmax(max_day, last_record),
+                            pmax(max_day + 1, last_record)))
+
+  # Join, Potentially overwrite breathing with "Death"
+  breathing_data <- breathing_data %>%
+    anti_join(final_outcomes %>% filter(value == "Death"), by = c("hospital_id", "patient_id", "day")) %>%
+    rbind(final_outcomes)
+
+  # Translate to factor
+  breathing_data <- breathing_data %>% mutate(
+    breathing = factor(tolower(value), levels = tolower(disease_levels), labels = disease_levels, ordered = TRUE)
+  )
+
+  breathing_unrecognized <- breathing_data %>% filter(is.na(breathing))
+  if(nrow(breathing_unrecognized) > 0) {
+    print(unique(breathing_unrecognized$value))
+    stop("Breathing NAs check failed")
+  }
+
+  breathing_data <- breathing_data %>% select(-value)
+
+
+
+
+  unmatched_patients <- patient_data_typed %>% anti_join(breathing_data, by = c("patient_id", "hospital_id"))
+  if(nrow(unmatched_patients) > 0) {
+    cat("Some patients have no breathing data\n")
+    print(unmatched_patients)
+  }
 
   adverse_events_data <- progression_data %>%
     filter(indicator == "Adverse events")
@@ -250,6 +325,15 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
 
   marker_data <- progression_data %>% filter(!(indicator %in% c("Date", "Breathing", "Adverse events", dummy_markers))) %>% rename(marker = indicator)
   marker_data <- correct_first_day_admission(patient_data_typed, marker_data)
+
+  duplicate_markers <- marker_data %>% group_by(hospital_id,patient_id, marker, day) %>%
+    summarise(count = n(), values = paste(value, collapse = ", "), .groups = "drop") %>%
+    filter(count > 1)
+
+  if(nrow(duplicate_markers) > 0)  {
+    print(duplicate_markers)
+    stop("Duplicate markers")
+  }
 
   # Correct Excel error
   marker_data <- marker_data %>%
@@ -334,7 +418,7 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
 
   for(overwrite in all_overwrites) {
     marker_data <- marker_data %>%
-      mutate(unit = if_else(marker == overwrite$marker & unit == overwrite$old_unit, overwrite$new_unit, unit))
+      mutate(unit = if_else(marker == overwrite$marker & (unit == overwrite$old_unit | (overwrite$old_unit == "" & is.na(unit))), overwrite$new_unit, unit))
   }
 
 
@@ -350,6 +434,8 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
                unit =  if_else(marker %in% conversion$markers & unit == conversion$old_unit, conversion$new_unit, unit))
   }
 
+
+  #TODO check SuppO2 only with Oxygen
 
   loo::nlist(marker_data, breathing_data, adverse_events_data)
 }
@@ -483,9 +569,14 @@ anonymize_for_analysis <- function(complete_data) {
       break
     }
   }
+
+
   names(new_ids) <- complete_data$patient_data$patient_id_full
 
+  write_csv(data.frame(old = names(new_ids), new = new_ids), path = "H:/raw/patient_map.csv")
+
   anonymized_data <- complete_data %>% mutate_complete_data(patient_id = new_ids[patient_id_full])
+
 
   # TODO - once coded, adverse events can be included in anonymized
   anonymized_data$adverse_events_data <- NULL
@@ -499,6 +590,11 @@ anonymize_for_analysis <- function(complete_data) {
   for(c in cols_to_remove) {
     anonymized_data$patient_data[[c]] <- NULL
   }
+
+  # Remove old ordering
+  anonymized_data$patient_data <- anonymized_data$patient_data %>% arrange(hospital_id, patient_id)
+  anonymized_data$breathing_data <- anonymized_data$breathing_data %>% arrange(hospital_id, patient_id, day)
+  anonymized_data$marker_data <- anonymized_data$marker_data %>% arrange(hospital_id, patient_id, day)
 
   anonymized_data
 }

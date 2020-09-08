@@ -37,8 +37,10 @@ vignettes/*.pdf
 
 *.exe
 *.nb.html
+*.html
 *.pdf
 *.rds
 ~*
 
 /private_data/
+/local_temp_data/

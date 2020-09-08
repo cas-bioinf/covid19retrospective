@@ -27,14 +27,15 @@ read_data_for_analysis <- function() {
                              best_supportive_care_from = col_integer(),
                              last_record = col_integer(),
                              outcome = col_factor()
-                           ))
+                           )) %>%
+    mutate(age_norm = (age - 65) / 20)
 
   breathing_data <- read_csv(here::here("private_data", "breathing_data.csv"),
                            col_types = cols(
                             patient_id = col_character(),
                             hospital_id = col_character(),
                             day = col_integer(),
-                            breathing = col_factor(levels = breathing_levels, ordered = TRUE)
+                            breathing = col_factor(levels = disease_levels, ordered = TRUE)
                           ))
 
   marker_data <- read_csv(here::here("private_data", "marker_data.csv"),
@@ -49,4 +50,98 @@ read_data_for_analysis <- function() {
                             ))
 
   loo::nlist(patient_data, breathing_data, marker_data)
+}
+
+prepare_marker_data_wide <- function(data) {
+  patient_max_days <- data$breathing_data %>%
+    group_by(hospital_id, patient_id) %>%
+    summarise(max_day = max(day), .groups = "drop")
+
+  complete_max_day <- max(patient_max_days$max_day)
+
+  # Add _censored columns only for markers where censoring was observed
+  wider_spec_censored <-
+    tibble(
+      marker = data$marker_data %>% filter(censored != "none") %>% pull(marker) %>% unique()
+    ) %>%
+    mutate(.name = paste0(marker, "_censored"), .value = "censored")
+
+  wider_spec <-
+    build_wider_spec(data$marker_data, names_from = "marker", values_from = "value") %>%
+    rbind(wider_spec_censored)
+  marker_wide <- data$marker_data %>%
+    select(-unit) %>% pivot_wider_spec(wider_spec, id_cols = one_of("patient_id", "hospital_id", "day"), values_fn = function(x) { if(length(x) > 1) { "ERROR" } else { x } })
+
+  which((marker_wide %>% select(oxygen_flow:az_censored) %>% as.matrix()) > 1, arr.ind = TRUE)
+
+  all_values <- marker_wide %>% select(oxygen_flow:az_censored) %>% unlist()
+  if(any(grepl("ERROR", all_values))) {
+    stop("Error in pivot")
+  }
+
+  all_patient_days <- patient_max_days %>%
+    crossing(day = 0:complete_max_day) %>%
+    filter(day <= max_day) %>%
+    select(-max_day)
+
+  markers_wide <- all_patient_days %>%
+    left_join(data$breathing_data, by = c("patient_id", "hospital_id", "day")) %>%
+    left_join(marker_wide, by = c("patient_id", "hospital_id", "day"))
+
+
+  compute_derived_markers_wide(markers_wide, data)
+}
+
+
+compute_derived_markers_wide <- function(markers_wide, data) {
+  nrow_before <- nrow(markers_wide)
+  #treatment_markers <- c("hcq", "kaletra", "az", "tocilizumab", "convalescent_plasma")
+  treatment_markers <- c(quo(hcq), quo(az), quo(convalescent_plasma))
+  for(treatment_mark in treatment_markers) {
+    first_treatment <- markers_wide %>% filter(!is.na(!!treatment_mark) & !!treatment_mark > 0) %>%
+      group_by(hospital_id, patient_id) %>%
+      summarise(first_day = min(day))
+
+    new_col_name <- paste0("took_", rlang::as_name(treatment_mark))
+    markers_wide <- markers_wide %>%
+      left_join(first_treatment, by = c("hospital_id", "patient_id")) %>%
+      mutate(!!new_col_name := !is.na(first_day) & first_day <= day) %>%
+      select(-first_day)
+  }
+
+  if(nrow(markers_wide) != nrow_before) {
+    stop("Failed processing")
+  }
+
+  # Markers from patient data
+  markers_wide <- markers_wide %>%
+    inner_join(data$patient_data %>% select(hospital_id, patient_id, best_supportive_care_from),
+               by = c("hospital_id", "patient_id")) %>%
+    mutate(best_supportive_care = !is.na(best_supportive_care_from) & day >= best_supportive_care_from) %>%
+    select(-best_supportive_care_from)
+
+
+  if(nrow(markers_wide) != nrow_before) {
+    stop("Failed processing")
+  }
+  markers_wide
+}
+
+impute_marker_constant <- function(markers_wide, column_name, initial_value = NA) {
+  markers_wide <- markers_wide %>% arrange(patient_id, day)
+
+  last_patient_id <- ""
+  last_value <- NA
+  for(i in 1:nrow(markers_wide)) {
+    if(markers_wide$patient_id[i] != last_patient_id) {
+      last_value = initial_value
+    }
+    if(is.na(markers_wide[[ccolumn_name]][i])) {
+      markers_wide[[ccolumn_name]][i] <- last_value
+    } else {
+      last_value <- markers_wide[[ccolumn_name]][i]
+    }
+  }
+
+  markers_wide
 }

@@ -1,0 +1,92 @@
+---
+title: "Survival - frequentist"
+output: html_notebook
+---
+
+
+```{r}
+devtools::load_all()
+library(tidyverse)
+library(survival)
+
+theme_set(cowplot::theme_cowplot())
+data <- read_data_for_analysis()
+wide <- prepare_marker_data_wide(data)
+
+hypothesis_res_list <- list()
+
+cache_dir <- here::here("local_temp_data")
+if(!dir.exists(cache_dir)) {
+  dir.create(cache_dir)
+}
+
+```
+
+# Competing risks death vs. discharged
+
+
+```{r}
+data_surv <- wide %>%  
+  filter(day > 0) %>%
+  mutate(daym1 = day - 1,
+    status = fct_collapse(breathing, Hospitalized = breathing_levels) %>% factor(ordered = FALSE) %>% fct_relevel("Hospitalized", "Discharged", "Death") %>% fct_explicit_na("Hospitalized")
+  ) %>%
+  inner_join(data$patient_data, by = c("hospital_id", "patient_id")) 
+
+f_competing_hcq <- Surv(daym1, day,status) ~ age + sex + took_hcq
+
+#survcheck(f_competing_hcq, data = data_surv, id = patient_id)
+fit_competing_hcq <- coxph(f_competing_hcq, data = data_surv, id = patient_id)
+fit_competing_hcq
+
+hypothesis_res_list[["competing_hcq"]] <-
+  rbind(
+  frequentist_hypothesis_res_from_coxph(hypotheses$hcq_reduces_death, fit_competing_hcq,
+                                        coefficient_name = "took_hcqTRUE", transition = "1:3", adjusted = "age, sex"),
+  frequentist_hypothesis_res_from_coxph(hypotheses$hcq_increases_discharged, fit_competing_hcq,
+                                        coefficient_name = "took_hcqTRUE", transition = "1:2", adjusted = "age, sex")
+  )
+
+hypothesis_res_list[["competing_hcq"]]
+```
+
+```{r}
+f_competing_hcq_az <- update.formula(f_competing_hcq, . ~ . + took_az)
+fit_competing_hcq_az <- coxph(f_competing_hcq_az, data = data_surv, id = patient_id)
+
+fit_competing_hcq_az
+
+hypothesis_res_list[["competing_hcq_az"]] <-
+  rbind(
+  frequentist_hypothesis_res_from_coxph(hypotheses$hcq_reduces_death, fit_competing_hcq_az,
+                                        coefficient_name = "took_hcqTRUE", transition = "1:3", adjusted = "age, sex, az"),
+  frequentist_hypothesis_res_from_coxph(hypotheses$hcq_increases_discharged, fit_competing_hcq_az,
+                                        coefficient_name = "took_hcqTRUE", transition = "1:2", adjusted = "age, sex, az")
+  )
+hypothesis_res_list[["competing_hcq_az"]]
+```
+
+```{r}
+f_competing_hcq_az_hospital <- update.formula(f_competing_hcq_az, . ~ . + hospital_id)
+fit_competing_hcq_az_hospital <- coxph(f_competing_hcq_az_hospital, data = data_surv, id = patient_id)
+fit_competing_hcq_az_hospital
+
+hypothesis_res_list[["competing_hcq_az_hospital"]] <-
+  rbind(
+  frequentist_hypothesis_res_from_coxph(hypotheses$hcq_reduces_death, fit_competing_hcq_az_hospital,
+                                        coefficient_name = "took_hcqTRUE", transition = "1:3", adjusted = "age, sex, az"),
+  frequentist_hypothesis_res_from_coxph(hypotheses$hcq_increases_discharged, fit_competing_hcq_az_hospital,
+                                        coefficient_name = "took_hcqTRUE", transition = "1:2", adjusted = "age, sex, az")
+  )
+hypothesis_res_list[["competing_hcq_az_hospital"]]
+
+```
+```{r}
+hypothesis_res_all <- do.call(rbind, hypothesis_res_list)
+write_csv(hypothesis_res_all, path = paste0(cache_dir, "/competing_risks_res.csv"))
+```
+
+
+# PCR positivity predicts
+
+# Lymphocyte count predicts?

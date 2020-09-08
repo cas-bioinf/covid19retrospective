@@ -9,6 +9,7 @@ library(tidyverse)
 ```
 
 TODO: code adverse events, code discontinued_medication_reason
+TODO: check last day, add outcome to breathing data, possibly
 
 ```{r}
 raw_data_dir <- "H:/raw/"
@@ -42,7 +43,6 @@ for(i in 1:nrow(raw_data_map)) {
 
 ```
 
-
 ```{r}
 complete_data <- join_hospital_data(hospital_data)
 # TODO check:last day vs. breathing data
@@ -65,7 +65,7 @@ if(nrow(differing_units) > 0) {
 
 ## Checking unit conversions
 
-Check values for all markers with converted units
+Check values for all markers with converted units (Note the 0 for Amoxiclav has been checked and is in the original data as well)
 
 ```{r}
 for(conversion in unit_conversions) {
@@ -79,6 +79,9 @@ for(conversion in unit_conversions) {
     )
   }
 }
+```
+```{r}
+complete_data$marker_data %>% filter(marker == "amoxiclav", value == 0)
 ```
 
 

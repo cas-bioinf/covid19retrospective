@@ -94,7 +94,7 @@ m1 <- brmshmmdata(m1_formula, series_data,
                   m1_rate_data, m1_hidden_state_data, m1_initial_states, prior = m1_prior,
                   observed_state_data = m1_observed_state_data)
 
-#make_stancode_hmm(m1)
+make_stancode_hmm(m1)
 #xx <- brms::make_standata(m1$formula, data = make_data_hmm(m1)$brmsdata)
 m1_fit <- brmhmm(m1, cache_file = paste0(cache_dir,"/grein_m1.rds"))
 
