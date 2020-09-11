@@ -49,7 +49,50 @@ read_data_for_analysis <- function() {
                               censored = col_character()
                             ))
 
-  loo::nlist(patient_data, breathing_data, marker_data)
+  data <- loo::nlist(patient_data, breathing_data, marker_data)
+  data$marker_data_wide <- prepare_marker_data_wide(data)
+
+  data <- compute_derived_quantities_patients(data)
+
+  data
+}
+
+#' @importFrom tidy replace_na
+compute_derived_quantities_patients <- function(data) {
+  data$patient_data <- data$patient_data %>%
+    mutate(
+      heart_problems = NYHA > 1,
+      obesity = BMI > 30,
+      comorbidities_sum =
+        replace_na(ischemic_heart_disease, FALSE) +
+        replace_na(has_hypertension_drugs, FALSE) +
+        replace_na(heart_failure, FALSE) +
+        replace_na(COPD, FALSE) +
+        replace_na(asthma, FALSE) +
+        replace_na(other_lung_disease, FALSE) +
+        replace_na(diabetes, FALSE) +
+        replace_na(renal_disease, FALSE) +
+        replace_na(liver_disease, FALSE) +
+        replace_na(smoking, FALSE) +
+        replace_na(heart_problems, FALSE) +
+        replace_na(obesity, FALSE),
+      comorbidities_sum_na = 2 * (
+        replace_na(ischemic_heart_disease, 0.5) +
+        replace_na(has_hypertension_drugs, 0.5) +
+        replace_na(heart_failure, 0.5) +
+        replace_na(COPD, 0.5) +
+        replace_na(asthma, 0.5) +
+        replace_na(other_lung_disease, 0.5) +
+        replace_na(diabetes, 0.5) +
+        replace_na(renal_disease, 0.5) +
+        replace_na(liver_disease, 0.5) +
+        replace_na(smoking, 0.5) +
+        replace_na(heart_problems, 0.5) +
+        replace_na(obesity, 0.5))
+    )
+
+
+  data
 }
 
 prepare_marker_data_wide <- function(data) {

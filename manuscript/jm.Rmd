@@ -1,0 +1,42 @@
+---
+title: "Joint modelling"
+output: html_notebook
+---
+
+```{r, setup}
+devtools::load_all()
+library(tidyverse)
+library(survival)
+library(rstanarm)
+
+theme_set(cowplot::theme_cowplot())
+data <- read_data_for_analysis()
+wide <- data$marker_data_wide
+
+
+cache_dir <- here::here("local_temp_data")
+if(!dir.exists(cache_dir)) {
+  dir.create(cache_dir)
+}
+
+```
+
+```{r}
+
+data_surv <- wide %>%  
+  filter(day > 0) %>%
+  mutate(daym1 = day - 1,
+    status = fct_collapse(breathing, Hospitalized = breathing_levels) %>% factor(ordered = FALSE) %>% fct_relevel("Hospitalized", "Discharged", "Death") %>% fct_explicit_na("Hospitalized")
+  ) %>%
+  inner_join(data$patient_data, by = c("hospital_id", "patient_id")) 
+
+
+
+tt <- stan_jm(formulaLong = CRP ~ day + (1 | patient_id),
+              dataLong = wide,
+              formulaEvent = Surv(daym1, day,status) ~ age + sex + took_hcq,
+              dataEvent = data_surv,
+              id_var = "patient_id",
+              time_var = "day")
+```
+
