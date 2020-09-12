@@ -111,6 +111,8 @@ write_csv(hypothesis_res_all, path = paste0(cache_dir, "/competing_risks_res.csv
 ```
 
 
+# Peak IL-6, peak D-dimer
+
 # PCR positivity predicts
 
 # Lymphocyte count predicts?
