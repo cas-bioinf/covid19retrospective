@@ -160,6 +160,6 @@ anonymized_data <- anonymize_for_analysis(complete_data)
 for(n in names(anonymized_data) ) {
   write_csv(anonymized_data[[n]], path = here::here("private_data", paste0(n,".csv")))
 }
-write_csv(data.frame(version = date()), path = here::here("data_revision.csv"))
+write_lines(digest::digest(anonymized_data), path = here::here("private_data", "data_revision.txt"))
 ```
 

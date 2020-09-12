@@ -3,7 +3,7 @@ title: "Joint modelling"
 output: html_notebook
 ---
 
-```{r, setup}
+```{r setup}
 devtools::load_all()
 library(tidyverse)
 library(survival)
@@ -13,6 +13,7 @@ theme_set(cowplot::theme_cowplot())
 data <- read_data_for_analysis()
 wide <- data$marker_data_wide
 
+options(mc.cores = parallel::detectCores())
 
 cache_dir <- here::here("local_temp_data")
 if(!dir.exists(cache_dir)) {
@@ -26,17 +27,92 @@ if(!dir.exists(cache_dir)) {
 data_surv <- wide %>%  
   filter(day > 0) %>%
   mutate(daym1 = day - 1,
-    status = fct_collapse(breathing, Hospitalized = breathing_levels) %>% factor(ordered = FALSE) %>% fct_relevel("Hospitalized", "Discharged", "Death") %>% fct_explicit_na("Hospitalized")
+    event_death = !is.na(breathing) & breathing == "Death",
+    event_discharged = !is.na(breathing) & breathing == "Discharged",
   ) %>%
-  inner_join(data$patient_data, by = c("hospital_id", "patient_id")) 
+  inner_join(data$patient_data, by = c("hospital_id", "patient_id"))  %>%
+  arrange("patient_id", "day")
 
-
-
-tt <- stan_jm(formulaLong = CRP ~ day + (1 | patient_id),
-              dataLong = wide,
-              formulaEvent = Surv(daym1, day,status) ~ age + sex + took_hcq,
-              dataEvent = data_surv,
-              id_var = "patient_id",
-              time_var = "day")
+#TODO: impute the competing risk as censored long in the future
 ```
 
+```{r}
+data_d_dimer <- data_surv %>%
+  group_by(patient_id) %>%
+  filter(any(!is.na(d_dimer))) %>%
+  ungroup() %>%
+    select(event_death, event_discharged, 
+         day, daym1, patient_id, hospital_id, 
+         age, sex, took_hcq,
+         d_dimer) %>%
+  mutate(log_d_dimer = log(d_dimer + 1) - 4)
+
+data_d_dimer %>% filter(d_dimer == 0)
+# data_d_dimer %>% group_by(sex, ever_hcq) %>% summarise(pts = length(unique(patient_id)), n_dimer = sum(!is.na(d_dimer)))
+
+fit_d_dimer_age_sex_hcq <- stan_jm_with_cache(formulaLong = log_d_dimer ~ day + (1  | patient_id),
+              dataLong = data_d_dimer %>% filter(!is.na(d_dimer)),
+              formulaEvent = Surv(daym1, day, event_death) ~ age + sex + took_hcq,
+              dataEvent = data_d_dimer,
+              id_var = "patient_id",
+              time_var = "day",
+              cache_file = paste0(cache_dir, "/jm_d_dimer_age_sex_hcq.rds"))
+
+fit_d_dimer_age_sex_hcq
+
+#length(unique(data_d_dimer$patient_id))
+to_pred <- data_d_dimer %>% group_by(patient_id) %>% summarise(n_d_dimer = sum(!is.na(d_dimer))) %>%
+  filter(n_d_dimer > 1) %>% pull(patient_id)
+#data_d_dimer %>% filter(patient_id == unique(data_d_dimer$patient_id)[31])
+
+```
+```{r}
+p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[1:11])
+plot(p1, plot_observed = TRUE)                     
+p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[12:14])
+plot(p1, plot_observed = TRUE)                     
+p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[15:18])
+plot(p1, plot_observed = TRUE)                     
+
+p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[19:20])
+plot(p1, plot_observed = TRUE)                     
+p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[21:22])
+plot(p1, plot_observed = TRUE)                     
+p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[22:26])
+plot(p1, plot_observed = TRUE)
+p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[27:29])
+plot(p1, plot_observed = TRUE)                     
+p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[30:32])
+plot(p1, plot_observed = TRUE)                     
+```
+
+
+```{r}
+data_IL_6 <- data_surv %>%
+  group_by(patient_id) %>%
+  filter(any(!is.na(IL_6))) %>%
+  ungroup() %>% 
+  select(event_death, event_discharged, 
+         day, daym1, patient_id, hospital_id, 
+         age, sex, took_hcq,
+         IL_6) %>%
+  mutate(log_IL_6 = log(IL_6))
+
+fit_IL_6_age_sex_hcq <- stan_jm_with_cache(formulaLong = log_IL_6 ~ day + (1 + day | patient_id),
+              dataLong = data_IL_6 %>% filter(!is.na(IL_6)),
+              formulaEvent = Surv(daym1, day, event_death) ~ age + sex + took_hcq,
+              dataEvent = data_IL_6,
+              id_var = "patient_id",
+              time_var = "day",
+              cache_file = paste0(cache_dir, "/jm_IL_6_age_sex_hcq.rds"))
+
+fit_IL_6_age_sex_hcq
+
+```
+```{r}
+for(id in unique(data_IL_6$patient_id)) {
+  p1 <- posterior_traj(fit_IL_6_age_sex_hcq, ids = id)
+  print(plot(p1, plot_observed = TRUE)                     )
+}
+
+```

@@ -6,12 +6,12 @@ bibliography: Covid19.json
 ---
 
 
-```
-{r setup}
+```{r setup}
 devtools::load_all()
 library(tidyverse)
 theme_set(cowplot::theme_cowplot())
 data <- read_data_for_analysis()
+wide <- prepare_marker_data_wide(data)
 ```
 
 # Introduction 
@@ -51,10 +51,25 @@ First class of models are frequentist multistate models under the proportional h
 
 # Results
 
-```
-{r}
+```{r}
 n_patients <- nrow(data$patient_data)
 n_hospitals <- length(unique(data$patient_data$hospital_id))
+```
+
+
+```{r}
+my_paste <- function(x) {
+  paste0(as.integer(x), collapse = "")
+}
+wide  %>% 
+  arrange(hospital_id, patient_id, day) %>%
+  mutate(patient_id = factor(patient_id), patient_id = fct_reorder(patient_id, breathing,  .fun = my_paste, .desc = FALSE)) %>%
+  ggplot(aes(x = day, y = patient_id, fill = breathing)) + 
+  geom_tile() + 
+  scale_fill_viridis_d(direction = -1) +
+  theme(axis.text.y = element_blank()) +
+  theme(axis.title.y = element_blank(), axis.ticks.y = element_blank())
+
 ```
 
 

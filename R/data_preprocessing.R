@@ -59,6 +59,10 @@ read_data_for_analysis <- function() {
 
 #' @importFrom tidy replace_na
 compute_derived_quantities_patients <- function(data) {
+  derived_from_wide <- data$marker_data_wide %>%
+    group_by(patient_id) %>%
+    summarise(ever_hcq = any(!is.na(took_hcq) & took_hcq))
+
   data$patient_data <- data$patient_data %>%
     mutate(
       heart_problems = NYHA > 1,
@@ -90,6 +94,9 @@ compute_derived_quantities_patients <- function(data) {
         replace_na(heart_problems, 0.5) +
         replace_na(obesity, 0.5))
     )
+
+  data$patient_data <- data$patient_data %>%
+    left_join(derived_from_wide, by = "patient_id")
 
 
   data
@@ -179,12 +186,33 @@ impute_marker_constant <- function(markers_wide, column_name, initial_value = NA
     if(markers_wide$patient_id[i] != last_patient_id) {
       last_value = initial_value
     }
-    if(is.na(markers_wide[[ccolumn_name]][i])) {
-      markers_wide[[ccolumn_name]][i] <- last_value
+    if(is.na(markers_wide[[column_name]][i])) {
+      markers_wide[[column_name]][i] <- last_value
     } else {
-      last_value <- markers_wide[[ccolumn_name]][i]
+      last_value <- markers_wide[[column_name]][i]
     }
   }
+
+  markers_wide
+}
+
+compute_marker_peak <- function(markers_wide, column_name, new_column_name, initial_value = NA) {
+  markers_wide <- markers_wide %>% arrange(patient_id, day)
+
+  last_patient_id <- ""
+  current_max <- NA
+  peaks <- numeric(nrow(markers_wide))
+  for(i in 1:nrow(markers_wide)) {
+    if(markers_wide$patient_id[i] != last_patient_id) {
+      current_max = initial_value
+    }
+    if(!is.na(markers_wide[[column_name]][i])) {
+      current_max = max(current_max, markers_wide[[ccolumn_name]][i])
+    }
+    peaks[i] <- current_max
+  }
+
+  markers_wide[[new_column_name]] <- peaks
 
   markers_wide
 }

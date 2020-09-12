@@ -69,11 +69,7 @@ wide  %>% ggplot(aes(x = day, y = patient_id, fill = breathing)) +
 
 
 
-```{r}
-outcome_data %>% filter(day > 30)
-data$patient_data %>% filter(patient_id == "kOw52xii4l")
-data_for_plot %>% filter(is.na(day))
-```
+
 ```{r}
 data$patient_data %>% filter(is.na(last_record))
 ```
