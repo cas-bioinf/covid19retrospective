@@ -25,12 +25,14 @@ registerS3method("stan_llh", class = "rate_hmm", method = stan_llh.rate_hmm, env
 ```{r}
 series_data <- wide %>%
   inner_join(data$patient_data, by = c("hospital_id", "patient_id")) %>% 
-  rename(.time = day, .serie = patient_id, .observed = breathing) %>%
+  mutate(.time = day, .serie = patient_id, .observed = breathing) %>%
   mutate(.time = .time +1) %>% 
   filter(.time >= 1) %>%
   group_by(.serie) %>%
   filter(sum(!is.na(.observed)) > 1) %>%
   ungroup()
+
+
 ```
 
 ```{r}
@@ -245,7 +247,7 @@ pp_check_transitions_direction(hcq_m4_fit, hcq_m4_predicted_rect, states_from = 
 ```{r}
 hcq_m5_formula <-  ~ is_improve_one + is_death + mo(death_id) + (0 + is_worsen_one | worsen_one_id) + 
     (0 + is_improve_one | improve_one_id) + best_supportive_care * rate_group + took_hcq * rate_group + age_norm * rate_group + sex * rate_group + (rate_group | hospital_id) + mo(comorbidities_sum) * rate_group
-hcq_m5 <- brmshmmdata(hcq_m5_formula, series_data, ☻
+hcq_m5 <- brmshmmdata(hcq_m5_formula, series_data, 
                   hcq_m1_rate_data, hcq_m1_hidden_state_data, hcq_m1_initial_states, prior = hcq_m1_prior,
                   observed_state_data = hcq_m1_observed_state_data)
 
@@ -280,4 +282,114 @@ for(step in 1:ceiling(length(all_ids) / step_size)) {
 pp_check_last_state(hcq_m5_fit, hcq_m5_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
 pp_check_transitions_direction(hcq_m5_fit, hcq_m5_predicted_rect)
 pp_check_transitions_direction(hcq_m5_fit, hcq_m5_predicted_rect, states_from = 2:6)
+```
+
+## hcq_m6 - D-dimer
+
+
+```{r}
+hcq_m6_series_data <- series_data %>% 
+  group_by(.serie) %>%
+  filter(any(!is.na(d_dimer))) %>%
+  ungroup() %>%
+  compute_marker_peak(column_name = "d_dimer", new_column_name = "peak_d_dimer", initial_value = 0) %>%
+  mutate(log_peak_d_dimer = log(peak_d_dimer + 1) - 4)
+
+hcq_m6_initial_states <- hcq_m6_series_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed)
+
+
+hcq_m6_formula <-  ~ is_improve_one + is_death + mo(death_id) + (0 + is_worsen_one | worsen_one_id) + 
+    (0 + is_improve_one | improve_one_id) + best_supportive_care * rate_group + age_norm * rate_group + sex * rate_group + (rate_group | hospital_id) + log_peak_d_dimer * rate_group
+
+
+hcq_m6 <- brmshmmdata(hcq_m6_formula, hcq_m6_series_data, 
+                  hcq_m1_rate_data, hcq_m1_hidden_state_data, hcq_m6_initial_states, prior = hcq_m1_prior,
+                  observed_state_data = hcq_m1_observed_state_data)
+
+hcq_m6_fit <- brmhmm(hcq_m6, cache_file = paste0(cache_dir,"/hcq_m6.rds"))
+
+summary(hcq_m6_fit$brmsfit)
+```
+
+```{r}
+hcq_m6_epred_rect <- posterior_epred_rect(hcq_m6_fit)
+hcq_m6_predicted_rect <- posterior_epred_to_predicted(hcq_m6_fit, hcq_m6_epred_rect)
+hcq_m6_predicted <- posterior_rect_to_long(hcq_m6_fit, hcq_m6_predicted_rect)
+```
+
+
+
+```{r}
+hcq_m6_predicted_df <- posterior_long_to_df(hcq_m6_fit$data, hcq_m6_predicted)
+
+all_ids <- hcq_m6_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
+  distinct() %>% arrange(hospital_id) %>% pull(.serie)
+step_size <- 6
+for(step in 1:ceiling(length(all_ids) / step_size)) {
+  series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+  
+  posterior_state_plot(hcq_m6_predicted_df, all_ids[series_id], hcq_m6_fit$data) %>% print()
+
+}
+```
+
+```{r}
+pp_check_last_state(hcq_m6_fit, hcq_m6_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
+pp_check_transitions_direction(hcq_m6_fit, hcq_m6_predicted_rect)
+pp_check_transitions_direction(hcq_m6_fit, hcq_m6_predicted_rect, states_from = 2:6)
+```
+
+## hcq_m7 - IL-6
+
+
+```{r}
+hcq_m7_series_data <- series_data %>% 
+  group_by(.serie) %>%
+  filter(any(!is.na(IL_6))) %>%
+  ungroup() %>%
+  compute_marker_peak(column_name = "IL_6", new_column_name = "peak_IL_6", initial_value = 1) %>%
+  mutate(log_peak_IL_6 = log(peak_IL_6))
+
+hcq_m7_initial_states <- hcq_m7_series_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed)
+
+
+hcq_m7_formula <-  ~ is_improve_one + is_death + mo(death_id) + (0 + is_worsen_one | worsen_one_id) + 
+    (0 + is_improve_one | improve_one_id) + best_supportive_care * rate_group + age_norm * rate_group + sex * rate_group + (rate_group | hospital_id) + log_peak_IL_6 * rate_group
+
+
+hcq_m7 <- brmshmmdata(hcq_m7_formula, hcq_m7_series_data, 
+                  hcq_m1_rate_data, hcq_m1_hidden_state_data, hcq_m7_initial_states, prior = hcq_m1_prior,
+                  observed_state_data = hcq_m1_observed_state_data)
+
+hcq_m7_fit <- brmhmm(hcq_m7, cache_file = paste0(cache_dir,"/hcq_m7.rds"))
+
+summary(hcq_m7_fit$brmsfit)
+```
+
+```{r}
+hcq_m7_epred_rect <- posterior_epred_rect(hcq_m7_fit)
+hcq_m7_predicted_rect <- posterior_epred_to_predicted(hcq_m7_fit, hcq_m7_epred_rect)
+hcq_m7_predicted <- posterior_rect_to_long(hcq_m7_fit, hcq_m7_predicted_rect)
+```
+
+
+
+```{r}
+hcq_m7_predicted_df <- posterior_long_to_df(hcq_m7_fit$data, hcq_m7_predicted)
+
+all_ids <- hcq_m7_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
+  distinct() %>% arrange(hospital_id) %>% pull(.serie)
+step_size <- 6
+for(step in 1:ceiling(length(all_ids) / step_size)) {
+  series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+  
+  posterior_state_plot(hcq_m7_predicted_df, all_ids[series_id], hcq_m7_fit$data) %>% print()
+
+}
+```
+
+```{r}
+pp_check_last_state(hcq_m7_fit, hcq_m7_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
+pp_check_transitions_direction(hcq_m7_fit, hcq_m7_predicted_rect)
+pp_check_transitions_direction(hcq_m7_fit, hcq_m7_predicted_rect, states_from = 2:6)
 ```

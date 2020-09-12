@@ -6,7 +6,9 @@ bibliography: Covid19.json
 ---
 
 
-```{r setup}
+```{r setup, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
+knitr::opts_chunk$set(echo = FALSE)
+
 devtools::load_all()
 library(tidyverse)
 theme_set(cowplot::theme_cowplot())
@@ -50,6 +52,53 @@ First class of models are frequentist multistate models under the proportional h
 ```
 
 # Results
+
+```{r}
+
+data_table_1 <- rbind(
+  data$patient_data %>% mutate(group = "All"),
+  data$patient_data %>% mutate(group = if_else(ever_hcq, "HCQ", "No HCQ")),
+  data$patient_data %>% filter(any_d_dimer) %>% mutate(group = "Measured D-dimer"),
+  data$patient_data %>% filter(any_IL_6) %>% mutate(group = "Measured IL-6")
+  )
+
+sum_percent <- function(x) {
+  paste0(sum(x, na.rm = TRUE), " (", scales::percent(mean(x, na.rm = TRUE), accuracy = 1), ")")
+}
+
+mean_iqr <- function(x) {
+  paste0(round(mean(x, na.rm = TRUE)), " (", round(quantile(x, 0.25, na.rm = TRUE)), " - ", round(quantile(x, 0.75, na.rm = TRUE)), ")")  
+}
+
+data_table_1 %>% group_by(group) %>% 
+  summarise(
+    N = n(),
+    `Distinct sites` = length(unique(hospital_id)),
+    Female = sum_percent(sex == "F"),
+    `Age (mean, IQR)` = mean_iqr(age),
+    `Admitted for Covid` = sum_percent(admitted_for_covid),
+    `Took Azithromycin` = sum_percent(ever_az),
+    `Ischemic Heart Disease` = sum_percent(ischemic_heart_disease),
+    `Takes antihypertensives` = sum_percent(has_hypertension_drugs),	
+    `Heart Failure` = sum_percent(heart_failure),
+    COPD = sum_percent(COPD),
+    Asthma = sum_percent(asthma),
+    `Other lung disease` = sum_percent(other_lung_disease),
+    Diabetes = sum_percent(diabetes),
+    `Renal Disease` = sum_percent(renal_disease),
+    `Liver Disease` = sum_percent(liver_disease),
+    `Smoking` = sum_percent(smoking),
+    `BMI (mean, IQR)` = mean_iqr(BMI),
+    .groups = "drop"
+  ) %>%
+  mutate(group = factor(group, levels= c("All", "HCQ", "No HCQ", "Measured D-dimer","Measured IL-6"), ordered = TRUE)) %>%
+  arrange(group) %>%
+  as.data.frame() %>%
+  column_to_rownames("group") %>%
+  t() %>% 
+  knitr::kable()
+```
+
 
 ```{r}
 n_patients <- nrow(data$patient_data)

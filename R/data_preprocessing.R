@@ -61,7 +61,12 @@ read_data_for_analysis <- function() {
 compute_derived_quantities_patients <- function(data) {
   derived_from_wide <- data$marker_data_wide %>%
     group_by(patient_id) %>%
-    summarise(ever_hcq = any(!is.na(took_hcq) & took_hcq))
+    summarise(ever_hcq = any(took_hcq),
+              ever_az = any(took_az),
+              ever_convalescent_plasma = any(took_convalescent_plasma),
+              any_d_dimer = any(!is.na(d_dimer)),
+              any_IL_6 = any(!is.na(IL_6))
+    )
 
   data$patient_data <- data$patient_data %>%
     mutate(
@@ -157,6 +162,10 @@ compute_derived_markers_wide <- function(markers_wide, data) {
       left_join(first_treatment, by = c("hospital_id", "patient_id")) %>%
       mutate(!!new_col_name := !is.na(first_day) & first_day <= day) %>%
       select(-first_day)
+
+    if(any(is.na(markers_wide[[new_col_name]]))) {
+      stop(paste0("NA in ", new_col_name))
+    }
   }
 
   if(nrow(markers_wide) != nrow_before) {
@@ -207,7 +216,7 @@ compute_marker_peak <- function(markers_wide, column_name, new_column_name, init
       current_max = initial_value
     }
     if(!is.na(markers_wide[[column_name]][i])) {
-      current_max = max(current_max, markers_wide[[ccolumn_name]][i])
+      current_max = max(current_max, markers_wide[[column_name]][i])
     }
     peaks[i] <- current_max
   }
