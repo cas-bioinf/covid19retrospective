@@ -1,5 +1,20 @@
 [
 	{
+		"id": "http://zotero.org/users/5567156/items/GSJGZJ8M",
+		"type": "webpage",
+		"title": "Multi-state models for colon cancer recurrence and death with a cured fraction",
+		"URL": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3999912/",
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					4,
+					30
+				]
+			]
+		}
+	},
+	{
 		"id": "http://zotero.org/users/5567156/items/FJXV5LWV",
 		"type": "article-journal",
 		"abstract": "<p>Background: Nearly 30,000 patients with coronavirus disease-2019 (COVID-19) have been hospitalized in New York City as of April 14th, 2020. Data on the epidemiology, clinical course, and outcomes of critically ill patients with COVID-19 in this setting are needed. Methods: We prospectively collected clinical, biomarker, and treatment data on critically ill adults with laboratory-confirmed-COVID-19 admitted to two hospitals in northern Manhattan between March 2nd and April 1st, 2020. The primary outcome was in-hospital mortality. Secondary outcomes included frequency and duration of invasive mechanical ventilation, frequency of vasopressor use and renal-replacement-therapy, and time to clinical deterioration following hospital admission. The relationship between clinical risk factors, biomarkers, and in-hospital mortality was modeled using Cox-proportional-hazards regression. Each patient had at least 14 days of observation. Results: Of 1,150 adults hospitalized with COVID-19 during the study period, 257 (22%) were critically ill. The median age was 62 years (interquartile range [IQR] 51-72); 170 (66%) were male. Two-hundred twelve (82%) had at least one chronic illness, the most common of which were hypertension (63%; 162/257) and diabetes mellitus (36%; 92/257). One-hundred-thirty-eight patients (54%) were obese, and 13 (5%) were healthcare workers. As of April 14th, 2020, in-hospital mortality was 33% (86/257); 47% (122/257) of patients remained hospitalized. Two-hundred-one (79%) patients received invasive mechanical ventilation (median 13 days [IQR 9-17]), and 54% (138/257) and 29% (75/257) required vasopressors and renal-replacement-therapy, respectively. The median time to clinical deterioration following hospital admission was 3 days (IQR 1-6). Older age, hypertension, chronic lung disease, and higher concentrations of interleukin-6 and d-dimer at admission were independently associated with in-hospital mortality. Conclusions: Critical illness among patients hospitalized with COVID-19 in New York City is common and associated with a high frequency of invasive mechanical ventilation, extra-pulmonary organ dysfunction, and substantial in-hospital mortality.</p>",
@@ -207,6 +222,48 @@
 					"2020",
 					4,
 					17
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/JRAYS5BC",
+		"type": "article-journal",
+		"abstract": "Augmenting the global efforts towards HIV control and prevention, spatial modelling helps identify areas with poor viral suppression to inform programme planning. This study aims to describe the spatial viral suppression and viral rebound trajectories among ART patients. This is the first application of the fully Bayesian geoadditive semiparametric multistate Markov models to account for unobserved geographical heterogeneity. Time-varying log-baseline effects of the transition intensities and non-linear effects of continuous covariates were estimated as smoothed functions of time using penalised splines. Non-parametric effects of fixed covariates and frailty effects to account for individual variability were also considered. Viral load was the preferred marker for better prediction of HIV/AIDS disease progression; therefore, a three staged model was proposed bases on two viral load transient states defined by undetectable viral cutoff limits and death as the third absorbing state. Model application was based on the routinely collected individual-level data of ART patients from the Zimbabwe national ART programme. Amongst 18,150 participants, both the log-baseline transition rates of attaining undetectable viral suppression and attaining a viral rebound increased with increase in ART duration. Viral rebound transition was significantly prevalent among patients living on the long-distance truck route region (Matabeleland North province) which borders with Botswana and Zambia. Interventions which address health literacy and misconceptions over ART benefits and the gravity of attaining and sustaining viral suppression are a priority in the fight of HIV to increase patients’ life expectancy and lower HIV transmission.",
+		"language": "en",
+		"page": "17",
+		"source": "Zotero",
+		"title": "Spatial Heterogeneity of Viral Suppression and Viral Rebound Patterns among ART Patients in Zimbabwe from 2004 to 2017: A Bayesian Mixed Effects Multistate Model",
+		"author": [
+			{
+				"family": "Zingoni",
+				"given": "Zvifadzo Matsena"
+			},
+			{
+				"family": "Chirwa",
+				"given": "Tobias F"
+			},
+			{
+				"family": "Todd",
+				"given": "Jim"
+			},
+			{
+				"family": "Musenge",
+				"given": "Eustasius"
+			}
+		]
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/QEA4REGF",
+		"type": "webpage",
+		"title": "A Bayesian Approach to Multistate Hidden Markov Models: Application to Dementia Progression: Journal of the American Statistical Association: Vol 115, No 529",
+		"URL": "https://amstat.tandfonline.com/doi/abs/10.1080/01621459.2019.1594831?journalCode=uasa20#.XqqJ8plS-Uk",
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					4,
+					30
 				]
 			]
 		}
@@ -428,6 +485,58 @@
 					"2020",
 					4,
 					29
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/JH6SZGE9",
+		"type": "article-journal",
+		"abstract": "State-switching models such as hidden Markov models or Markov-switching regression models are routinely applied to analyse sequences of observations that are driven by underlying non-observable states. Coupled state-switching models extend these approaches to address the case of multiple observation sequences whose underlying state variables interact. In this paper, we provide an overview of the modelling techniques related to coupling in state-switching models, thereby forming a rich and flexible statistical framework particularly useful for modelling correlated time series. Simulation experiments demonstrate the relevance of being able to account for an asynchronous evolution as well as interactions between the underlying latent processes. The models are further illustrated using two case studies related to a) interactions between a dolphin mother and her calf as inferred from movement data; and b) electronic health record data collected on 696 patients within an intensive care unit.",
+		"container-title": "arXiv:2004.14700 [stat]",
+		"language": "en",
+		"note": "arXiv: 2004.14700",
+		"source": "arXiv.org",
+		"title": "A primer on coupled state-switching models for multiple interacting time series",
+		"URL": "http://arxiv.org/abs/2004.14700",
+		"author": [
+			{
+				"family": "Pohle",
+				"given": "Jennifer"
+			},
+			{
+				"family": "Langrock",
+				"given": "Roland"
+			},
+			{
+				"family": "Schaar",
+				"given": "Mihaela",
+				"non-dropping-particle": "van der"
+			},
+			{
+				"family": "King",
+				"given": "Ruth"
+			},
+			{
+				"family": "Jensen",
+				"given": "Frants Havmand"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					5,
+					6
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					4,
+					30
 				]
 			]
 		}
@@ -1308,6 +1417,32 @@
 					"2020",
 					4,
 					29
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/PQMY4QPE",
+		"type": "speech",
+		"abstract": "Experimental treatments for COVID-19 are increasingly being attempted. The ability to learn about their effects from this usage would be a helpful and more immediate complement to randomized trials, without requiring that we deny access to anybody. This presentation describes a method for doing so, both to maximize what we learn from ongoing treatment cases and to avoid misleading inferences that are otherwise likely to emerge.",
+		"note": "source: ResearchGate",
+		"title": "Learning the effects of COVID-19 treatments given outside of randomized trials",
+		"author": [
+			{
+				"family": "Hazlett",
+				"given": "Chad"
+			},
+			{
+				"family": "Wulf",
+				"given": "David"
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					3,
+					22
 				]
 			]
 		}
@@ -5128,6 +5263,1066 @@
 					"2020",
 					8,
 					19
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/JKUH2UDJ",
+		"type": "article-journal",
+		"abstract": "<p>Background: Hydroxychloroquine has recently received Emergency Use Authorization by the FDA and is currently prescribed in combination with azithromycin for COVID-19 pneumonia. We studied the safety of hydroxychloroquine, alone and in combination with azithromycin. Methods: New user cohort studies were conducted including 16 severe adverse events (SAEs). Rheumatoid arthritis patients aged 18+ and initiating hydroxychloroquine were compared to those initiating sulfasalazine and followed up over 30 days. Self-controlled case series (SCCS) were conducted to further establish safety in wider populations. Separately, SAEs associated with hydroxychloroquine-azithromycin (compared to hydroxychloroquine-amoxicillin) were studied. Data comprised 14 sources of claims data or electronic medical records from Germany, Japan, Netherlands, Spain, UK, and USA. Propensity score stratification and calibration using negative control outcomes were used to address confounding. Cox models were fitted to estimate calibrated hazard ratios (CalHRs) according to drug use. Estimates were pooled where I2&lt;40%. Results: Overall, 956,374 and 310,350 users of hydroxychloroquine and sulfasalazine, and 323,122 and 351,956 users of hydroxychloroquine-azithromycin and hydroxychloroquine-amoxicillin were included. No excess risk of SAEs was identified when 30-day hydroxychloroquine and sulfasalazine use were compared. SCCS confirmed these findings. However, when azithromycin was added to hydroxychloroquine, we observed an increased risk of 30-day cardiovascular mortality (CalHR2.19 [1.22-3.94]), chest pain/angina (CalHR 1.15 [95% CI 1.05-1.26]), and heart failure (CalHR 1.22 [95% CI 1.02-1.45]) Conclusions: Short-term hydroxychloroquine treatment is safe, but addition of azithromycin may induce heart failure and cardiovascular mortality, potentially due to synergistic effects on QT length. We call for caution if such combination is to be used in the management of Covid-19.</p>",
+		"container-title": "medRxiv",
+		"DOI": "10.1101/2020.04.08.20054551",
+		"language": "en",
+		"note": "publisher: Cold Spring Harbor Laboratory Press",
+		"page": "2020.04.08.20054551",
+		"source": "www.medrxiv.org",
+		"title": "Safety of hydroxychloroquine, alone and in combination with azithromycin, in light of rapid wide-spread use for COVID-19: a multinational, network cohort and self-controlled case series study",
+		"title-short": "Safety of hydroxychloroquine, alone and in combination with azithromycin, in light of rapid wide-spread use for COVID-19",
+		"URL": "https://www.medrxiv.org/content/10.1101/2020.04.08.20054551v2",
+		"author": [
+			{
+				"family": "Lane",
+				"given": "Jennifer C. E."
+			},
+			{
+				"family": "Weaver",
+				"given": "James"
+			},
+			{
+				"family": "Kostka",
+				"given": "Kristin"
+			},
+			{
+				"family": "Duarte-Salles",
+				"given": "Talita"
+			},
+			{
+				"family": "Abrahao",
+				"given": "Maria Tereza F."
+			},
+			{
+				"family": "Alghoul",
+				"given": "Heba"
+			},
+			{
+				"family": "Alser",
+				"given": "Osaid"
+			},
+			{
+				"family": "Alshammari",
+				"given": "Thamir M."
+			},
+			{
+				"family": "Biedermann",
+				"given": "Patricia"
+			},
+			{
+				"family": "Burn",
+				"given": "Edward"
+			},
+			{
+				"family": "Casajust",
+				"given": "Paula"
+			},
+			{
+				"family": "Conover",
+				"given": "Mitch"
+			},
+			{
+				"family": "Culhane",
+				"given": "Aedin C."
+			},
+			{
+				"family": "Davydov",
+				"given": "Alexander"
+			},
+			{
+				"family": "DuVall",
+				"given": "Scott L."
+			},
+			{
+				"family": "Dymshyts",
+				"given": "Dmitry"
+			},
+			{
+				"family": "Bertolín",
+				"given": "Sergio Fernández"
+			},
+			{
+				"family": "Fišter",
+				"given": "Kristina"
+			},
+			{
+				"family": "Hardin",
+				"given": "Jill"
+			},
+			{
+				"family": "Hester",
+				"given": "Laura"
+			},
+			{
+				"family": "Hripcsak",
+				"given": "George"
+			},
+			{
+				"family": "Kent",
+				"given": "Seamus"
+			},
+			{
+				"family": "Khosla",
+				"given": "Sajan"
+			},
+			{
+				"family": "Kolovos",
+				"given": "Spyros"
+			},
+			{
+				"family": "Lambert",
+				"given": "Christophe G."
+			},
+			{
+				"family": "Lei",
+				"given": "Johan",
+				"dropping-particle": "ver der"
+			},
+			{
+				"family": "Lynch",
+				"given": "Kristine E."
+			},
+			{
+				"family": "Makadia",
+				"given": "Rupa"
+			},
+			{
+				"family": "Margulis",
+				"given": "Andrea V."
+			},
+			{
+				"family": "Matheny",
+				"given": "Michael E."
+			},
+			{
+				"family": "Mehta",
+				"given": "Paras"
+			},
+			{
+				"family": "Morales",
+				"given": "Daniel R."
+			},
+			{
+				"family": "Morgan-Stewart",
+				"given": "Henry"
+			},
+			{
+				"family": "Mosseveld",
+				"given": "Mees"
+			},
+			{
+				"family": "Newby",
+				"given": "Danielle"
+			},
+			{
+				"family": "Nyberg",
+				"given": "Fredrik"
+			},
+			{
+				"family": "Ostropolets",
+				"given": "Anna"
+			},
+			{
+				"family": "Park",
+				"given": "Rae Woong"
+			},
+			{
+				"family": "Prats-Uribe",
+				"given": "Albert"
+			},
+			{
+				"family": "Rao",
+				"given": "Gowtham A."
+			},
+			{
+				"family": "Reich",
+				"given": "Christian"
+			},
+			{
+				"family": "Reps",
+				"given": "Jenna"
+			},
+			{
+				"family": "Rijnbeek",
+				"given": "Peter"
+			},
+			{
+				"family": "Sathappan",
+				"given": "Selva Muthu Kumaran"
+			},
+			{
+				"family": "Schuemie",
+				"given": "Martijn"
+			},
+			{
+				"family": "Seager",
+				"given": "Sarah"
+			},
+			{
+				"family": "Sena",
+				"given": "Anthony"
+			},
+			{
+				"family": "Shoaibi",
+				"given": "Azza"
+			},
+			{
+				"family": "Spotnitz",
+				"given": "Matthew"
+			},
+			{
+				"family": "Suchard",
+				"given": "Marc A."
+			},
+			{
+				"family": "Swerdel",
+				"given": "Joel"
+			},
+			{
+				"family": "Torre",
+				"given": "Carmen Olga"
+			},
+			{
+				"family": "Vizcaya",
+				"given": "David"
+			},
+			{
+				"family": "Wen",
+				"given": "Haini"
+			},
+			{
+				"family": "Wilde",
+				"given": "Marcel",
+				"dropping-particle": "de"
+			},
+			{
+				"family": "You",
+				"given": "Seng Chan"
+			},
+			{
+				"family": "Zhang",
+				"given": "Lin"
+			},
+			{
+				"family": "Zhuk",
+				"given": "Oleg"
+			},
+			{
+				"family": "Ryan",
+				"given": "Patrick"
+			},
+			{
+				"family": "Prieto-Alhambra",
+				"given": "Daniel"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					9,
+					12
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					5,
+					31
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/YP62P6XJ",
+		"type": "article-journal",
+		"abstract": "Objective To compare the effects of treatments for coronavirus disease 2019 (covid-19).\nDesign Living systematic review and network meta-analysis.\nData sources US Centers for Disease Control and Prevention COVID-19 Research Articles Downloadable Database, which includes 25 electronic databases and six additional Chinese databases to 10 August 2020.\nStudy selection Randomised clinical trials in which people with suspected, probable, or confirmed covid-19 were randomised to drug treatment or to standard care or placebo. Pairs of reviewers independently screened potentially eligible articles.\nMethods After duplicate data abstraction, a Bayesian network meta-analysis was conducted. Risk of bias of the included studies was assessed using a modification of the Cochrane risk of bias 2.0 tool, and the certainty of the evidence using the grading of recommendations assessment, development and evaluation (GRADE) approach. For each outcome, interventions were classified in groups from the most to the least beneficial or harmful following GRADE guidance.\nResults 35 trials with 16 588 patients met inclusion criteria; 12 (24.3%) trials and 6853 (41.3%) patients are new from the previous iteration. Twenty-seven randomised controlled trials were included in the analysis performed on 29 July 2020. Compared with standard care, glucocorticoids probably reduce death (risk difference 31 fewer per 1000 patients, 95% credible interval 55 fewer to 5 fewer, moderate certainty), mechanical ventilation (28 fewer per 1000 patients, 45 fewer to 9 fewer, moderate certainty), and duration of hospitalisation (mean difference −1.0 day, −1.4 to −0.6 days moderate certainty). The impact of remdesivir on mortality, mechanical ventilation, and length of hospital stay is uncertain, but it probably reduces duration of symptoms (−2.6 days −4.3 to −0.6 days, moderate certainty) and probably does not substantially increase adverse effects leading to drug discontinuation (3 more per 1000, 7 fewer to 43 more, moderate certainty). Hydroxychloroquine may not reduce risk of death (13 more per 1000, 15 fewer to 43 more, low certainty) or mechanical ventilation (19 more per 1000, 4 fewer to 45 more, moderate certainty). The certainty in effects for all other interventions was low or very low certainty.\nConclusion Glucocorticoids probably reduce mortality and mechanical ventilation in patients with covid-19 compared with standard care, whereas hydroxychloroquine may not reduce either. The effectiveness of most interventions is uncertain because most of the randomised controlled trials so far have been small and have important limitations.\nSystematic review registration This review was not registered. The protocol is included as a supplement.\nReaders’ note This article is a living systematic review that will be updated to reflect emerging evidence. Updates may occur for up to two years from the date of original publication. This version is update 1 of the original article published on 30 July 2020 (BMJ 2020;370:m2980), and previous versions can be found as data supplements. When citing this paper please consider adding the update number and date of access for clarity.",
+		"container-title": "BMJ",
+		"DOI": "10.1136/bmj.m2980",
+		"ISSN": "1756-1833",
+		"journalAbbreviation": "BMJ",
+		"language": "en",
+		"note": "publisher: British Medical Journal Publishing Group\nsection: Research\nPMID: 32732190",
+		"source": "www.bmj.com",
+		"title": "Drug treatments for covid-19: living systematic review and network meta-analysis",
+		"title-short": "Drug treatments for covid-19",
+		"URL": "https://www.bmj.com/content/370/bmj.m2980",
+		"volume": "370",
+		"author": [
+			{
+				"family": "Siemieniuk",
+				"given": "Reed AC"
+			},
+			{
+				"family": "Bartoszko",
+				"given": "Jessica J."
+			},
+			{
+				"family": "Ge",
+				"given": "Long"
+			},
+			{
+				"family": "Zeraatkar",
+				"given": "Dena"
+			},
+			{
+				"family": "Izcovich",
+				"given": "Ariel"
+			},
+			{
+				"family": "Kum",
+				"given": "Elena"
+			},
+			{
+				"family": "Pardo-Hernandez",
+				"given": "Hector"
+			},
+			{
+				"family": "Rochwerg",
+				"given": "Bram"
+			},
+			{
+				"family": "Lamontagne",
+				"given": "Francois"
+			},
+			{
+				"family": "Han",
+				"given": "Mi Ah"
+			},
+			{
+				"family": "Liu",
+				"given": "Qin"
+			},
+			{
+				"family": "Agarwal",
+				"given": "Arnav"
+			},
+			{
+				"family": "Agoritsas",
+				"given": "Thomas"
+			},
+			{
+				"family": "Chu",
+				"given": "Derek K."
+			},
+			{
+				"family": "Couban",
+				"given": "Rachel"
+			},
+			{
+				"family": "Darzi",
+				"given": "Andrea"
+			},
+			{
+				"family": "Devji",
+				"given": "Tahira"
+			},
+			{
+				"family": "Fang",
+				"given": "Bo"
+			},
+			{
+				"family": "Fang",
+				"given": "Carmen"
+			},
+			{
+				"family": "Flottorp",
+				"given": "Signe Agnes"
+			},
+			{
+				"family": "Foroutan",
+				"given": "Farid"
+			},
+			{
+				"family": "Heels-Ansdell",
+				"given": "Diane"
+			},
+			{
+				"family": "Honarmand",
+				"given": "Kimia"
+			},
+			{
+				"family": "Hou",
+				"given": "Liangying"
+			},
+			{
+				"family": "Hou",
+				"given": "Xiaorong"
+			},
+			{
+				"family": "Ibrahim",
+				"given": "Quazi"
+			},
+			{
+				"family": "Loeb",
+				"given": "Mark"
+			},
+			{
+				"family": "Marcucci",
+				"given": "Maura"
+			},
+			{
+				"family": "McLeod",
+				"given": "Shelley L."
+			},
+			{
+				"family": "Motaghi",
+				"given": "Sharhzad"
+			},
+			{
+				"family": "Murthy",
+				"given": "Srinivas"
+			},
+			{
+				"family": "Mustafa",
+				"given": "Reem A."
+			},
+			{
+				"family": "Neary",
+				"given": "John D."
+			},
+			{
+				"family": "Qasim",
+				"given": "Anila"
+			},
+			{
+				"family": "Rada",
+				"given": "Gabriel"
+			},
+			{
+				"family": "Riaz",
+				"given": "Irbaz Bin"
+			},
+			{
+				"family": "Sadeghirad",
+				"given": "Behnam"
+			},
+			{
+				"family": "Sekercioglu",
+				"given": "Nigar"
+			},
+			{
+				"family": "Sheng",
+				"given": "Lulu"
+			},
+			{
+				"family": "Sreekanta",
+				"given": "Ashwini"
+			},
+			{
+				"family": "Switzer",
+				"given": "Charlotte"
+			},
+			{
+				"family": "Tendal",
+				"given": "Britta"
+			},
+			{
+				"family": "Thabane",
+				"given": "Lehana"
+			},
+			{
+				"family": "Tomlinson",
+				"given": "George"
+			},
+			{
+				"family": "Turner",
+				"given": "Tari"
+			},
+			{
+				"family": "Vandvik",
+				"given": "Per O."
+			},
+			{
+				"family": "Vernooij",
+				"given": "Robin WM"
+			},
+			{
+				"family": "Viteri-García",
+				"given": "Andrés"
+			},
+			{
+				"family": "Wang",
+				"given": "Ying"
+			},
+			{
+				"family": "Yao",
+				"given": "Liang"
+			},
+			{
+				"family": "Ye",
+				"given": "Zhikang"
+			},
+			{
+				"family": "Guyatt",
+				"given": "Gordon H."
+			},
+			{
+				"family": "Brignardello-Petersen",
+				"given": "Romina"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					9,
+					12
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					7,
+					30
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/TS57HJ3T",
+		"type": "article-journal",
+		"abstract": "Objective To review and appraise the validity and usefulness of published and preprint reports of prediction models for diagnosing coronavirus disease 2019 (covid-19) in patients with suspected infection, for prognosis of patients with covid-19, and for detecting people in the general population at increased risk of becoming infected with covid-19 or being admitted to hospital with the disease.\nDesign Living systematic review and critical appraisal by the COVID-PRECISE (Precise Risk Estimation to optimise covid-19 Care for Infected or Suspected patients in diverse sEttings) group.\nData sources PubMed and Embase through Ovid, arXiv, medRxiv, and bioRxiv up to 5 May 2020.\nStudy selection Studies that developed or validated a multivariable covid-19 related prediction model.\nData extraction At least two authors independently extracted data using the CHARMS (critical appraisal and data extraction for systematic reviews of prediction modelling studies) checklist; risk of bias was assessed using PROBAST (prediction model risk of bias assessment tool).\nResults 14 217 titles were screened, and 107 studies describing 145 prediction models were included. The review identified four models for identifying people at risk in the general population; 91 diagnostic models for detecting covid-19 (60 were based on medical imaging, nine to diagnose disease severity); and 50 prognostic models for predicting mortality risk, progression to severe disease, intensive care unit admission, ventilation, intubation, or length of hospital stay. The most frequently reported predictors of diagnosis and prognosis of covid-19 are age, body temperature, lymphocyte count, and lung imaging features. Flu-like symptoms and neutrophil count are frequently predictive in diagnostic models, while comorbidities, sex, C reactive protein, and creatinine are frequent prognostic factors. C index estimates ranged from 0.73 to 0.81 in prediction models for the general population, from 0.65 to more than 0.99 in diagnostic models, and from 0.68 to 0.99 in prognostic models. All models were rated at high risk of bias, mostly because of non-representative selection of control patients, exclusion of patients who had not experienced the event of interest by the end of the study, high risk of model overfitting, and vague reporting. Most reports did not include any description of the study population or intended use of the models, and calibration of the model predictions was rarely assessed.\nConclusion Prediction models for covid-19 are quickly entering the academic literature to support medical decision making at a time when they are urgently needed. This review indicates that proposed models are poorly reported, at high risk of bias, and their reported performance is probably optimistic. Hence, we do not recommend any of these reported prediction models for use in current practice. Immediate sharing of well documented individual participant data from covid-19 studies and collaboration are urgently needed to develop more rigorous prediction models, and validate promising ones. The predictors identified in included models should be considered as candidate predictors for new models. Methodological guidance should be followed because unreliable predictions could cause more harm than benefit in guiding clinical decisions. Finally, studies should adhere to the TRIPOD (transparent reporting of a multivariable prediction model for individual prognosis or diagnosis) reporting guideline.\nSystematic review registration Protocol https://osf.io/ehc47/, registration https://osf.io/wy245.\nReaders’ note This article is a living systematic review that will be updated to reflect emerging evidence. Updates may occur for up to two years from the date of original publication. This version is update 2 of the original article published on 7 April 2020 (BMJ 2020;369:m1328), and previous updates can be found as data supplements (https://www.bmj.com/content/369/bmj.m1328/related#datasupp).",
+		"container-title": "BMJ",
+		"DOI": "10.1136/bmj.m1328",
+		"ISSN": "1756-1833",
+		"journalAbbreviation": "BMJ",
+		"language": "en",
+		"note": "publisher: British Medical Journal Publishing Group\nsection: Research\nPMID: 32265220",
+		"source": "www.bmj.com",
+		"title": "Prediction models for diagnosis and prognosis of covid-19: systematic review and critical appraisal",
+		"title-short": "Prediction models for diagnosis and prognosis of covid-19",
+		"URL": "https://www.bmj.com/content/369/bmj.m1328",
+		"volume": "369",
+		"author": [
+			{
+				"family": "Wynants",
+				"given": "Laure"
+			},
+			{
+				"family": "Calster",
+				"given": "Ben Van"
+			},
+			{
+				"family": "Collins",
+				"given": "Gary S."
+			},
+			{
+				"family": "Riley",
+				"given": "Richard D."
+			},
+			{
+				"family": "Heinze",
+				"given": "Georg"
+			},
+			{
+				"family": "Schuit",
+				"given": "Ewoud"
+			},
+			{
+				"family": "Bonten",
+				"given": "Marc M. J."
+			},
+			{
+				"family": "Dahly",
+				"given": "Darren L."
+			},
+			{
+				"family": "Damen",
+				"given": "Johanna A. A."
+			},
+			{
+				"family": "Debray",
+				"given": "Thomas P. A."
+			},
+			{
+				"family": "Jong",
+				"given": "Valentijn M. T.",
+				"dropping-particle": "de"
+			},
+			{
+				"family": "Vos",
+				"given": "Maarten De"
+			},
+			{
+				"family": "Dhiman",
+				"given": "Paula"
+			},
+			{
+				"family": "Haller",
+				"given": "Maria C."
+			},
+			{
+				"family": "Harhay",
+				"given": "Michael O."
+			},
+			{
+				"family": "Henckaerts",
+				"given": "Liesbet"
+			},
+			{
+				"family": "Heus",
+				"given": "Pauline"
+			},
+			{
+				"family": "Kreuzberger",
+				"given": "Nina"
+			},
+			{
+				"family": "Lohmann",
+				"given": "Anna"
+			},
+			{
+				"family": "Luijken",
+				"given": "Kim"
+			},
+			{
+				"family": "Ma",
+				"given": "Jie"
+			},
+			{
+				"family": "Martin",
+				"given": "Glen P."
+			},
+			{
+				"family": "Navarro",
+				"given": "Constanza L. Andaur"
+			},
+			{
+				"family": "Reitsma",
+				"given": "Johannes B."
+			},
+			{
+				"family": "Sergeant",
+				"given": "Jamie C."
+			},
+			{
+				"family": "Shi",
+				"given": "Chunhu"
+			},
+			{
+				"family": "Skoetz",
+				"given": "Nicole"
+			},
+			{
+				"family": "Smits",
+				"given": "Luc J. M."
+			},
+			{
+				"family": "Snell",
+				"given": "Kym I. E."
+			},
+			{
+				"family": "Sperrin",
+				"given": "Matthew"
+			},
+			{
+				"family": "Spijker",
+				"given": "René"
+			},
+			{
+				"family": "Steyerberg",
+				"given": "Ewout W."
+			},
+			{
+				"family": "Takada",
+				"given": "Toshihiko"
+			},
+			{
+				"family": "Tzoulaki",
+				"given": "Ioanna"
+			},
+			{
+				"family": "Kuijk",
+				"given": "Sander M. J.",
+				"dropping-particle": "van"
+			},
+			{
+				"family": "Royen",
+				"given": "Florien S.",
+				"dropping-particle": "van"
+			},
+			{
+				"family": "Verbakel",
+				"given": "Jan Y."
+			},
+			{
+				"family": "Wallisch",
+				"given": "Christine"
+			},
+			{
+				"family": "Wilkinson",
+				"given": "Jack"
+			},
+			{
+				"family": "Wolff",
+				"given": "Robert"
+			},
+			{
+				"family": "Hooft",
+				"given": "Lotty"
+			},
+			{
+				"family": "Moons",
+				"given": "Karel G. M."
+			},
+			{
+				"family": "Smeden",
+				"given": "Maarten",
+				"dropping-particle": "van"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					9,
+					12
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					4,
+					7
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/8EWY8TKM",
+		"type": "article-journal",
+		"container-title": "Journal of Open Source Software",
+		"DOI": "10.21105/joss.01686",
+		"ISSN": "2475-9066",
+		"issue": "43",
+		"journalAbbreviation": "JOSS",
+		"page": "1686",
+		"source": "DOI.org (Crossref)",
+		"title": "Welcome to the Tidyverse",
+		"URL": "https://joss.theoj.org/papers/10.21105/joss.01686",
+		"volume": "4",
+		"author": [
+			{
+				"family": "Wickham",
+				"given": "Hadley"
+			},
+			{
+				"family": "Averick",
+				"given": "Mara"
+			},
+			{
+				"family": "Bryan",
+				"given": "Jennifer"
+			},
+			{
+				"family": "Chang",
+				"given": "Winston"
+			},
+			{
+				"family": "McGowan",
+				"given": "Lucy"
+			},
+			{
+				"family": "François",
+				"given": "Romain"
+			},
+			{
+				"family": "Grolemund",
+				"given": "Garrett"
+			},
+			{
+				"family": "Hayes",
+				"given": "Alex"
+			},
+			{
+				"family": "Henry",
+				"given": "Lionel"
+			},
+			{
+				"family": "Hester",
+				"given": "Jim"
+			},
+			{
+				"family": "Kuhn",
+				"given": "Max"
+			},
+			{
+				"family": "Pedersen",
+				"given": "Thomas"
+			},
+			{
+				"family": "Miller",
+				"given": "Evan"
+			},
+			{
+				"family": "Bache",
+				"given": "Stephan"
+			},
+			{
+				"family": "Müller",
+				"given": "Kirill"
+			},
+			{
+				"family": "Ooms",
+				"given": "Jeroen"
+			},
+			{
+				"family": "Robinson",
+				"given": "David"
+			},
+			{
+				"family": "Seidel",
+				"given": "Dana"
+			},
+			{
+				"family": "Spinu",
+				"given": "Vitalie"
+			},
+			{
+				"family": "Takahashi",
+				"given": "Kohske"
+			},
+			{
+				"family": "Vaughan",
+				"given": "Davis"
+			},
+			{
+				"family": "Wilke",
+				"given": "Claus"
+			},
+			{
+				"family": "Woo",
+				"given": "Kara"
+			},
+			{
+				"family": "Yutani",
+				"given": "Hiroaki"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					9,
+					12
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2019",
+					11,
+					21
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/67XKBC2W",
+		"type": "book",
+		"title": "R: A Language and Environment for Statistical Computing",
+		"URL": "https://www.R-project.org/",
+		"version": "4.0",
+		"author": [
+			{
+				"family": "R Core Team",
+				"given": ""
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					"2020"
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/7ER3ZSER",
+		"type": "article-journal",
+		"container-title": "The R Journal",
+		"DOI": "10.32614/RJ-2018-017",
+		"ISSN": "2073-4859",
+		"issue": "1",
+		"journalAbbreviation": "The R Journal",
+		"language": "en",
+		"page": "395",
+		"source": "DOI.org (Crossref)",
+		"title": "Advanced Bayesian Multilevel Modeling with the R Package brms",
+		"URL": "https://journal.r-project.org/archive/2018/RJ-2018-017/index.html",
+		"volume": "10",
+		"author": [
+			{
+				"family": "Bürkner",
+				"given": "Paul-Christian"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					9,
+					12
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2018"
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/I9UVTUJF",
+		"type": "book",
+		"call-number": "R853.S7 T47 2000",
+		"collection-title": "Statistics for biology and health",
+		"event-place": "New York",
+		"ISBN": "978-0-387-98784-2",
+		"number-of-pages": "350",
+		"publisher": "Springer",
+		"publisher-place": "New York",
+		"source": "Library of Congress ISBN",
+		"title": "Modeling survival data: extending the Cox model",
+		"title-short": "Modeling survival data",
+		"author": [
+			{
+				"family": "Therneau",
+				"given": "Terry M."
+			},
+			{
+				"family": "Grambsch",
+				"given": "Patricia M."
+			}
+		],
+		"issued": {
+			"date-parts": [
+				[
+					"2000"
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/KHJGLQS5",
+		"type": "article-journal",
+		"abstract": "The joint modeling of longitudinal and time-to-event data has received much attention in the biostatistical literature in recent years. In this notebook (and talk), we describe the implementation of a shared parameter joint model for longitudinal and time-to-event data in Stan. The methods described in the notebook are a simplified version of those underpinning the stan_jm modeling function that has recently been contributed to the rstanarm R package.",
+		"DOI": "10.5281/ZENODO.1284334",
+		"note": "publisher: Zenodo",
+		"source": "DOI.org (Datacite)",
+		"title": "Joint Longitudinal And Time-To-Event Models Via Stan",
+		"URL": "https://zenodo.org/record/1284334",
+		"author": [
+			{
+				"family": "Brilleman",
+				"given": "Sam"
+			},
+			{
+				"family": "Crowther",
+				"given": "Michael"
+			},
+			{
+				"family": "Moreno-Betancur",
+				"given": "Margarita"
+			},
+			{
+				"family": "Buros Novik",
+				"given": "Jacqueline"
+			},
+			{
+				"family": "Wolfe",
+				"given": "Rory"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					9,
+					12
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2018",
+					1,
+					10
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/F9K2L5Q8",
+		"type": "article-journal",
+		"container-title": "Journal of the American Statistical Association",
+		"DOI": "10.1080/01621459.2019.1594831",
+		"ISSN": "0162-1459, 1537-274X",
+		"issue": "529",
+		"journalAbbreviation": "Journal of the American Statistical Association",
+		"language": "en",
+		"page": "16-31",
+		"source": "DOI.org (Crossref)",
+		"title": "A Bayesian Approach to Multistate Hidden Markov Models: Application to Dementia Progression",
+		"title-short": "A Bayesian Approach to Multistate Hidden Markov Models",
+		"URL": "https://www.tandfonline.com/doi/full/10.1080/01621459.2019.1594831",
+		"volume": "115",
+		"author": [
+			{
+				"family": "Williams",
+				"given": "Jonathan P."
+			},
+			{
+				"family": "Storlie",
+				"given": "Curtis B."
+			},
+			{
+				"family": "Therneau",
+				"given": "Terry M."
+			},
+			{
+				"family": "Jr",
+				"given": "Clifford R. Jack"
+			},
+			{
+				"family": "Hannig",
+				"given": "Jan"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					9,
+					12
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					1,
+					2
 				]
 			]
 		}

@@ -29,13 +29,25 @@ An ongoing challenge in evalutating Covid-19 treatments is that the analysis and
 
 # Methods
 
-A convenience sample of patients... The study was approved by the Ethical committees of TODO.
 
-Sex differences are to be expected for both sociological and biological [@http://zotero.org/users/5567156/items/5KQZ3XEE] reasons.
+## Data Collection
+A convenience sample of patients... Patients over the age of 18 were included if they had PCR-confirmed infection of SARS-CoV-2 and were not participating in a clinical evaluation of any Covid-19 pharmacotherapy. Full protocol for data collection is attached in the supplementary material. The study was approved by the Ethical committees of TODO.
 
-Important to consider appropriate estimands [@http://zotero.org/users/5567156/items/MH797GNC].
+## Statistical analysis
 
-We performed multiverse analysis [@http://zotero.org/users/5567156/items/DXWM259V]
+Since many details of analysis may influence the conclusions made, we performed multiverse analysis [@http://zotero.org/users/5567156/items/DXWM259V] and report results for all the hypothesis tested across multiple different models using both frequentist and Bayesian paradigms. For each model class we worked with several possible sets of adjustments and - where applicable - with multiple estimands of the outcome as different tasks require different estimands [@http://zotero.org/users/5567156/items/MH797GNC]. All analysis wes performed in the R language [@http://zotero.org/users/5567156/items/67XKBC2W], visualisations and data cleaning was run with the `tidyverse` package [@http://zotero.org/users/5567156/items/8EWY8TKM]. Complete code for all analyses can be found at TODO.
+
+First class of models are frequentist multistate models under the proportional hazards assumption as implemented in the `coxph` function from the `survival` package [@http://zotero.org/users/5567156/items/I9UVTUJF].
+
+`brms` package [@http://zotero.org/users/5567156/items/7ER3ZSER]. The parametrization of the HMM is inspired by [@http://zotero.org/users/5567156/items/F9K2L5Q8] where an underlying continous process with given rates only between the neighbouring state and the transition matrix across all states is then computed as the total probability of transition across all possible paths.
+
+`stan_jm` function in the `rstanarm` package [@http://zotero.org/users/5567156/items/KHJGLQS5]
+
+
+
+```{r}
+#Sex differences are to be expected for both sociological and biological [@http://zotero.org/users/5567156/items/5KQZ3XEE] reasons.
+```
 
 # Results
 
