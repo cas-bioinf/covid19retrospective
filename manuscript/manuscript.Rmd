@@ -41,7 +41,7 @@ Since many details of analysis may influence the conclusions made, we performed 
 
 First class of models are frequentist multistate models under the proportional hazards assumption as implemented in the `coxph` function from the `survival` package [@http://zotero.org/users/5567156/items/I9UVTUJF].
 
-`brms` package [@http://zotero.org/users/5567156/items/7ER3ZSER]. The parametrization of the HMM is inspired by [@http://zotero.org/users/5567156/items/F9K2L5Q8] where an underlying continous process with given rates only between the neighbouring state and the transition matrix across all states is then computed as the total probability of transition across all possible paths.
+Second class of models are Bayesian hidden Markov models of disease progression implemented via a custom extension to the `brms` package [@http://zotero.org/users/5567156/items/7ER3ZSER]. The parametrization of the HMM is inspired by [@http://zotero.org/users/5567156/items/F9K2L5Q8] where an underlying continous process with given rates only between the neighbouring state and the transition matrix across all states is then computed as the total probability of transition across all possible paths. This class of models does not satisfy the proportional hazards assumption, instead, it is assumed the process has the Markov property - i.e. that the unobserved state and the covariates at a given day contain all the information to determine probabilities of the states on the next day.
 
 `stan_jm` function in the `rstanarm` package [@http://zotero.org/users/5567156/items/KHJGLQS5]
 
