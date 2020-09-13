@@ -121,6 +121,10 @@ validate_brmshmmdata <- function(d) {
   d$serie_data$.serie <- validate_id(d$serie_data$.serie, "serie_data$.serie",
                                         force_no_gaps = TRUE)
 
+  #TODO make the binding between initial states and series explicit
+  if(length(d$initial_state) != length(unique(d$serie_data$.serie))) {
+    stop("Incorrect number of initial states")
+  }
 
   d
 }

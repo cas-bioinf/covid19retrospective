@@ -8,8 +8,9 @@ brm_with_cache <- function(cache_file = NULL, ...) {
        is.null(cache_contents$standata) || is.null(cache_contents$fit)) {
       message("Invalid cache content")
     } else {
-      if(identical(stancode, cache_contents$stancode) &&
+      if(#identical(stancode, cache_contents$stancode) &&
          identical(standata, cache_contents$standata)) {
+        warning("Currently not checking stancode, TODO")
         fit <- cache_contents$fit
       } else {
         message("Cache file out of date, refitting")
@@ -26,3 +27,5 @@ brm_with_cache <- function(cache_file = NULL, ...) {
 
   fit
 }
+
+#normalize_stancode <- function

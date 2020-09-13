@@ -2,7 +2,7 @@ model_color <- "#3993dd"
 data_color <- "#91171f"
 decoration_color <- "#ca5310"
 
-posterior_state_plot <- function(predictions_df, series_id = 1:max(predictions_df$.serie),
+posterior_state_plot <- function(predictions_df, series_id = unique(predictions_df$.serie),
                                  observed_data = NULL,
                                  predicted_labels = NULL) {
 

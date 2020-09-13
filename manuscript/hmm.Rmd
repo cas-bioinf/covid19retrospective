@@ -23,7 +23,7 @@ registerS3method("stan_llh", class = "rate_hmm", method = stan_llh.rate_hmm, env
 ```
 
 ```{r}
-series_data <- wide %>%
+serie_data <- wide %>%
   inner_join(data$patient_data, by = c("hospital_id", "patient_id")) %>% 
   mutate(.time = day, .serie = patient_id, .observed = breathing) %>%
   mutate(.time = .time +1) %>% 
@@ -72,7 +72,7 @@ hcq_m1_rate_data <- rbind(
   recode_group("improve_one") %>%
   recode_group("worsen_one")
 
-hcq_m1_initial_states <- series_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed)
+hcq_m1_initial_states <- serie_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed)
 
 hcq_m1_prior = brms::set_prior("normal(-2, 5)", "Intercept") +
   brms::set_prior("normal(0, 5)", "b") +
@@ -80,7 +80,7 @@ hcq_m1_prior = brms::set_prior("normal(-2, 5)", "Intercept") +
 
 hcq_m1_formula <- ~ is_improve_one + is_death + mo(death_id) + (0 + is_worsen_one | worsen_one_id) + 
     (0 + is_improve_one | improve_one_id) + best_supportive_care * rate_group + took_hcq * rate_group
-hcq_m1 <- brmshmmdata(hcq_m1_formula, series_data, 
+hcq_m1 <- brmshmmdata(hcq_m1_formula, serie_data, 
                   hcq_m1_rate_data, hcq_m1_hidden_state_data, hcq_m1_initial_states, prior = hcq_m1_prior,
                   observed_state_data = hcq_m1_observed_state_data)
 
@@ -91,6 +91,39 @@ hcq_m1_fit <- brmhmm(hcq_m1, cache_file = paste0(cache_dir,"/hcq_m1.rds"))
 summary(hcq_m1_fit$brmsfit)
   
 ```
+```{r}
+
+counterfactual_max_days <- 90
+counterfactual_base <-  crossing(day = 0:counterfactual_max_days, patient_id = unique(serie_data$patient_id)) %>%
+  inner_join(data$patient_data, by = c("patient_id")) %>% 
+  left_join(wide, by = c("hospital_id", "patient_id", "day")) %>%
+  mutate(.time = day, .serie = patient_id, .observed = breathing) %>%
+  mutate(.time = .time +1) %>% 
+  filter(.time >= 1) %>%
+  group_by(.serie) %>%
+  mutate(best_supportive_care = !is.na(best_supportive_care_from) & day >= best_supportive_care_from) %>%
+  ungroup()
+
+
+counterfactual_took_hcq <- counterfactual_base %>% mutate(took_hcq = TRUE)
+counterfactual_no_hcq <- counterfactual_base %>% mutate(took_hcq = FALSE)
+
+
+
+hcq_m1_counterfactual_took_hcq <- hcq_m1
+hcq_m1_counterfactual_took_hcq$serie_data = counterfactual_took_hcq
+
+hcq_m1_counterfactual_took_hcq_epred_rect <- posterior_epred_rect(hcq_m1_fit, newdata = hcq_m1_counterfactual_took_hcq)
+
+hcq_m1_counterfactual_no_hcq <- hcq_m1
+hcq_m1_counterfactual_no_hcq$serie_data = counterfactual_no_hcq
+
+hcq_m1_counterfactual_no_hcq_epred_rect <- posterior_epred_rect(hcq_m1_fit, newdata = hcq_m1_counterfactual_no_hcq)
+
+
+```
+
+
 ```{r}
 hcq_m1_epred_rect <- posterior_epred_rect(hcq_m1_fit)
 hcq_m1_predicted_rect <- posterior_epred_to_predicted(hcq_m1_fit, hcq_m1_epred_rect)
@@ -122,7 +155,7 @@ pp_check_transitions_direction(hcq_m1_fit, hcq_m1_predicted_rect, states_from = 
 ```{r}
 hcq_m2_formula <- ~ is_improve_one + is_death + mo(death_id) + (0 + is_worsen_one | worsen_one_id) + 
     (0 + is_improve_one | improve_one_id) + best_supportive_care * rate_group + took_hcq * rate_group + age_norm * rate_group + sex * rate_group
-hcq_m2 <- brmshmmdata(hcq_m2_formula, series_data, 
+hcq_m2 <- brmshmmdata(hcq_m2_formula, serie_data, 
                   hcq_m1_rate_data, hcq_m1_hidden_state_data, hcq_m1_initial_states, prior = hcq_m1_prior,
                   observed_state_data = hcq_m1_observed_state_data)
 
@@ -163,7 +196,7 @@ pp_check_transitions_direction(hcq_m2_fit, hcq_m2_predicted_rect, states_from = 
 ```{r}
 hcq_m3_formula <- ~ is_improve_one + is_death + mo(death_id) + (0 + is_worsen_one | worsen_one_id) + 
     (0 + is_improve_one | improve_one_id) + best_supportive_care * rate_group + took_hcq * rate_group + age_norm * rate_group + sex * rate_group + (rate_group | hospital_id)
-hcq_m3 <- brmshmmdata(hcq_m3_formula, series_data, 
+hcq_m3 <- brmshmmdata(hcq_m3_formula, serie_data, 
                   hcq_m1_rate_data, hcq_m1_hidden_state_data, hcq_m1_initial_states, prior = hcq_m1_prior,
                   observed_state_data = hcq_m1_observed_state_data)
 
@@ -203,7 +236,7 @@ pp_check_transitions_direction(hcq_m3_fit, hcq_m3_predicted_rect, states_from = 
 ```{r}
 hcq_m4_formula <- ~ is_improve_one + is_death + mo(death_id) + (0 + is_worsen_one | worsen_one_id) + 
     (0 + is_improve_one | improve_one_id) + best_supportive_care * rate_group + took_hcq * rate_group + took_az * rate_group + age_norm * rate_group + sex * rate_group + (rate_group | hospital_id)
-hcq_m4 <- brmshmmdata(hcq_m4_formula, series_data, 
+hcq_m4 <- brmshmmdata(hcq_m4_formula, serie_data, 
                   hcq_m1_rate_data, hcq_m1_hidden_state_data, hcq_m1_initial_states, prior = hcq_m1_prior,
                   observed_state_data = hcq_m1_observed_state_data)
 
@@ -246,8 +279,8 @@ pp_check_transitions_direction(hcq_m4_fit, hcq_m4_predicted_rect, states_from = 
 
 ```{r}
 hcq_m5_formula <-  ~ is_improve_one + is_death + mo(death_id) + (0 + is_worsen_one | worsen_one_id) + 
-    (0 + is_improve_one | improve_one_id) + best_supportive_care * rate_group + took_hcq * rate_group + age_norm * rate_group + sex * rate_group + (rate_group | hospital_id) + mo(comorbidities_sum) * rate_group
-hcq_m5 <- brmshmmdata(hcq_m5_formula, series_data, 
+    (0 + is_improve_one | improve_one_id) + best_supportive_care * rate_group + took_hcq * rate_group + age_norm * rate_group + sex * rate_group + (rate_group | hospital_id) + comorbidities_sum * rate_group #mo(comorbidities_sum) * rate_group
+hcq_m5 <- brmshmmdata(hcq_m5_formula, serie_data, 
                   hcq_m1_rate_data, hcq_m1_hidden_state_data, hcq_m1_initial_states, prior = hcq_m1_prior,
                   observed_state_data = hcq_m1_observed_state_data)
 
@@ -288,21 +321,21 @@ pp_check_transitions_direction(hcq_m5_fit, hcq_m5_predicted_rect, states_from = 
 
 
 ```{r}
-hcq_m6_series_data <- series_data %>% 
+hcq_m6_serie_data <- serie_data %>% 
   group_by(.serie) %>%
   filter(any(!is.na(d_dimer))) %>%
   ungroup() %>%
   compute_marker_peak(column_name = "d_dimer", new_column_name = "peak_d_dimer", initial_value = 0) %>%
   mutate(log_peak_d_dimer = log(peak_d_dimer + 1) - 4)
 
-hcq_m6_initial_states <- hcq_m6_series_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed)
+hcq_m6_initial_states <- hcq_m6_serie_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed)
 
 
 hcq_m6_formula <-  ~ is_improve_one + is_death + mo(death_id) + (0 + is_worsen_one | worsen_one_id) + 
     (0 + is_improve_one | improve_one_id) + best_supportive_care * rate_group + age_norm * rate_group + sex * rate_group + (rate_group | hospital_id) + log_peak_d_dimer * rate_group
 
 
-hcq_m6 <- brmshmmdata(hcq_m6_formula, hcq_m6_series_data, 
+hcq_m6 <- brmshmmdata(hcq_m6_formula, hcq_m6_serie_data, 
                   hcq_m1_rate_data, hcq_m1_hidden_state_data, hcq_m6_initial_states, prior = hcq_m1_prior,
                   observed_state_data = hcq_m1_observed_state_data)
 
@@ -343,21 +376,21 @@ pp_check_transitions_direction(hcq_m6_fit, hcq_m6_predicted_rect, states_from = 
 
 
 ```{r}
-hcq_m7_series_data <- series_data %>% 
+hcq_m7_serie_data <- serie_data %>% 
   group_by(.serie) %>%
   filter(any(!is.na(IL_6))) %>%
   ungroup() %>%
   compute_marker_peak(column_name = "IL_6", new_column_name = "peak_IL_6", initial_value = 1) %>%
   mutate(log_peak_IL_6 = log(peak_IL_6))
 
-hcq_m7_initial_states <- hcq_m7_series_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed)
+hcq_m7_initial_states <- hcq_m7_serie_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed)
 
 
 hcq_m7_formula <-  ~ is_improve_one + is_death + mo(death_id) + (0 + is_worsen_one | worsen_one_id) + 
     (0 + is_improve_one | improve_one_id) + best_supportive_care * rate_group + age_norm * rate_group + sex * rate_group + (rate_group | hospital_id) + log_peak_IL_6 * rate_group
 
 
-hcq_m7 <- brmshmmdata(hcq_m7_formula, hcq_m7_series_data, 
+hcq_m7 <- brmshmmdata(hcq_m7_formula, hcq_m7_serie_data, 
                   hcq_m1_rate_data, hcq_m1_hidden_state_data, hcq_m7_initial_states, prior = hcq_m1_prior,
                   observed_state_data = hcq_m1_observed_state_data)
 

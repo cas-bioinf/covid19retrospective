@@ -1,9 +1,13 @@
-posterior_epred_rect <- function(fit, nsamples = NULL) {
+posterior_epred_rect <- function(fit, nsamples = NULL, newdata = NULL) {
   validate_brmshmmfit(fit)
 
   brms:::contains_samples(fit$brmsfit)
 
-  pred_rawdata <- fit$data
+  if(is.null(newdata)) {
+    pred_rawdata <- fit$data
+  } else {
+    pred_rawdata <- newdata
+  }
 
   data_hmm <- make_data_hmm(pred_rawdata)
 
@@ -43,12 +47,16 @@ posterior_epred_rect <- function(fit, nsamples = NULL) {
   result_rect
 }
 
-posterior_rect_to_long <- function(fit, posterior_rect) {
+posterior_rect_to_long <- function(fit, posterior_rect, newdata = NULL) {
   validate_brmshmmfit(fit)
   brms:::contains_samples(fit$brmsfit)
 
   nsamples <- dim(posterior_rect)[3]
-  pred_rawdata <- fit$data
+  if(is.null(newdata)) {
+    pred_rawdata <- fit$data
+  } else {
+    pred_rawdata <- newdata
+  }
 
   result <- array(NA_integer_, c(nsamples, nrow(pred_rawdata$serie_data)))
 
