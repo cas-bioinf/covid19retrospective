@@ -33,7 +33,9 @@ marker_map <- c(
         "Augmentin" = "amoxiclav",
         "Piperacilin/tazobactam" = "piperacilin_tazobactam",
         "Piperacillin/Tazobactam" = "piperacilin_tazobactam",
-        "Clarithromycin" = "clarithromycin",
+        "Clarithromycin" = "clarithromycin", # Also a macrolide
+        "sulfamethoxazol" = "sulfamethoxazol", # Combines with trimethoprim to "Cotrimoxazol"
+        "trimethoprim" = "trimethoprim",
         "ofloxacin" = "ofloxacin",
         "ceftriaxone" = "ceftriaxone",
         "cefuroxime" = "cefuroxime",
@@ -44,7 +46,6 @@ marker_map <- c(
         "cefepime" = "cefepime",
         "Vancomycin" = "vancomycin",
         "ampicillin/sulbactam" = "ampicillin_sulbactam",
-        "trimethoprim" = "trimethoprim",
         "Ciprofloxacin" = "ciprofloxacin",
         "Meropenem" = "meropenem",
         "Metronidazol" = "Metronidazol",
@@ -52,7 +53,6 @@ marker_map <- c(
         "Fluconazol" = "fluconazol",
         "zinkorot" = "zinc",
         "Anidulafungin" = "anidulafungin",
-        "sulfamethoxazol" = "sulfamethoxazol",
         "Isoprinosine" = "isoprinosine",
         "Tamiflu" = "tamiflu",
         "Lexaurin" = "lexaurin"
