@@ -18,6 +18,9 @@ if(!dir.exists(cache_dir)) {
   dir.create(cache_dir)
 }
 
+do_pp_checks <- FALSE
+hmm_hypothesis_res_list <- list()
+
 #Temporary hack
 registerS3method("stan_llh", class = "rate_hmm", method = stan_llh.rate_hmm, envir = asNamespace("brms"))
 ```
@@ -93,63 +96,90 @@ summary(hcq_m1_fit$brmsfit)
 ```
 ```{r}
 
-counterfactual_max_days <- 90
-counterfactual_base <-  crossing(day = 0:counterfactual_max_days, patient_id = unique(serie_data$patient_id)) %>%
-  inner_join(data$patient_data, by = c("patient_id")) %>% 
-  left_join(wide, by = c("hospital_id", "patient_id", "day")) %>%
-  mutate(.time = day, .serie = patient_id, .observed = breathing) %>%
-  mutate(.time = .time +1) %>% 
-  filter(.time >= 1) %>%
-  group_by(.serie) %>%
-  mutate(best_supportive_care = !is.na(best_supportive_care_from) & day >= best_supportive_care_from) %>%
-  ungroup()
-
-
-counterfactual_took_hcq <- counterfactual_base %>% mutate(took_hcq = TRUE)
-counterfactual_no_hcq <- counterfactual_base %>% mutate(took_hcq = FALSE)
-
-
-
-hcq_m1_counterfactual_took_hcq <- hcq_m1
-hcq_m1_counterfactual_took_hcq$serie_data = counterfactual_took_hcq
-
-hcq_m1_counterfactual_took_hcq_epred_rect <- posterior_epred_rect(hcq_m1_fit, newdata = hcq_m1_counterfactual_took_hcq)
-
-hcq_m1_counterfactual_no_hcq <- hcq_m1
-hcq_m1_counterfactual_no_hcq$serie_data = counterfactual_no_hcq
-
-hcq_m1_counterfactual_no_hcq_epred_rect <- posterior_epred_rect(hcq_m1_fit, newdata = hcq_m1_counterfactual_no_hcq)
+# counterfactual_max_days <- 90
+# counterfactual_base <-  crossing(day = 0:counterfactual_max_days, patient_id = unique(serie_data$patient_id)) %>%
+#   inner_join(data$patient_data, by = c("patient_id")) %>% 
+#   left_join(wide, by = c("hospital_id", "patient_id", "day")) %>%
+#   mutate(.time = day, .serie = patient_id, .observed = breathing) %>%
+#   mutate(.time = .time +1) %>% 
+#   filter(.time >= 1) %>%
+#   group_by(.serie) %>%
+#   mutate(best_supportive_care = !is.na(best_supportive_care_from) & day >= best_supportive_care_from) %>%
+#   ungroup()
+# 
+# 
+# counterfactual_took_hcq <- counterfactual_base %>% mutate(took_hcq = TRUE)
+# counterfactual_no_hcq <- counterfactual_base %>% mutate(took_hcq = FALSE)
+# 
+# 
+# 
+# hcq_m1_counterfactual_took_hcq <- hcq_m1
+# hcq_m1_counterfactual_took_hcq$serie_data = counterfactual_took_hcq
+# 
+# hcq_m1_counterfactual_took_hcq_epred_rect <- posterior_epred_rect(hcq_m1_fit, newdata = hcq_m1_counterfactual_took_hcq)
+# 
+# hcq_m1_counterfactual_no_hcq <- hcq_m1
+# hcq_m1_counterfactual_no_hcq$serie_data = counterfactual_no_hcq
+# 
+# hcq_m1_counterfactual_no_hcq_epred_rect <- posterior_epred_rect(hcq_m1_fit, newdata = hcq_m1_counterfactual_no_hcq)
 
 
 ```
 
+```{r}
+draws <- tidybayes::tidy_draws(hcq_m1_fit$brmsfit)
+hmm_hypothesis_res_list[["hcq_m1_death"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_took_hcqTRUE,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_reduces_death,
+    adjusted = "supportive"
+  )
+
+hmm_hypothesis_res_list[["hcq_m1_discharged"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_increases_discharged,
+    adjusted = "supportive"
+  )
+```
+
 
 ```{r}
-hcq_m1_epred_rect <- posterior_epred_rect(hcq_m1_fit)
-hcq_m1_predicted_rect <- posterior_epred_to_predicted(hcq_m1_fit, hcq_m1_epred_rect)
-hcq_m1_predicted <- posterior_rect_to_long(hcq_m1_fit, hcq_m1_predicted_rect)
+if(do_pp_checks) {
+  hcq_m1_epred_rect <- posterior_epred_rect(hcq_m1_fit)
+  hcq_m1_predicted_rect <- posterior_epred_to_predicted(hcq_m1_fit, hcq_m1_epred_rect)
+  hcq_m1_predicted <- posterior_rect_to_long(hcq_m1_fit, hcq_m1_predicted_rect)
+}
 ```
 
 
 
 ```{r}
-hcq_m1_predicted_df <- posterior_long_to_df(hcq_m1_fit$data, hcq_m1_predicted)
-
-all_ids <- hcq_m1_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
-  distinct() %>% arrange(hospital_id) %>% pull(.serie)
-step_size <- 6
-for(step in 1:ceiling(length(all_ids) / step_size)) {
-  series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+if(do_pp_checks) {
+  hcq_m1_predicted_df <- posterior_long_to_df(hcq_m1_fit$data, hcq_m1_predicted)
   
-  posterior_state_plot(hcq_m1_predicted_df, all_ids[series_id], hcq_m1_fit$data) %>% print()
-
+  all_ids <- hcq_m1_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
+    distinct() %>% arrange(hospital_id) %>% pull(.serie)
+  step_size <- 6
+  for(step in 1:ceiling(length(all_ids) / step_size)) {
+    series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+    
+    posterior_state_plot(hcq_m1_predicted_df, all_ids[series_id], hcq_m1_fit$data) %>% print()
+  
+  }
 }
 ```
 
 ```{r}
-pp_check_last_state(hcq_m1_fit, hcq_m1_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
-pp_check_transitions_direction(hcq_m1_fit, hcq_m1_predicted_rect)
-pp_check_transitions_direction(hcq_m1_fit, hcq_m1_predicted_rect, states_from = 2:6)
+if(do_pp_checks) {
+  pp_check_last_state(hcq_m1_fit, hcq_m1_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
+  pp_check_transitions_direction(hcq_m1_fit, hcq_m1_predicted_rect)
+  pp_check_transitions_direction(hcq_m1_fit, hcq_m1_predicted_rect, states_from = 2:6)
+}
 ```
 
 ```{r}
@@ -164,6 +194,26 @@ hcq_m2_fit <- brmhmm(hcq_m2, cache_file = paste0(cache_dir,"/hcq_m2.rds"))
 summary(hcq_m2_fit$brmsfit)
 ```
 
+```{r}
+draws <- tidybayes::tidy_draws(hcq_m2_fit$brmsfit)
+hmm_hypothesis_res_list[["hcq_m2_death"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_took_hcqTRUE,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_reduces_death,
+    adjusted = "age, sex, supportive"
+  )
+
+hmm_hypothesis_res_list[["hcq_m2_discharged"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_increases_discharged,
+    adjusted = "age, sex, supportive"
+  )
+```
 
 ```{r}
 hcq_m2_epred_rect <- posterior_epred_rect(hcq_m2_fit)
@@ -204,6 +254,29 @@ hcq_m3_fit <- brmhmm(hcq_m3, cache_file = paste0(cache_dir,"/hcq_m3.rds"))
 
 summary(hcq_m3_fit$brmsfit)
 ```
+
+```{r}
+draws <- tidybayes::tidy_draws(hcq_m3_fit$brmsfit)
+hmm_hypothesis_res_list[["hcq_m3_death"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_took_hcqTRUE,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_reduces_death,
+    adjusted = "age, sex, supportive, hospital"
+  )
+
+hmm_hypothesis_res_list[["hcq_m3_discharged"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_increases_discharged,
+    adjusted = "age, sex, supportive, hospital"
+  )
+```
+
+
 ```{r}
 hcq_m3_epred_rect <- posterior_epred_rect(hcq_m3_fit)
 hcq_m3_predicted_rect <- posterior_epred_to_predicted(hcq_m3_fit, hcq_m3_epred_rect)
@@ -243,6 +316,45 @@ hcq_m4 <- brmshmmdata(hcq_m4_formula, serie_data,
 hcq_m4_fit <- brmhmm(hcq_m4, cache_file = paste0(cache_dir,"/hcq_m4.rds"))
 
 summary(hcq_m4_fit$brmsfit)
+```
+
+```{r}
+draws <- tidybayes::tidy_draws(hcq_m4_fit$brmsfit)
+hmm_hypothesis_res_list[["hcq_m4_death"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_took_hcqTRUE,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_reduces_death,
+    adjusted = "age, sex, supportive, hospital, az"
+  )
+
+hmm_hypothesis_res_list[["hcq_m4_discharged"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_increases_discharged,
+    adjusted = "age, sex, supportive, hospital, az"
+  )
+
+hmm_hypothesis_res_list[["hcq_m4_death_az"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_took_azTRUE,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_reduces_death,
+    adjusted = "age, sex, supportive, hospital, hcq"
+  )
+
+hmm_hypothesis_res_list[["hcq_m4_discharged_az"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_took_azTRUE + draws$`b_rate_groupimprove_one:took_azTRUE`,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_increases_discharged,
+    adjusted = "age, sex, supportive, hospital, hcq"
+  )
 ```
 
 ```{r}
@@ -288,6 +400,28 @@ hcq_m5_fit <- brmhmm(hcq_m5, cache_file = paste0(cache_dir,"/hcq_m5.rds"))
 
 summary(hcq_m5_fit$brmsfit)
 ```
+
+```{r}
+draws <- tidybayes::tidy_draws(hcq_m5_fit$brmsfit)
+hmm_hypothesis_res_list[["hcq_m5_death"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_took_hcqTRUE,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_reduces_death,
+    adjusted = "age, sex, supportive, hospital, comorbidities_sum"
+  )
+
+hmm_hypothesis_res_list[["hcq_m5_discharged"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_increases_discharged,
+    adjusted = "age, sex, supportive, hospital, comorbidities_sum"
+  )
+```
+
 
 ```{r}
 hcq_m5_epred_rect <- posterior_epred_rect(hcq_m5_fit)
@@ -345,6 +479,20 @@ summary(hcq_m6_fit$brmsfit)
 ```
 
 ```{r}
+draws <- tidybayes::tidy_draws(hcq_m6_fit$brmsfit)
+hmm_hypothesis_res_list[["hcq_m6_d_dimer_death"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_log_peak_d_dimer,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$d_dimer_increases_death,
+    adjusted = "age, sex, hospital"
+  )
+
+
+```
+
+```{r}
 hcq_m6_epred_rect <- posterior_epred_rect(hcq_m6_fit)
 hcq_m6_predicted_rect <- posterior_epred_to_predicted(hcq_m6_fit, hcq_m6_epred_rect)
 hcq_m6_predicted <- posterior_rect_to_long(hcq_m6_fit, hcq_m6_predicted_rect)
@@ -399,6 +547,21 @@ hcq_m7_fit <- brmhmm(hcq_m7, cache_file = paste0(cache_dir,"/hcq_m7.rds"))
 summary(hcq_m7_fit$brmsfit)
 ```
 
+
+```{r}
+draws <- tidybayes::tidy_draws(hcq_m7_fit$brmsfit)
+hmm_hypothesis_res_list[["hcq_m7_IL_6_death"]] <- 
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_log_peak_IL_6,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$IL_6_increases_death,
+    adjusted = "age, sex, hospital"
+  )
+
+
+```
+
 ```{r}
 hcq_m7_epred_rect <- posterior_epred_rect(hcq_m7_fit)
 hcq_m7_predicted_rect <- posterior_epred_to_predicted(hcq_m7_fit, hcq_m7_epred_rect)
@@ -426,3 +589,18 @@ pp_check_last_state(hcq_m7_fit, hcq_m7_predicted_rect) #TODO separately terminal
 pp_check_transitions_direction(hcq_m7_fit, hcq_m7_predicted_rect)
 pp_check_transitions_direction(hcq_m7_fit, hcq_m7_predicted_rect, states_from = 2:6)
 ```
+
+
+
+# Environment
+
+
+```{r}
+hmm_hypothesis_res_all <- do.call(rbind, hmm_hypothesis_res_list)
+write_csv(hmm_hypothesis_res_all, path = here::here("manuscript", "hmm_res.csv"))
+```
+
+```{r}
+sessionInfo()
+```
+
