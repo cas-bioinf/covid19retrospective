@@ -1,7 +1,12 @@
 hypotheses <-
-  list(hcq_reduces_death = list(caption = "HCQ reduces risk of death"),
-       hcq_increases_discharged = list(caption = "HCQ reduces time in hospital")
-       ) %>% purrr::imap(
+  list(
+       hcq_reduces_death = list(caption = "HCQ associated with lower risk of death"),
+       hcq_increases_discharged = list(caption = "HCQ associated with shorter time in hospital"),
+       az_reduces_death = list(caption = "Azithromycin associated with lower risk of death"),
+       az_increases_discharged = list(caption = "Azithromycin associated with shorter time in hospital"),
+       d_dimer_increases_death = list(caption = "High D-dimer associated with higher risk of death"),
+       IL_6_increases_death = list(caption = "High IL-6 associated with higher risk of death")
+  ) %>% purrr::imap(
          function(def, name) {
            def$name <- name
            def
@@ -15,9 +20,40 @@ frequentist_hypothesis_res_from_coxph <- function(
   coefficient_id <- summ$cmap[coefficient_name, transition]
   data.frame(hypothesis = hypothesis$name,
              model = "coxph",
-             adjusted = "age, sex",
+             adjusted = adjusted,
+             estimand = "log(HR)",
              p_value = summ$coefficients[coefficient_id, "Pr(>|z|)"],
+             point_estimate = summ$coefficients[coefficient_id, "coef"],
              ci_low = summ$conf.int[coefficient_id, "lower .95"],
              ci_high = summ$conf.int[coefficient_id, "upper .95"]
+  )
+}
+
+
+bayesian_hypothesis_res_from_jm <- function(
+  hypothesis, jm_fit, coefficient_name, adjusted) {
+  bayesian_hypothesis_res_from_fit(
+    draws = tidybayes::tidy_draws(fit)[[coefficient_name]],
+    model = "jm",
+    estimand = "log(HR)",
+    hypothesis = hypothesis,
+    adjusted = adjusted)
+}
+
+bayesian_hypothesis_res_from_draws <- function(
+  draws, model, estimand,
+  hypothesis, adjusted) {
+
+  reference_point <- 0
+  reference_location <- ecdf(draws)(reference_point)
+  data.frame(hypothesis = hypothesis$name,
+             model = model,
+             adjusted = adjusted,
+             estimand = estimand,
+             widest_CI_excl_reference = abs(reference_location - 0.5) * 2,
+             point_estimate = mean(draws),
+             ci_low = quantile(draws, 0.025),
+             ci_high = quantile(draws, 0.975),
+             row.names = NULL
   )
 }
