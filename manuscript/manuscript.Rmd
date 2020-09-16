@@ -1,6 +1,12 @@
 ---
-title: "Detailed disease progression of 88 patients hospitalized with Covid-19 in the Czech Republic: A dataset and exploratory analysis" 
-output: pdf_document
+title: "Detailed disease progression of 88 patients hospitalized with Covid-19 in the Czech Republic: An exploratory analysis" 
+output: 
+  #rticles::arxiv_article
+  pdf_document
+  # bookdown::pdf_document2: 
+  #   toc: false
+  ##bookdown::pdf_book: 
+  #   base_format: rticles::arxiv_article
 abstract: "We collected a multi-centric retrospective dataset of patients who were admitted to 10 hospitals in Czech Republic and tested positive for SARS-CoV-2. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. To assess association between treatments, markers and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom."
 bibliography: Covid19.json
 ---
@@ -18,9 +24,9 @@ wide <- prepare_marker_data_wide(data)
 
 # Introduction 
 
-The Covid-19 pandemic, caused by severe acute respiratory syndrome coronavirus (SARS-CoV-2) has, as of September 2020 led to over 28 million cases and over 900 000 deaths. Proposed treatments include antivirals approved for other indications (Chloroquine, Hydroxychloroquine, Lopinavir/Ritonavir, Remdesivir, Favipiravir, Umifenovir), Azithromycin, corticosteriods, immunoglobulins, Tocilizumab and convalescent plasma [@http://zotero.org/users/5567156/items/8XWTUMUI; @http://zotero.org/users/5567156/items/6Q8Z8VJR; TODO]. Currently, the only treatment that exhibited positive effects in randomized trials is the corticosteriod Dexamethasone for severe cases [@http://zotero.org/users/5567156/items/IW6VZ53Q; http://zotero.org/users/5567156/items/5VAKEW58]. While initially promising, Hydroxychloroquine has failed to show benefit for both hospitalized patients [@http://zotero.org/users/5567156/items/9X3UH8ZM], as early treatment [@https://www.acpjournals.org/doi/10.7326/M20-4207] and as post-exposure profylaxis [@http://zotero.org/users/5567156/items/7C23YCV5; http://zotero.org/users/5567156/items/GMR9FX9Z]. Further, no improvement could be discerned when adding Azithromycin to Hydroxychloroquine therapy [@http://zotero.org/users/5567156/items/BQLRZGTQ]. Similarly, Lopinavir/Ritonavir also did not show benefit [@http://zotero.org/users/5567156/items/6I6GAVWU]. No benefit was observed for convalscent plasma [@http://zotero.org/users/5567156/items/UEXLDJCB; http://zotero.org/users/5567156/items/BHGT88US] For additional summary see (live review)   
+The Covid-19 pandemic, caused by severe acute respiratory syndrome coronavirus (SARS-CoV-2) has, as of September 2020 led to over 28 million cases and over 900 000 deaths. Proposed treatments include antivirals approved for other indications (Chloroquine, Hydroxychloroquine, Lopinavir/Ritonavir, Remdesivir, Favipiravir, Umifenovir), Azithromycin, corticosteriods, immunoglobulins, Tocilizumab and convalescent plasma [@http://zotero.org/users/5567156/items/8XWTUMUI; @http://zotero.org/users/5567156/items/6Q8Z8VJR; TODO]. Currently, the only treatment that exhibited positive effects in randomized trials is the corticosteriod Dexamethasone for severe cases [@http://zotero.org/users/5567156/items/IW6VZ53Q; @http://zotero.org/users/5567156/items/5VAKEW58]. While initially promising, Hydroxychloroquine has failed to show benefit for both hospitalized patients [@http://zotero.org/users/5567156/items/9X3UH8ZM], as early treatment [@http://zotero.org/users/5567156/items/G6KZKVMI] and as post-exposure profylaxis [@http://zotero.org/users/5567156/items/7C23YCV5; @http://zotero.org/users/5567156/items/GMR9FX9Z]. Further, no improvement could be discerned when adding Azithromycin to Hydroxychloroquine therapy [@http://zotero.org/users/5567156/items/BQLRZGTQ]. Similarly, Lopinavir/Ritonavir also did not show benefit [@http://zotero.org/users/5567156/items/6I6GAVWU]. No benefit was observed for convalscent plasma [@http://zotero.org/users/5567156/items/UEXLDJCB; @http://zotero.org/users/5567156/items/BHGT88US] For additional summary see [@http://zotero.org/users/5567156/items/YP62P6XJ].
 
-In observational studies, Hydroxychloroquine was often found to be associated with better outcomes [e. g., @http://zotero.org/users/5567156/items/WZPNBRYN; http://zotero.org/users/5567156/items/4HR7MUJ6; http://zotero.org/users/5567156/items/NXC9CDI9]
+In observational studies, Hydroxychloroquine was often found to be associated with better outcomes [e. g., @http://zotero.org/users/5567156/items/WZPNBRYN; @http://zotero.org/users/5567156/items/4HR7MUJ6; @http://zotero.org/users/5567156/items/NXC9CDI9]
 
 High IL-6, D-dimer values were observed to be associated with outcome and disease severity [@http://zotero.org/users/5567156/items/ID7F3XIH].
 Large study of electronic health records [@http://zotero.org/users/5567156/items/ARTB8HYZ] showed TODO.
@@ -51,9 +57,11 @@ Second class of models are Bayesian hidden Markov models of disease progression 
 #Sex differences are to be expected for both sociological and biological [@http://zotero.org/users/5567156/items/5KQZ3XEE] reasons.
 ```
 
+
+
 # Results
 
-```{r}
+```{r summarytable, echo=FALSE}
 
 data_table_1 <- rbind(
   data$patient_data %>% mutate(group = "All"),
@@ -73,8 +81,8 @@ mean_iqr <- function(x) {
 data_table_1 %>% group_by(group) %>% 
   summarise(
     N = n(),
-    `Distinct sites` = length(unique(hospital_id)),
-    Female = sum_percent(sex == "F"),
+   # `Distinct sites` = length(unique(hospital_id)),
+    Male = sum_percent(sex == "M"),
     `Age (mean, IQR)` = mean_iqr(age),
     `Admitted for Covid` = sum_percent(admitted_for_covid),
     `Took Azithromycin` = sum_percent(ever_az),
@@ -89,6 +97,8 @@ data_table_1 %>% group_by(group) %>%
     `Liver Disease` = sum_percent(liver_disease),
     `Smoking` = sum_percent(smoking),
     `BMI (mean, IQR)` = mean_iqr(BMI),
+    Deceased = sum_percent(outcome == "Death"),
+    Discharged = sum_percent(outcome == "Discharged"),
     .groups = "drop"
   ) %>%
   mutate(group = factor(group, levels= c("All", "HCQ", "No HCQ", "Measured D-dimer","Measured IL-6"), ordered = TRUE)) %>%
@@ -96,21 +106,25 @@ data_table_1 %>% group_by(group) %>%
   as.data.frame() %>%
   column_to_rownames("group") %>%
   t() %>% 
-  knitr::kable()
+  knitr::kable(caption = "Patient characterstics. Note that the 'Measured D-dimer' and 'Measured IL-6' are neither exclusive nor exhaustive.", booktabs = TRUE)
 ```
 
+
+See Table \@ref(tab:summarytable) for the overall characteristics of the patient sample and several subgroups we used in the analysis.
 
 ```{r}
 n_patients <- nrow(data$patient_data)
 n_hospitals <- length(unique(data$patient_data$hospital_id))
 ```
 
+In Figure \@ref(fig:progression) we show the disease progression for all patients.
 
-```{r}
+```{r progression, fig.cap="Disease progression for all patients included in the study"}
 my_paste <- function(x) {
   paste0(as.integer(x), collapse = "")
 }
 wide  %>% 
+  filter(!is.na(breathing)) %>%
   arrange(hospital_id, patient_id, day) %>%
   mutate(patient_id = factor(patient_id), patient_id = fct_reorder(patient_id, breathing,  .fun = my_paste, .desc = FALSE)) %>%
   ggplot(aes(x = day, y = patient_id, fill = breathing)) + 
@@ -120,6 +134,52 @@ wide  %>%
   theme(axis.title.y = element_blank(), axis.ticks.y = element_blank())
 
 ```
+
+
+```{r multiverse_results}
+bayesian_cols <- cols(
+  hypothesis = col_character(),
+  model = col_character(),
+  adjusted = col_character(),
+  estimand = col_character(),
+  widest_CI_excl_reference = col_double(),
+  point_estimate = col_double(),
+  ci_low = col_double(),
+  ci_high = col_double()
+)
+res_bayesian <- 
+  rbind(read_csv(here::here("manuscript", "hmm_res.csv"), col_types = bayesian_cols),
+        read_csv(here::here("manuscript", "jm_res.csv"), col_types = bayesian_cols)
+        )
+
+frequentist_cols <- cols(
+  hypothesis = col_character(),
+  model = col_character(),
+  adjusted = col_character(),
+  p_value = col_double(),
+  ci_low = col_double(),
+  ci_high = col_double()
+)
+
+res_frequentist <- 
+  rbind(read_csv(here::here("manuscript", "competing_risks_res.csv"), col_types = frequentist_cols))
+```
+
+```{r, fig.height=6, fig.width=}
+rbind(res_bayesian %>% select(-widest_CI_excl_reference), 
+      res_frequentist %>% select(-p_value)) %>%
+  mutate(
+    model_adjusted = paste0(model, " - ", adjusted),
+    label = factor(model_adjusted, levels = model_adjusted, labels = str_wrap(model_adjusted, 30)),
+    hypothesis = factor(hypothesis, levels = names(hypotheses), labels = purrr::map_chr(hypotheses,.f = ~ .x$caption))) %>%
+  ggplot(aes(x = point_estimate, xmin = ci_low, xmax = ci_high, y = label)) +
+  geom_vline(xintercept = 0, color = "blue") +
+  geom_point() +
+  geom_errorbarh() +
+  facet_wrap(~hypothesis, ncol = 1, scales = "free") 
+  #theme(axis.text.y = element_text(size = 6))
+```
+
 
 
 # References

@@ -1,4 +1,5 @@
-hypothesis,model,adjusted,widest_CI_excl_reference,point_estimate,ci_low,ci_high
-d_dimer_increases_death,jm,"age, sex, hcq",0.8145,0.4623520650361091,-0.17388168635662815,1.2990022483702242
-IL_6_increases_death,jm,"age, sex, hcq",0.44399999999999995,0.6628944241063485,-1.634427997616421,2.856371800857806
-d_dimer_increases_death,jm,"age, sex",0.8280000000000001,0.48549551387753986,-0.17023417215201875,1.3300737373827154
+hypothesis,model,adjusted,estimand,widest_CI_excl_reference,point_estimate,ci_low,ci_high
+d_dimer_increases_death,jm,"age, sex",log(HR),0.8135,0.4889373542364291,-0.1934630856042735,1.2880803790949442
+d_dimer_increases_death,jm,"age, sex, hcq",log(HR),0.7605,0.4430016772236544,-0.22771369336781433,1.2429202311823069
+IL_6_increases_death,jm,"age, sex",log(HR),0.5785,0.8610433055620637,-1.6037742808036022,3.0004075602392266
+IL_6_increases_death,jm,"age, sex, hcq",log(HR),0.6074999999999999,1.4802845837415133,-2.114606391954635,5.4115743494685145

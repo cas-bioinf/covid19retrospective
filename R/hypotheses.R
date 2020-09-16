@@ -24,16 +24,16 @@ frequentist_hypothesis_res_from_coxph <- function(
              estimand = "log(HR)",
              p_value = summ$coefficients[coefficient_id, "Pr(>|z|)"],
              point_estimate = summ$coefficients[coefficient_id, "coef"],
-             ci_low = summ$conf.int[coefficient_id, "lower .95"],
-             ci_high = summ$conf.int[coefficient_id, "upper .95"]
+             ci_low = log(summ$conf.int[coefficient_id, "lower .95"]),
+             ci_high = log(summ$conf.int[coefficient_id, "upper .95"])
   )
 }
 
 
 bayesian_hypothesis_res_from_jm <- function(
   hypothesis, jm_fit, coefficient_name, adjusted) {
-  bayesian_hypothesis_res_from_fit(
-    draws = tidybayes::tidy_draws(fit)[[coefficient_name]],
+  bayesian_hypothesis_res_from_draws(
+    draws = tidybayes::tidy_draws(jm_fit)[[coefficient_name]],
     model = "jm",
     estimand = "log(HR)",
     hypothesis = hypothesis,
