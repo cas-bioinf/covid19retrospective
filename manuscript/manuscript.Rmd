@@ -7,8 +7,9 @@ output:
      toc: false
   # bookdown::pdf_book: 
   #    base_format: rticles::arxiv_article
-abstract: "We collected a multi-centric retrospective dataset of patients who were admitted to N hospitals in Czech Republic and tested positive for SARS-CoV-2. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. To assess association between treatments, markers and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom."
+abstract: "We collected a multi-centric retrospective dataset of patients who were admitted to N hospitals in Czech Republic and tested positive for SARS-CoV-2. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. To assess association between treatments, markers and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom. Additionally we performed external validation of several proposed prognostic models for Covid-19 severity."
 bibliography: Covid19.json
+date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
 ---
 
 
@@ -34,7 +35,7 @@ Large study of electronic health records [@http://zotero.org/users/5567156/items
 
 An ongoing challenge in evalutating Covid-19 treatments is that the analysis and interpretation of the data is often inappropriate or misleading, most notably interpreting lack of evidence due to small sample size as evidence of no effect [see e.g., @http://zotero.org/users/5567156/items/5PZEEPJV; @http://zotero.org/users/5567156/items/AZDZHLJV].
 
-
+Additionally, many methods for predicting disease severity of Covid-19 were published, but the methods are at high risk of bias and lack external validation [@http://zotero.org/users/5567156/items/TS57HJ3T].
 
 # Methods
 
@@ -46,9 +47,9 @@ A convenience sample of patients... Patients over the age of 18 were included if
 
 Since many details of analysis may influence the conclusions made, we performed multiverse analysis [@http://zotero.org/users/5567156/items/DXWM259V] and report results for all the hypothesis tested across multiple different models using both frequentist and Bayesian paradigms. For each model class we worked with several possible sets of adjustments and - where applicable - with multiple estimands of the outcome as different tasks require different estimands [@http://zotero.org/users/5567156/items/MH797GNC]. All analysis wes performed in the R language [@http://zotero.org/users/5567156/items/67XKBC2W], visualisations and data cleaning was run with the `tidyverse` package [@http://zotero.org/users/5567156/items/8EWY8TKM]. Complete code for all analyses can be found at TODO.
 
-First class of models are frequentist multistate models under the proportional hazards assumption as implemented in the `coxph` function from the `survival` package [@http://zotero.org/users/5567156/items/I9UVTUJF]. We primarily use a model with competing risks for death and discharge from hospital (see Figure \@ref(fig:modelstates)a).
+First class of models are frequentist multistate models under the proportional hazards assumption as implemented in the `coxph` function from the `survival` package [@http://zotero.org/users/5567156/items/I9UVTUJF]. We primarily use a model with competing risks for death and discharge from hospital (see Figure&nbsp;\@ref(fig:modelstates)a).
 
-Second class of models are Bayesian hidden Markov models of disease progression implemented via a custom extension to the `brms` package [@http://zotero.org/users/5567156/items/7ER3ZSER]. The parametrization of the HMM is inspired by [@http://zotero.org/users/5567156/items/F9K2L5Q8] where an underlying continous process with given rates only between the neighbouring state and the transition matrix across all states is then computed as the total probability of transition across all possible paths. This class of models does not satisfy the proportional hazards assumption, instead, it is assumed the process has the Markov property - i.e. that the unobserved state and the covariates at a given day contain all the information to determine probabilities of the states on the next day. We primarily use a model that explicitly uses all of the recorded levels of breathing support and has a hidden (unobserved) element whether the patient is improving or worsening. The states and available transitions are shown in Figure \@ref(fig:modelstates)b.
+Second class of models are Bayesian hidden Markov models of disease progression implemented via a custom extension to the `brms` package [@http://zotero.org/users/5567156/items/7ER3ZSER]. The parametrization of the HMM is inspired by [@http://zotero.org/users/5567156/items/F9K2L5Q8] where an underlying continous process with given rates only between the neighbouring state and the transition matrix across all states is then computed as the total probability of transition across all possible paths. This class of models does not satisfy the proportional hazards assumption, instead, it is assumed the process has the Markov property - i.e. that the unobserved state and the covariates at a given day contain all the information to determine probabilities of the states on the next day. We primarily use a model that explicitly uses all of the recorded levels of breathing support and has a hidden (unobserved) element whether the patient is improving or worsening. The states and available transitions are shown in Figure&nbsp;\@ref(fig:modelstates)b.
 
 
 ```{r modelstates, fig.cap="States used in the competing risk model (a) and in the hidden Markov model (b). AA = Ambient air, Oxygen = Nasal oxygen, NIPPV = Non-invasive positive-pressure ventilation, ECMO = Extra-corporeal membrane oxygenation. In both models the 'Death' and 'Discharged' states are terminal. In the hidden Markov model, the 'Improving' and 'Worsening' variants of each non-terminal state are not observable - only the breathing support is observed and improving/worsening is inferred from progression of the disease." }
@@ -69,7 +70,9 @@ Except for age, sex and comorbidities, all covariates are treated as time-varyin
 #Sex differences are to be expected for both sociological and biological [@http://zotero.org/users/5567156/items/5KQZ3XEE] reasons.
 ```
 
+## Evaluating prognostic models
 
+We searched the living systematic review of Covid-19 prognostic models [@http://zotero.org/users/5567156/items/TS57HJ3T] for models that could be applied to our dataset (i.e. where we have gathered all the input features). This resulted in five usable models: [@http://zotero.org/users/5567156/items/EN4GICJ6; @http://zotero.org/users/5567156/items/INZVABQI; @http://zotero.org/users/5567156/items/3A2RN4ZS; @http://zotero.org/users/5567156/items/4DDUVEKS; @http://zotero.org/users/5567156/items/X4GWJIP5].
 
 # Results
 
@@ -130,7 +133,7 @@ data_table_1 %>% group_by(group) %>%
 ```
 
 
-In Figure \@ref(fig:progression) we show the disease progression for all patients.
+In Figure&nbsp;\@ref(fig:progression) we show the disease progression for all patients.
 
 ```{r progression, fig.cap="Disease progression for all patients included in the study as determined by breathing support required. AA = Ambient air, Oxygen = Nasal oxygen, NIPPV = Non-invasive positive-pressure ventilation, ECMO = Extra-corporeal membrane oxygenation."}
 my_paste <- function(x) {
@@ -184,7 +187,7 @@ all_hypo <- rbind(res_bayesian %>% select(-widest_CI_excl_reference),
 
 ```
 
-
+## Association between treatment, markers and outcomes
 
 ```{r multiverseresultsdrugs, fig.height=7, fig.width=8.5, fig.cap="Estimates of model coefficients (log hazard ratios) for association between treatments and main outcomes. Each row represents a model - HMM = Bayesian hidden-markov model, coxph = Frequentist competing risks model. Additionally the factors the model adjusted for are listed - supportive = best supportive care initiated, comorbidities_sum = total number of comorbidities, admitted = admitted for Covid-19, az = took Azithromycin, hcq = took Hydroxychloroquine. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval."}
 plot_multiverse <- function(hypo_res) {
@@ -214,9 +217,51 @@ multiverse_az <- plot_multiverse(all_hypo %>% filter(group == "az"))
 plot_multiverse(all_hypo %>% filter(group == "markers"))
 ```
 
-The results of the multiverse analysis for association between drugs used and outcomes is shown in Figure \@ref(fig:multiverseresultsdrugs). In the current dataset, we see a possibly strong negative association between using Hydroxychloroquine and risk of death across all models, although for several models we cannot rule out that the association is of negligible strength. Across all models, the data offer no definitive conclusions on the association between taking Hydroxychloroquine and length of hospital stay (represented as risk for being discharged). After adjusting for Hydroxychloroquine usage, we also cannot make any strong claims on the association of using Azithromycin with either outcome. In all cases, the results seem to not be strongly affected by model choice.
+The results of the multiverse analysis for association between drugs used and outcomes is shown in Figure&nbsp;\@ref(fig:multiverseresultsdrugs). In the current dataset, we see a possibly strong negative association between using Hydroxychloroquine and risk of death across all models, although for several models we cannot rule out that the association is of negligible strength. Across all models, the data offer no definitive conclusions on the association between taking Hydroxychloroquine and length of hospital stay (represented as risk for being discharged). After adjusting for Hydroxychloroquine usage, we also cannot make any strong claims on the association of using Azithromycin with either outcome. In all cases, the results seem to not be strongly affected by model choice.
 
-We additionally investigated the association of several markers with disease progression. Due to low number of patients in the current dataset, the results are inconclusive and heavily dependent on model choice. All of the coefficient estimates can be seen in Figure \@ref(fig:multiverseresultsmarkers)
+We additionally investigated the association of several markers with disease progression. Due to low number of patients in the current dataset, the results are inconclusive and heavily dependent on model choice. All of the coefficient estimates can be seen in Figure&nbsp;\@ref(fig:multiverseresultsmarkers)
+
+## Evaluating prediction models
+
+The ACP index [@http://zotero.org/users/5567156/items/EN4GICJ6] is a simple score that categorizes the patients into 3 categories based on age and C-reactive protein (CRP): grade 1 (age $<$ 60 years and CRP $<$ 34 mg/L), grade 2 (age $\geq$ 60
+years and CRP $<$ 34 mg/L or age $<$ 60 years and CRP $\geq$ 34 mg/L), grade 3 (age $\geq$ 60 years and CRP $\geq$ 34 mg/L) and was evaluated primarily on 12-day mortality. Despite the score being developed on patients in Wuhan, China, the 12-day mortality in our dataset is in rough agreement with the values in the original manuscript as shown in Table \@ref(tab:acpresults).      
+
+
+```{r acpresults, echo=FALSE}
+acp_data <- wide %>%  
+  group_by(patient_id) %>%
+  filter(any(!is.na(CRP))) %>%
+  summarise(
+    first_CRP_day = min(day[!is.na(CRP)]),
+    first_CRP = CRP[day == first_CRP_day],
+    worst_breathing_12 = max(breathing[day >= first_CRP_day & day <= first_CRP_day + 12]),
+    .groups = "drop") %>% 
+  inner_join(data$patient_data, by = c("patient_id")) %>%
+  filter(outcome %in% c("Death","Discharged") | last_record - first_CRP_day >= 12) %>%
+  mutate(    
+    alive_12 = last_record > first_CRP_day + 12 | outcome == "Discharged",
+    ACP_grade = case_when(
+       age < 60 & first_CRP < 34 ~ 1,
+       age >= 60 & first_CRP >= 34 ~ 3,
+       TRUE ~ 2
+    ) 
+  )
+
+acp_data %>%
+  group_by(ACP_grade) %>%
+  summarise(`patients` = n(), `12-day mortality` = scales::percent(mean(!alive_12), accuracy = 0.1), .groups = "drop") %>%
+  arrange(ACP_grade) %>%
+  mutate(`Li et al. 95% CI` = c("0%", "0 - 11.3%", "19.8 - 44.3%")) %>%
+  rename(`ACP grade` = ACP_grade) %>%
+  knitr::kable(booktabs = TRUE, caption = "Comparing the 12-day mortality based on ACP score (where available) with the 95\\% confidence intervals (CI) for 12-day mortality reported by Lu et al.")
+
+# acp_data %>%
+#   group_by(ACP_grade, worst_breathing_12) %>%
+#   summarise(mean(alive_12))
+```
+
+(TODO: the other prediction models)
+
 
 
 # Conclusions

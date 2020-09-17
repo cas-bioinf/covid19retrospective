@@ -65,7 +65,9 @@ compute_derived_quantities_patients <- function(data) {
               ever_az = any(took_az),
               ever_convalescent_plasma = any(took_convalescent_plasma),
               any_d_dimer = any(!is.na(d_dimer)),
-              any_IL_6 = any(!is.na(IL_6))
+              any_IL_6 = any(!is.na(IL_6)),
+              worst_breathing = max(breathing),
+              .groups = "drop"
     )
 
   data$patient_data <- data$patient_data %>%
