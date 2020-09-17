@@ -2,12 +2,12 @@
 title: "Detailed disease progression of 88 patients hospitalized with Covid-19 in the Czech Republic: An exploratory analysis" 
 output: 
   #rticles::arxiv_article
-  pdf_document
-  # bookdown::pdf_document2: 
-  #   toc: false
-  ##bookdown::pdf_book: 
-  #   base_format: rticles::arxiv_article
-abstract: "We collected a multi-centric retrospective dataset of patients who were admitted to 10 hospitals in Czech Republic and tested positive for SARS-CoV-2. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. To assess association between treatments, markers and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom."
+  #pdf_document
+  bookdown::pdf_document2: 
+     toc: false
+  # bookdown::pdf_book: 
+  #    base_format: rticles::arxiv_article
+abstract: "We collected a multi-centric retrospective dataset of patients who were admitted to N hospitals in Czech Republic and tested positive for SARS-CoV-2. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. To assess association between treatments, markers and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom."
 bibliography: Covid19.json
 ---
 
@@ -17,6 +17,7 @@ knitr::opts_chunk$set(echo = FALSE)
 
 devtools::load_all()
 library(tidyverse)
+library(patchwork)
 theme_set(cowplot::theme_cowplot())
 data <- read_data_for_analysis()
 wide <- prepare_marker_data_wide(data)
@@ -45,13 +46,24 @@ A convenience sample of patients... Patients over the age of 18 were included if
 
 Since many details of analysis may influence the conclusions made, we performed multiverse analysis [@http://zotero.org/users/5567156/items/DXWM259V] and report results for all the hypothesis tested across multiple different models using both frequentist and Bayesian paradigms. For each model class we worked with several possible sets of adjustments and - where applicable - with multiple estimands of the outcome as different tasks require different estimands [@http://zotero.org/users/5567156/items/MH797GNC]. All analysis wes performed in the R language [@http://zotero.org/users/5567156/items/67XKBC2W], visualisations and data cleaning was run with the `tidyverse` package [@http://zotero.org/users/5567156/items/8EWY8TKM]. Complete code for all analyses can be found at TODO.
 
-First class of models are frequentist multistate models under the proportional hazards assumption as implemented in the `coxph` function from the `survival` package [@http://zotero.org/users/5567156/items/I9UVTUJF].
+First class of models are frequentist multistate models under the proportional hazards assumption as implemented in the `coxph` function from the `survival` package [@http://zotero.org/users/5567156/items/I9UVTUJF]. We primarily use a model with competing risks for death and discharge from hospital (see Figure \@ref(fig:modelstates)a).
 
-Second class of models are Bayesian hidden Markov models of disease progression implemented via a custom extension to the `brms` package [@http://zotero.org/users/5567156/items/7ER3ZSER]. The parametrization of the HMM is inspired by [@http://zotero.org/users/5567156/items/F9K2L5Q8] where an underlying continous process with given rates only between the neighbouring state and the transition matrix across all states is then computed as the total probability of transition across all possible paths. This class of models does not satisfy the proportional hazards assumption, instead, it is assumed the process has the Markov property - i.e. that the unobserved state and the covariates at a given day contain all the information to determine probabilities of the states on the next day.
-
-`stan_jm` function in the `rstanarm` package [@http://zotero.org/users/5567156/items/KHJGLQS5]
+Second class of models are Bayesian hidden Markov models of disease progression implemented via a custom extension to the `brms` package [@http://zotero.org/users/5567156/items/7ER3ZSER]. The parametrization of the HMM is inspired by [@http://zotero.org/users/5567156/items/F9K2L5Q8] where an underlying continous process with given rates only between the neighbouring state and the transition matrix across all states is then computed as the total probability of transition across all possible paths. This class of models does not satisfy the proportional hazards assumption, instead, it is assumed the process has the Markov property - i.e. that the unobserved state and the covariates at a given day contain all the information to determine probabilities of the states on the next day. We primarily use a model that explicitly uses all of the recorded levels of breathing support and has a hidden (unobserved) element whether the patient is improving or worsening. The states and available transitions are shown in Figure \@ref(fig:modelstates)b.
 
 
+```{r modelstates, fig.cap="States used in the competing risk model (a) and in the hidden Markov model (b). AA = Ambient air, Oxygen = Nasal oxygen, NIPPV = Non-invasive positive-pressure ventilation, ECMO = Extra-corporeal membrane oxygenation. In both models the 'Death' and 'Discharged' states are terminal. In the hidden Markov model, the 'Improving' and 'Worsening' variants of each non-terminal state are not observable - only the breathing support is observed and improving/worsening is inferred from progression of the disease." }
+knitr::include_graphics(here::here("manuscript","static_figs","model_states.pdf"))
+```
+
+When markers are used as predictors in both the hidden Markov models and the competing risks model, we impute the missing values using either the maximum of the marker so far or the last-known value of the marker.  
+
+Additionally we used joint models for longitudinal and time-to-event data from `stan_jm` function in the `rstanarm` package [@http://zotero.org/users/5567156/items/KHJGLQS5]. Those models include a longitudinal component to model the evolution over time of marker for each patient and a time-to-event component which assumes proportional-hazards for an event. The estimated value of the marker is then used as one of the predictors in the time-to-event component. 
+
+```{r}
+#Since `stan_jm` does not support competing risks, we imputed the second event...
+```
+
+Except for age, sex and comorbidities, all covariates are treated as time-varying, e.g. the effect of taking a drug is only included for the days after the drug was taken. 
 
 ```{r}
 #Sex differences are to be expected for both sociological and biological [@http://zotero.org/users/5567156/items/5KQZ3XEE] reasons.
@@ -60,6 +72,14 @@ Second class of models are Bayesian hidden Markov models of disease progression 
 
 
 # Results
+
+```{r}
+n_patients <- nrow(data$patient_data)
+n_hospitals <- length(unique(data$patient_data$hospital_id))
+```
+
+In total, we were able to gather data for `r n_patients` patients, see Table \@ref(tab:summarytable) for the overall characteristics of the patient sample and several subgroups we used in the analysis.
+
 
 ```{r summarytable, echo=FALSE}
 
@@ -106,20 +126,13 @@ data_table_1 %>% group_by(group) %>%
   as.data.frame() %>%
   column_to_rownames("group") %>%
   t() %>% 
-  knitr::kable(caption = "Patient characterstics. Note that the 'Measured D-dimer' and 'Measured IL-6' are neither exclusive nor exhaustive.", booktabs = TRUE)
+  knitr::kable(caption = "Patient characteristics. Note that the 'Measured D-dimer' and 'Measured IL-6' are neither exclusive nor exhaustive.", booktabs = TRUE)
 ```
 
-
-See Table \@ref(tab:summarytable) for the overall characteristics of the patient sample and several subgroups we used in the analysis.
-
-```{r}
-n_patients <- nrow(data$patient_data)
-n_hospitals <- length(unique(data$patient_data$hospital_id))
-```
 
 In Figure \@ref(fig:progression) we show the disease progression for all patients.
 
-```{r progression, fig.cap="Disease progression for all patients included in the study"}
+```{r progression, fig.cap="Disease progression for all patients included in the study as determined by breathing support required. AA = Ambient air, Oxygen = Nasal oxygen, NIPPV = Non-invasive positive-pressure ventilation, ECMO = Extra-corporeal membrane oxygenation."}
 my_paste <- function(x) {
   paste0(as.integer(x), collapse = "")
 }
@@ -128,15 +141,15 @@ wide  %>%
   arrange(hospital_id, patient_id, day) %>%
   mutate(patient_id = factor(patient_id), patient_id = fct_reorder(patient_id, breathing,  .fun = my_paste, .desc = FALSE)) %>%
   ggplot(aes(x = day, y = patient_id, fill = breathing)) + 
-  geom_tile() + 
-  scale_fill_viridis_d(direction = -1) +
+  geom_tile(height = 0.7) + 
+  scale_fill_viridis_d("", direction = -1) +
+  scale_x_continuous("Days since hospitalization") +
   theme(axis.text.y = element_blank()) +
   theme(axis.title.y = element_blank(), axis.ticks.y = element_blank())
 
 ```
 
-
-```{r multiverse_results}
+```{r}
 bayesian_cols <- cols(
   hypothesis = col_character(),
   model = col_character(),
@@ -163,23 +176,53 @@ frequentist_cols <- cols(
 
 res_frequentist <- 
   rbind(read_csv(here::here("manuscript", "competing_risks_res.csv"), col_types = frequentist_cols))
+
+all_hypo <- rbind(res_bayesian %>% select(-widest_CI_excl_reference), 
+      res_frequentist %>% select(-p_value)) %>%
+    inner_join(hypotheses_df, by = c("hypothesis" = "name")) 
+
+
 ```
 
-```{r, fig.height=6, fig.width=}
-rbind(res_bayesian %>% select(-widest_CI_excl_reference), 
-      res_frequentist %>% select(-p_value)) %>%
-  mutate(
+
+
+```{r multiverseresultsdrugs, fig.height=7, fig.width=8.5, fig.cap="Estimates of model coefficients (log hazard ratios) for association between treatments and main outcomes. Each row represents a model - HMM = Bayesian hidden-markov model, coxph = Frequentist competing risks model. Additionally the factors the model adjusted for are listed - supportive = best supportive care initiated, comorbidities_sum = total number of comorbidities, admitted = admitted for Covid-19, az = took Azithromycin, hcq = took Hydroxychloroquine. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval."}
+plot_multiverse <- function(hypo_res) {
+  hypo_res %>% mutate(
+    id = rev(1:n()),
     model_adjusted = paste0(model, " - ", adjusted),
     label = factor(model_adjusted, levels = model_adjusted, labels = str_wrap(model_adjusted, 30)),
-    hypothesis = factor(hypothesis, levels = names(hypotheses), labels = purrr::map_chr(hypotheses,.f = ~ .x$caption))) %>%
-  ggplot(aes(x = point_estimate, xmin = ci_low, xmax = ci_high, y = label)) +
+    model_adjusted_fct = fct_reorder(factor(model_adjusted),  id)) %>%
+  ggplot(aes(x = point_estimate, xmin = ci_low, xmax = ci_high, y = model_adjusted_fct)) +
   geom_vline(xintercept = 0, color = "blue") +
   geom_point() +
-  geom_errorbarh() +
-  facet_wrap(~hypothesis, ncol = 1, scales = "free") 
+  geom_errorbarh() + 
+  facet_wrap(~caption, ncol = 1, scales = "free_y") +
+  scale_x_continuous("Model coefficient estimate") +
+  scale_y_discrete("")
   #theme(axis.text.y = element_text(size = 6))
+}
+
+multiverse_hcq <- plot_multiverse(all_hypo %>% filter(group == "hcq"))
+multiverse_az <- plot_multiverse(all_hypo %>% filter(group == "az"))
+
+(multiverse_hcq / multiverse_az) + plot_layout(heights = c(2.2,1))
+
 ```
 
+```{r multiverseresultsmarkers, fig.height=2.5, fig.width=6, fig.cap="Estimates of model coefficients (log hazard ratios) for association between markers and death. Each row represents a model - HMM = Bayesian hidden-markov model, jm = Joint longitudinal and time-to-event model. Additionally the factors the model adjusted for are listed - hcq = took Hydroxychloroquine. We show posterior mean and 95% credible interval."}
+plot_multiverse(all_hypo %>% filter(group == "markers"))
+```
 
+The results of the multiverse analysis for association between drugs used and outcomes is shown in Figure \@ref(fig:multiverseresultsdrugs). In the current dataset, we see a possibly strong negative association between using Hydroxychloroquine and risk of death across all models, although for several models we cannot rule out that the association is of negligible strength. Across all models, the data offer no definitive conclusions on the association between taking Hydroxychloroquine and length of hospital stay (represented as risk for being discharged). After adjusting for Hydroxychloroquine usage, we also cannot make any strong claims on the association of using Azithromycin with either outcome. In all cases, the results seem to not be strongly affected by model choice.
+
+We additionally investigated the association of several markers with disease progression. Due to low number of patients in the current dataset, the results are inconclusive and heavily dependent on model choice. All of the coefficient estimates can be seen in Figure \@ref(fig:multiverseresultsmarkers)
+
+
+# Conclusions
+
+Will be written once we have the full dataset.
+
+Where our resutls contradict randomized trials, the most likely explanation is systematic bias in our dataset.
 
 # References

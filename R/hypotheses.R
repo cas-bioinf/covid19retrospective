@@ -1,17 +1,19 @@
 hypotheses <-
   list(
-       hcq_reduces_death = list(caption = "HCQ associated with lower risk of death"),
-       hcq_increases_discharged = list(caption = "HCQ associated with shorter time in hospital"),
-       az_reduces_death = list(caption = "Azithromycin associated with lower risk of death"),
-       az_increases_discharged = list(caption = "Azithromycin associated with shorter time in hospital"),
-       d_dimer_increases_death = list(caption = "High D-dimer associated with higher risk of death"),
-       IL_6_increases_death = list(caption = "High IL-6 associated with higher risk of death")
+       hcq_reduces_death = list(caption = "HCQ associated with risk of death", group = "hcq"),
+       hcq_increases_discharged = list(caption = "HCQ associated with time in hospital", group = "hcq"),
+       az_reduces_death = list(caption = "Azithromycin associated with risk of death", group = "az"),
+       az_increases_discharged = list(caption = "Azithromycin associated with time in hospital", group = "az"),
+       d_dimer_increases_death = list(caption = "High D-dimer associated with risk of death", group = "markers"),
+       IL_6_increases_death = list(caption = "High IL-6 associated with risk of death", group = "markers")
   ) %>% purrr::imap(
          function(def, name) {
            def$name <- name
            def
          })
 
+hypotheses_df <- purrr::map_dfr(hypotheses, as.data.frame) %>%
+  mutate(name = factor(name, levels = name))
 
 frequentist_hypothesis_res_from_coxph <- function(
   hypothesis, coxph_fit, coefficient_name, transition, adjusted) {

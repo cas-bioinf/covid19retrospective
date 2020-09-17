@@ -216,31 +216,37 @@ hmm_hypothesis_res_list[["hcq_m2_discharged"]] <-
 ```
 
 ```{r}
-hcq_m2_epred_rect <- posterior_epred_rect(hcq_m2_fit)
-hcq_m2_predicted_rect <- posterior_epred_to_predicted(hcq_m2_fit, hcq_m2_epred_rect)
-hcq_m2_predicted <- posterior_rect_to_long(hcq_m2_fit, hcq_m2_predicted_rect)
+if(do_pp_checks) {
+  hcq_m2_epred_rect <- posterior_epred_rect(hcq_m2_fit)
+  hcq_m2_predicted_rect <- posterior_epred_to_predicted(hcq_m2_fit, hcq_m2_epred_rect)
+  hcq_m2_predicted <- posterior_rect_to_long(hcq_m2_fit, hcq_m2_predicted_rect)
+}
 ```
 
 
 
 ```{r}
-hcq_m2_predicted_df <- posterior_long_to_df(hcq_m2_fit$data, hcq_m2_predicted)
-
-all_ids <- hcq_m2_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
-  distinct() %>% arrange(hospital_id) %>% pull(.serie)
-step_size <- 6
-for(step in 1:ceiling(length(all_ids) / step_size)) {
-  series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+if(do_pp_checks) {
+  hcq_m2_predicted_df <- posterior_long_to_df(hcq_m2_fit$data, hcq_m2_predicted)
   
-  posterior_state_plot(hcq_m2_predicted_df, all_ids[series_id], hcq_m2_fit$data) %>% print()
-
+  all_ids <- hcq_m2_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
+    distinct() %>% arrange(hospital_id) %>% pull(.serie)
+  step_size <- 6
+  for(step in 1:ceiling(length(all_ids) / step_size)) {
+    series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+    
+    posterior_state_plot(hcq_m2_predicted_df, all_ids[series_id], hcq_m2_fit$data) %>% print()
+  
+  }
 }
 ```
 
 ```{r}
-pp_check_last_state(hcq_m2_fit, hcq_m2_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
-pp_check_transitions_direction(hcq_m2_fit, hcq_m2_predicted_rect)
-pp_check_transitions_direction(hcq_m2_fit, hcq_m2_predicted_rect, states_from = 2:6)
+if(do_pp_checks) {
+  pp_check_last_state(hcq_m2_fit, hcq_m2_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
+  pp_check_transitions_direction(hcq_m2_fit, hcq_m2_predicted_rect)
+  pp_check_transitions_direction(hcq_m2_fit, hcq_m2_predicted_rect, states_from = 2:6)
+}
 ```
 
 ```{r}
@@ -278,31 +284,37 @@ hmm_hypothesis_res_list[["hcq_m3_discharged"]] <-
 
 
 ```{r}
-hcq_m3_epred_rect <- posterior_epred_rect(hcq_m3_fit)
-hcq_m3_predicted_rect <- posterior_epred_to_predicted(hcq_m3_fit, hcq_m3_epred_rect)
-hcq_m3_predicted <- posterior_rect_to_long(hcq_m3_fit, hcq_m3_predicted_rect)
+if(do_pp_checks) {
+  hcq_m3_epred_rect <- posterior_epred_rect(hcq_m3_fit)
+  hcq_m3_predicted_rect <- posterior_epred_to_predicted(hcq_m3_fit, hcq_m3_epred_rect)
+  hcq_m3_predicted <- posterior_rect_to_long(hcq_m3_fit, hcq_m3_predicted_rect)
+}
 ```
 
 
 
 ```{r}
-hcq_m3_predicted_df <- posterior_long_to_df(hcq_m3_fit$data, hcq_m3_predicted)
-
-all_ids <- hcq_m3_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
-  distinct() %>% arrange(hospital_id) %>% pull(.serie)
-step_size <- 6
-for(step in 1:ceiling(length(all_ids) / step_size)) {
-  series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+if(do_pp_checks) {
+  hcq_m3_predicted_df <- posterior_long_to_df(hcq_m3_fit$data, hcq_m3_predicted)
   
-  posterior_state_plot(hcq_m3_predicted_df, all_ids[series_id], hcq_m3_fit$data) %>% print()
-
+  all_ids <- hcq_m3_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
+    distinct() %>% arrange(hospital_id) %>% pull(.serie)
+  step_size <- 6
+  for(step in 1:ceiling(length(all_ids) / step_size)) {
+    series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+    
+    posterior_state_plot(hcq_m3_predicted_df, all_ids[series_id], hcq_m3_fit$data) %>% print()
+  
+  }
 }
 ```
 
 ```{r}
-pp_check_last_state(hcq_m3_fit, hcq_m3_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
-pp_check_transitions_direction(hcq_m3_fit, hcq_m3_predicted_rect)
-pp_check_transitions_direction(hcq_m3_fit, hcq_m3_predicted_rect, states_from = 2:6)
+if(do_pp_checks) {
+  pp_check_last_state(hcq_m3_fit, hcq_m3_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
+  pp_check_transitions_direction(hcq_m3_fit, hcq_m3_predicted_rect)
+  pp_check_transitions_direction(hcq_m3_fit, hcq_m3_predicted_rect, states_from = 2:6)
+}
 ```
 
 
@@ -343,7 +355,7 @@ hmm_hypothesis_res_list[["hcq_m4_death_az"]] <-
     draws = draws$b_took_azTRUE,
     model = "HMM",
     estimand = "log(HR)",
-    hypothesis = hypotheses$hcq_reduces_death,
+    hypothesis = hypotheses$az_reduces_death,
     adjusted = "age, sex, supportive, hospital, hcq"
   )
 
@@ -352,37 +364,43 @@ hmm_hypothesis_res_list[["hcq_m4_discharged_az"]] <-
     draws = draws$b_took_azTRUE + draws$`b_rate_groupimprove_one:took_azTRUE`,
     model = "HMM",
     estimand = "log(HR)",
-    hypothesis = hypotheses$hcq_increases_discharged,
+    hypothesis = hypotheses$az_increases_discharged,
     adjusted = "age, sex, supportive, hospital, hcq"
   )
 ```
 
 ```{r}
-hcq_m4_epred_rect <- posterior_epred_rect(hcq_m4_fit)
-hcq_m4_predicted_rect <- posterior_epred_to_predicted(hcq_m4_fit, hcq_m4_epred_rect)
-hcq_m4_predicted <- posterior_rect_to_long(hcq_m4_fit, hcq_m4_predicted_rect)
-```
-
-
-
-```{r}
-hcq_m4_predicted_df <- posterior_long_to_df(hcq_m4_fit$data, hcq_m4_predicted)
-
-all_ids <- hcq_m4_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
-  distinct() %>% arrange(hospital_id) %>% pull(.serie)
-step_size <- 6
-for(step in 1:ceiling(length(all_ids) / step_size)) {
-  series_id <- ((step - 1) * step_size + 1) : (step* step_size)
-  
-  posterior_state_plot(hcq_m4_predicted_df, all_ids[series_id], hcq_m4_fit$data) %>% print()
-
+if(do_pp_checks) {
+  hcq_m4_epred_rect <- posterior_epred_rect(hcq_m4_fit)
+  hcq_m4_predicted_rect <- posterior_epred_to_predicted(hcq_m4_fit, hcq_m4_epred_rect)
+  hcq_m4_predicted <- posterior_rect_to_long(hcq_m4_fit, hcq_m4_predicted_rect)
 }
 ```
 
+
+
 ```{r}
-pp_check_last_state(hcq_m4_fit, hcq_m4_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
-pp_check_transitions_direction(hcq_m4_fit, hcq_m4_predicted_rect)
-pp_check_transitions_direction(hcq_m4_fit, hcq_m4_predicted_rect, states_from = 2:6)
+if(do_pp_checks) {
+  hcq_m4_predicted_df <- posterior_long_to_df(hcq_m4_fit$data, hcq_m4_predicted)
+  
+  all_ids <- hcq_m4_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
+    distinct() %>% arrange(hospital_id) %>% pull(.serie)
+  step_size <- 6
+  for(step in 1:ceiling(length(all_ids) / step_size)) {
+    series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+    
+    posterior_state_plot(hcq_m4_predicted_df, all_ids[series_id], hcq_m4_fit$data) %>% print()
+  
+  }
+}  
+```
+
+```{r}
+if(do_pp_checks) {
+  pp_check_last_state(hcq_m4_fit, hcq_m4_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
+  pp_check_transitions_direction(hcq_m4_fit, hcq_m4_predicted_rect)
+  pp_check_transitions_direction(hcq_m4_fit, hcq_m4_predicted_rect, states_from = 2:6)
+}
 ```
 
 
@@ -424,31 +442,37 @@ hmm_hypothesis_res_list[["hcq_m5_discharged"]] <-
 
 
 ```{r}
-hcq_m5_epred_rect <- posterior_epred_rect(hcq_m5_fit)
-hcq_m5_predicted_rect <- posterior_epred_to_predicted(hcq_m5_fit, hcq_m5_epred_rect)
-hcq_m5_predicted <- posterior_rect_to_long(hcq_m5_fit, hcq_m5_predicted_rect)
+if(do_pp_checks) {
+  hcq_m5_epred_rect <- posterior_epred_rect(hcq_m5_fit)
+  hcq_m5_predicted_rect <- posterior_epred_to_predicted(hcq_m5_fit, hcq_m5_epred_rect)
+  hcq_m5_predicted <- posterior_rect_to_long(hcq_m5_fit, hcq_m5_predicted_rect)
+}
 ```
 
 
 
 ```{r}
-hcq_m5_predicted_df <- posterior_long_to_df(hcq_m5_fit$data, hcq_m5_predicted)
-
-all_ids <- hcq_m5_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
-  distinct() %>% arrange(hospital_id) %>% pull(.serie)
-step_size <- 6
-for(step in 1:ceiling(length(all_ids) / step_size)) {
-  series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+if(do_pp_checks) {
+  hcq_m5_predicted_df <- posterior_long_to_df(hcq_m5_fit$data, hcq_m5_predicted)
   
-  posterior_state_plot(hcq_m5_predicted_df, all_ids[series_id], hcq_m5_fit$data) %>% print()
-
+  all_ids <- hcq_m5_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
+    distinct() %>% arrange(hospital_id) %>% pull(.serie)
+  step_size <- 6
+  for(step in 1:ceiling(length(all_ids) / step_size)) {
+    series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+    
+    posterior_state_plot(hcq_m5_predicted_df, all_ids[series_id], hcq_m5_fit$data) %>% print()
+  
+  }
 }
 ```
 
 ```{r}
-pp_check_last_state(hcq_m5_fit, hcq_m5_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
-pp_check_transitions_direction(hcq_m5_fit, hcq_m5_predicted_rect)
-pp_check_transitions_direction(hcq_m5_fit, hcq_m5_predicted_rect, states_from = 2:6)
+if(do_pp_checks) {
+  pp_check_last_state(hcq_m5_fit, hcq_m5_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
+  pp_check_transitions_direction(hcq_m5_fit, hcq_m5_predicted_rect)
+  pp_check_transitions_direction(hcq_m5_fit, hcq_m5_predicted_rect, states_from = 2:6)
+}
 ```
 
 ## hcq_m6 - D-dimer
@@ -493,31 +517,37 @@ hmm_hypothesis_res_list[["hcq_m6_d_dimer_death"]] <-
 ```
 
 ```{r}
-hcq_m6_epred_rect <- posterior_epred_rect(hcq_m6_fit)
-hcq_m6_predicted_rect <- posterior_epred_to_predicted(hcq_m6_fit, hcq_m6_epred_rect)
-hcq_m6_predicted <- posterior_rect_to_long(hcq_m6_fit, hcq_m6_predicted_rect)
+if(do_pp_checks) {
+  hcq_m6_epred_rect <- posterior_epred_rect(hcq_m6_fit)
+  hcq_m6_predicted_rect <- posterior_epred_to_predicted(hcq_m6_fit, hcq_m6_epred_rect)
+  hcq_m6_predicted <- posterior_rect_to_long(hcq_m6_fit, hcq_m6_predicted_rect)
+}
 ```
 
 
 
 ```{r}
-hcq_m6_predicted_df <- posterior_long_to_df(hcq_m6_fit$data, hcq_m6_predicted)
-
-all_ids <- hcq_m6_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
-  distinct() %>% arrange(hospital_id) %>% pull(.serie)
-step_size <- 6
-for(step in 1:ceiling(length(all_ids) / step_size)) {
-  series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+if(do_pp_checks) {
+  hcq_m6_predicted_df <- posterior_long_to_df(hcq_m6_fit$data, hcq_m6_predicted)
   
-  posterior_state_plot(hcq_m6_predicted_df, all_ids[series_id], hcq_m6_fit$data) %>% print()
-
+  all_ids <- hcq_m6_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
+    distinct() %>% arrange(hospital_id) %>% pull(.serie)
+  step_size <- 6
+  for(step in 1:ceiling(length(all_ids) / step_size)) {
+    series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+    
+    posterior_state_plot(hcq_m6_predicted_df, all_ids[series_id], hcq_m6_fit$data) %>% print()
+  
+  }
 }
 ```
 
 ```{r}
-pp_check_last_state(hcq_m6_fit, hcq_m6_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
-pp_check_transitions_direction(hcq_m6_fit, hcq_m6_predicted_rect)
-pp_check_transitions_direction(hcq_m6_fit, hcq_m6_predicted_rect, states_from = 2:6)
+if(do_pp_checks) {
+  pp_check_last_state(hcq_m6_fit, hcq_m6_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
+  pp_check_transitions_direction(hcq_m6_fit, hcq_m6_predicted_rect)
+  pp_check_transitions_direction(hcq_m6_fit, hcq_m6_predicted_rect, states_from = 2:6)
+}
 ```
 
 ## hcq_m7 - IL-6
@@ -563,31 +593,37 @@ hmm_hypothesis_res_list[["hcq_m7_IL_6_death"]] <-
 ```
 
 ```{r}
-hcq_m7_epred_rect <- posterior_epred_rect(hcq_m7_fit)
-hcq_m7_predicted_rect <- posterior_epred_to_predicted(hcq_m7_fit, hcq_m7_epred_rect)
-hcq_m7_predicted <- posterior_rect_to_long(hcq_m7_fit, hcq_m7_predicted_rect)
+if(do_pp_checks) {
+  hcq_m7_epred_rect <- posterior_epred_rect(hcq_m7_fit)
+  hcq_m7_predicted_rect <- posterior_epred_to_predicted(hcq_m7_fit, hcq_m7_epred_rect)
+  hcq_m7_predicted <- posterior_rect_to_long(hcq_m7_fit, hcq_m7_predicted_rect)
+}
 ```
 
 
 
 ```{r}
-hcq_m7_predicted_df <- posterior_long_to_df(hcq_m7_fit$data, hcq_m7_predicted)
-
-all_ids <- hcq_m7_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
-  distinct() %>% arrange(hospital_id) %>% pull(.serie)
-step_size <- 6
-for(step in 1:ceiling(length(all_ids) / step_size)) {
-  series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+if(do_pp_checks) {
+  hcq_m7_predicted_df <- posterior_long_to_df(hcq_m7_fit$data, hcq_m7_predicted)
   
-  posterior_state_plot(hcq_m7_predicted_df, all_ids[series_id], hcq_m7_fit$data) %>% print()
-
+  all_ids <- hcq_m7_fit$data$serie_data %>% select(hospital_id, .serie) %>% 
+    distinct() %>% arrange(hospital_id) %>% pull(.serie)
+  step_size <- 6
+  for(step in 1:ceiling(length(all_ids) / step_size)) {
+    series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+    
+    posterior_state_plot(hcq_m7_predicted_df, all_ids[series_id], hcq_m7_fit$data) %>% print()
+  
+  }
 }
 ```
 
 ```{r}
-pp_check_last_state(hcq_m7_fit, hcq_m7_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
-pp_check_transitions_direction(hcq_m7_fit, hcq_m7_predicted_rect)
-pp_check_transitions_direction(hcq_m7_fit, hcq_m7_predicted_rect, states_from = 2:6)
+if(do_pp_checks) {
+  pp_check_last_state(hcq_m7_fit, hcq_m7_predicted_rect) #TODO separately terminal and non-terminal states. Or "state at time t" - this should be coherent
+  pp_check_transitions_direction(hcq_m7_fit, hcq_m7_predicted_rect)
+  pp_check_transitions_direction(hcq_m7_fit, hcq_m7_predicted_rect, states_from = 2:6)
+}
 ```
 
 

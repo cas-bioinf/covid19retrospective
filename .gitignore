@@ -38,7 +38,7 @@ vignettes/*.pdf
 *.exe
 *.nb.html
 *.html
-*.pdf
+/manuscript/*.pdf
 *.rds
 ~*
 

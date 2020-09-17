@@ -62,9 +62,33 @@ hypothesis_res_list[["competing_hcq_az"]] <-
   frequentist_hypothesis_res_from_coxph(hypotheses$hcq_reduces_death, fit_competing_hcq_az,
                                         coefficient_name = "took_hcqTRUE", transition = "1:3", adjusted = "age, sex, az"),
   frequentist_hypothesis_res_from_coxph(hypotheses$hcq_increases_discharged, fit_competing_hcq_az,
-                                        coefficient_name = "took_hcqTRUE", transition = "1:2", adjusted = "age, sex, az")
+                                        coefficient_name = "took_hcqTRUE", transition = "1:2", adjusted = "age, sex, az"),
+  frequentist_hypothesis_res_from_coxph(hypotheses$az_reduces_death, fit_competing_hcq_az,
+                                        coefficient_name = "took_azTRUE", transition = "1:3", adjusted = "age, sex, hcq"),
+  frequentist_hypothesis_res_from_coxph(hypotheses$az_increases_discharged, fit_competing_hcq_az,
+                                        coefficient_name = "took_azTRUE", transition = "1:2", adjusted = "age, sex, hcq")
   )
 hypothesis_res_list[["competing_hcq_az"]]
+```
+
+```{r}
+f_competing_hcq_az_admitted <- update.formula(f_competing_hcq_az, . ~ . + admitted_for_covid)
+fit_competing_hcq_az_admitted <- coxph(f_competing_hcq_az_admitted, data = data_surv, id = patient_id)
+
+fit_competing_hcq_az_admitted
+
+hypothesis_res_list[["competing_hcq_az_admitted"]] <-
+  rbind(
+  frequentist_hypothesis_res_from_coxph(hypotheses$hcq_reduces_death, fit_competing_hcq_az_admitted,
+                                        coefficient_name = "took_hcqTRUE", transition = "1:3", adjusted = "age, sex, admitted, az"),
+  frequentist_hypothesis_res_from_coxph(hypotheses$hcq_increases_discharged, fit_competing_hcq_az_admitted,
+                                        coefficient_name = "took_hcqTRUE", transition = "1:2", adjusted = "age, sex, admitted, az"),
+  frequentist_hypothesis_res_from_coxph(hypotheses$az_reduces_death, fit_competing_hcq_az_admitted,
+                                        coefficient_name = "took_azTRUE", transition = "1:3", adjusted = "age, sex, admitted, hcq"),
+  frequentist_hypothesis_res_from_coxph(hypotheses$az_increases_discharged, fit_competing_hcq_az_admitted,
+                                        coefficient_name = "took_azTRUE", transition = "1:2", adjusted = "age, sex, admitted, hcq")
+  )
+hypothesis_res_list[["competing_hcq_az_admitted"]]
 ```
 
 ```{r}
@@ -77,14 +101,18 @@ hypothesis_res_list[["competing_hcq_az_hospital"]] <-
   frequentist_hypothesis_res_from_coxph(hypotheses$hcq_reduces_death, fit_competing_hcq_az_hospital,
                                         coefficient_name = "took_hcqTRUE", transition = "1:3", adjusted = "age, sex, az, hospital"),
   frequentist_hypothesis_res_from_coxph(hypotheses$hcq_increases_discharged, fit_competing_hcq_az_hospital,
-                                        coefficient_name = "took_hcqTRUE", transition = "1:2", adjusted = "age, sex, az, hospital")
+                                        coefficient_name = "took_hcqTRUE", transition = "1:2", adjusted = "age, sex, az, hospital"),
+  frequentist_hypothesis_res_from_coxph(hypotheses$az_reduces_death, fit_competing_hcq_az_hospital,
+                                        coefficient_name = "took_azTRUE", transition = "1:3", adjusted = "age, sex, hcq, hospital"),
+  frequentist_hypothesis_res_from_coxph(hypotheses$az_increases_discharged, fit_competing_hcq_az_hospital,
+                                        coefficient_name = "took_azTRUE", transition = "1:2", adjusted = "age, sex, hcq, hospital")
   )
 hypothesis_res_list[["competing_hcq_az_hospital"]]
 
 ```
 ```{r}
 hypothesis_res_all <- do.call(rbind, hypothesis_res_list)
-write_csv(hypothesis_res_all, path = paste0(cache_dir, "/competing_risks_res.csv"))
+write_csv(hypothesis_res_all, path = here::here("manuscript", "competing_risks_res.csv"))
 ```
 
 
@@ -105,66 +133,14 @@ hypothesis_res_list[["competing_hcq_az_comorbidities_sum"]]
 
 
 
-
+```{r}
+hypothesis_res_all <- do.call(rbind, hypothesis_res_list)
+write_csv(hypothesis_res_all, path = paste0(cache_dir, "/competing_risks_res.csv"))
+```
 
 
 # Peak IL-6, peak D-dimer
 
-
-```{r}
-data_surv_IL_6 <- data_surv %>%
-  group_by(patient_id) %>%
-  filter(any(!is.na(IL_6))) %>%
-  ungroup() %>%
-  compute_marker_peak(column_name = "IL_6", new_column_name = "peak_IL_6", initial_value = 1) %>%
-  mutate(log_peak_IL_6 = log(peak_IL_6))
-
-data_surv_IL_6 %>% group_by(patient_id) %>% summarise(m_b = max(breathing)) %>% group_by(m_b) %>% summarise(n())
-
-f_competing_IL_6 <- Surv(daym1, day,status) ~ log_peak_IL_6
-
-fit_competing_IL_6 <- coxph(f_competing_IL_6, data = data_surv_IL_6, id = patient_id)
-fit_competing_IL_6
-
-# hypothesis_res_list[["competing_hcq_az_comorbidities_sum"]] <-
-#   rbind(
-#   frequentist_hypothesis_res_from_coxph(hypotheses$hcq_reduces_death, fit_competing_hcq_az_comorbidities_sum,
-#                                         coefficient_name = "took_hcqTRUE", transition = "1:3", adjusted = "age, sex, az, comorbidities (sum)"),
-#   frequentist_hypothesis_res_from_coxph(hypotheses$hcq_increases_discharged, fit_competing_hcq_az_comorbidities_sum,
-#                                         coefficient_name = "took_hcqTRUE", transition = "1:2", adjusted = "age, sex, az, comorbidities (sum)")
-#   )
-# hypothesis_res_list[["competing_hcq_az_comorbidities_sum"]]
-```
-```{r}
-data_surv_d_dimer <- data_surv %>%
-  group_by(patient_id) %>%
-  filter(any(!is.na(d_dimer))) %>%
-  ungroup() %>%
-  compute_marker_peak(column_name = "d_dimer", new_column_name = "peak_d_dimer", initial_value = 0) %>%
-  mutate(log_peak_d_dimer = log(peak_d_dimer + 1) - 4)
-
-data_surv_d_dimer %>% group_by(patient_id) %>% summarise(m_b = max(breathing)) %>% group_by(m_b) %>% summarise(n())
-
-f_competing_d_dimer <- Surv(daym1, day,status) ~ log_peak_d_dimer
-
-fit_competing_d_dimer <- coxph(f_competing_d_dimer, data = data_surv_d_dimer, id = patient_id)
-fit_competing_d_dimer
-
-# hypothesis_res_list[["competing_hcq_az_comorbidities_sum"]] <-
-#   rbind(
-#   frequentist_hypothesis_res_from_coxph(hypotheses$hcq_reduces_death, fit_competing_hcq_az_comorbidities_sum,
-#                                         coefficient_name = "took_hcqTRUE", transition = "1:3", adjusted = "age, sex, az, comorbidities (sum)"),
-#   frequentist_hypothesis_res_from_coxph(hypotheses$hcq_increases_discharged, fit_competing_hcq_az_comorbidities_sum,
-#                                         coefficient_name = "took_hcqTRUE", transition = "1:2", adjusted = "age, sex, az, comorbidities (sum)")
-#   )
-# hypothesis_res_list[["competing_hcq_az_comorbidities_sum"]]
-```
-
 # PCR positivity predicts
 
 # Lymphocyte count predicts?
-
-```{r}
-hypothesis_res_all <- do.call(rbind, hypothesis_res_list)
-write_csv(hypothesis_res_all, path = here::here("manuscript", "competing_risks_res.csv"))
-```
