@@ -1,0 +1,55 @@
+---
+title: "Validating risk scores"
+output: html_notebook
+---
+
+```{r setup, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
+knitr::opts_chunk$set(echo = FALSE)
+
+devtools::load_all()
+library(tidyverse)
+library(patchwork)
+theme_set(cowplot::theme_cowplot())
+data <- read_data_for_analysis()
+wide <- prepare_marker_data_wide(data)
+```
+
+# ACP
+
+# Bello-Chavolla 
+
+- Requires pneumonia diagnosis (which we probably can't infer)... Maybe from using antibiotics?
+- Early onset diabetes = diabetes & 40 years
+
+- Age ≥ 65 years  3 
+Diabetes  1
+Diabetes*Age < 40 years 5
+Age < 40 years -6
+Obesity 1
+Pneumonia 7
+CKD 3
+COPD 1
+Immunosuppression 1
+
+# Chen and Liu
+
+𝑅𝑖𝑠𝑘𝑆𝑐𝑜𝑟𝑒𝑠=−4.211+0.013×𝐶𝑅𝑃+0.059×𝐴𝑔𝑒+0.112×𝐷𝐷−1.984×𝐿𝑌𝑀
+
+Results for the validation dataset:
+AUROC = 0.881
+Cutoff (0.5)
+Sensitivity = 0.839
+Specificity = 0.794
+
+
+```{r}
+
+
+wide$ly
+```
+
+# Shi et al.
+
+1 point for Age >= 50, Male, Hypertension
+
+Not sure what "severe" means
