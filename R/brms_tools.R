@@ -8,9 +8,8 @@ brm_with_cache <- function(cache_file = NULL, ...) {
        is.null(cache_contents$standata) || is.null(cache_contents$fit)) {
       message("Invalid cache content")
     } else {
-      if(#identical(stancode, cache_contents$stancode) &&
+      if(identical(normalize_stancode(stancode), normalize_stancode(cache_contents$stancode)) &&
          identical(standata, cache_contents$standata)) {
-        warning("Currently not checking stancode, TODO")
         fit <- cache_contents$fit
       } else {
         message("Cache file out of date, refitting")
@@ -28,4 +27,15 @@ brm_with_cache <- function(cache_file = NULL, ...) {
   fit
 }
 
-#normalize_stancode <- function
+normalize_stancode <- function(x) {
+  # Remove single-line comments
+  x <- gsub("//[^\n\r]*[\n\r]", " ", x)
+  x <- gsub("//[^\n\r]*$", " ", x)
+  # Remove multi-line comments
+  # x <- gsub("/\\*([^*]*[^/])*\\*/", " ", x)
+  x <- gsub("/\\*([^*]*(\\*[^/])?)*\\*/", " ", x)
+  # Standardize whitespace (including newlines)
+  x <- gsub("[[:space:]]+"," ", x)
+
+  trimws(x)
+}
