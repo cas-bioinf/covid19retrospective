@@ -28,7 +28,10 @@ read_data_for_analysis <- function() {
                              last_record = col_integer(),
                              outcome = col_factor()
                            )) %>%
-    mutate(age_norm = (age - 65) / 20)
+    mutate(age_norm = (age - 65) / 20,
+           high_creatinin = if_else(sex == "M", creatinin > 115, creatinin > 97),
+           high_pt_inr = pt_inr > 1.2,
+           low_albumin = albumin < 36)
 
   breathing_data <- read_csv(here::here("private_data", "breathing_data.csv"),
                            col_types = cols(
@@ -49,10 +52,32 @@ read_data_for_analysis <- function() {
                               censored = col_character()
                             ))
 
+  multiple_units <- data$marker_data %>%
+    group_by(marker) %>%
+    summarise(n_units = length(unique(unit))) %>%
+    filter(n_units > 1)
+  if(nrow(multiple_units) > 1) {
+    print(multiple_units)
+    stop("Multiple units for some markers")
+  }
+
+
   data <- loo::nlist(patient_data, breathing_data, marker_data)
   data$marker_data_wide <- prepare_marker_data_wide(data)
 
   data <- compute_derived_quantities_patients(data)
+
+  # TODO Reconstruct long from wide (because wide has more derived quantities and covers all days)
+  # Would require keeping units around in marker_data_wide
+
+
+  # Remove unsed xxx_censored fields from wide
+  censored_columns <- names(data$marker_data_wide)[grepl("_censored$", names(data$marker_data_wide))]
+  for(censored_col in censored_columns) {
+    if(all(is.na(data$marker_data_wide[[censored_col]]) | data$marker_data_wide[[censored_col]] == "none")) {
+      data$marker_data_wide[[censored_col]] <- NULL
+    }
+  }
 
   data
 }
@@ -64,9 +89,13 @@ compute_derived_quantities_patients <- function(data) {
     summarise(ever_hcq = any(took_hcq),
               ever_az = any(took_az),
               ever_convalescent_plasma = any(took_convalescent_plasma),
+              ever_antibiotics = any(took_antibiotics),
               any_d_dimer = any(!is.na(d_dimer)),
               any_IL_6 = any(!is.na(IL_6)),
               worst_breathing = max(breathing),
+              had_invasive = any(breathing >= "MV" & breathing < "Death"),
+              first_day_invasive = if_else(had_invasive, min(c(day[breathing >= "MV"], 1e6)), NA_real_),
+              last_day_invasive = if_else(had_invasive, max(c(day[breathing >= "MV"], 0)), NA_real_),
               .groups = "drop"
     )
 
@@ -86,6 +115,9 @@ compute_derived_quantities_patients <- function(data) {
         replace_na(liver_disease, FALSE) +
         replace_na(smoking, FALSE) +
         replace_na(heart_problems, FALSE) +
+        replace_na(high_creatinin, FALSE) +
+        replace_na(high_pt_inr, FALSE) +
+        replace_na(low_albumin, FALSE) +
         replace_na(obesity, FALSE),
       comorbidities_sum_na = 2 * (
         replace_na(ischemic_heart_disease, 0.5) +
@@ -99,6 +131,9 @@ compute_derived_quantities_patients <- function(data) {
         replace_na(liver_disease, 0.5) +
         replace_na(smoking, 0.5) +
         replace_na(heart_problems, 0.5) +
+        replace_na(high_creatinin, 0.5) +
+        replace_na(high_pt_inr, 0.5) +
+        replace_na(low_albumin, 0.5) +
         replace_na(obesity, 0.5))
     )
 
@@ -110,16 +145,16 @@ compute_derived_quantities_patients <- function(data) {
 }
 
 prepare_marker_data_wide <- function(data) {
-  patient_max_days <- data$breathing_data %>%
+  patient_ranges <- data$breathing_data %>%
     group_by(hospital_id, patient_id) %>%
-    summarise(max_day = max(day), .groups = "drop")
+    summarise(max_day = max(day), min_day = min(day), .groups = "drop")
 
-  complete_max_day <- max(patient_max_days$max_day)
+  complete_max_day <- max(patient_ranges$max_day)
+  complete_min_day <- min(patient_ranges$min_day)
 
-  # Add _censored columns only for markers where censoring was observed
   wider_spec_censored <-
     tibble(
-      marker = data$marker_data %>% filter(censored != "none") %>% pull(marker) %>% unique()
+      marker = data$marker_data %>% pull(marker) %>% unique()
     ) %>%
     mutate(.name = paste0(marker, "_censored"), .value = "censored")
 
@@ -136,10 +171,10 @@ prepare_marker_data_wide <- function(data) {
     stop("Error in pivot")
   }
 
-  all_patient_days <- patient_max_days %>%
-    crossing(day = 0:complete_max_day) %>%
-    filter(day <= max_day) %>%
-    select(-max_day)
+  all_patient_days <- patient_ranges %>%
+    crossing(day = complete_min_day:complete_max_day) %>%
+    filter(day <= max_day, day >= min_day) %>%
+    select(-max_day, -min_day)
 
   markers_wide <- all_patient_days %>%
     left_join(data$breathing_data, by = c("patient_id", "hospital_id", "day")) %>%
@@ -152,8 +187,23 @@ prepare_marker_data_wide <- function(data) {
 
 compute_derived_markers_wide <- function(markers_wide, data) {
   nrow_before <- nrow(markers_wide)
+
+  any_antibiotics <-  data$marker_data %>%
+    filter(marker %in% all_antibiotics) %>%
+    group_by(patient_id, day) %>%
+    summarise(antibiotics = any(!is.na(value) & value > 0))
+
+  any_macrolides <-  data$marker_data %>%
+    filter(marker %in% all_macrolides) %>%
+    group_by(patient_id, day) %>%
+    summarise(macrolides = any(!is.na(value) & value > 0))
+
+  markers_wide <- markers_wide %>%
+    left_join(any_antibiotics, by = c("patient_id", "day")) %>%
+    left_join(any_macrolides, by = c("patient_id", "day"))
+
   #treatment_markers <- c("hcq", "kaletra", "az", "tocilizumab", "convalescent_plasma")
-  treatment_markers <- c(quo(hcq), quo(az), quo(convalescent_plasma))
+  treatment_markers <- c(quo(hcq), quo(az), quo(convalescent_plasma), quo(antibiotics), quo(macrolides))
   for(treatment_mark in treatment_markers) {
     first_treatment <- markers_wide %>% filter(!is.na(!!treatment_mark) & !!treatment_mark > 0) %>%
       group_by(hospital_id, patient_id) %>%

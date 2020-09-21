@@ -44,6 +44,11 @@ data$breathing_data %>% ggplot(aes(x = day, y = patient_id, fill = breathing)) +
 
 ```
 ```{r}
+data$patient_data %>% filter(hospital_id == "QKuFp") %>% select(first_day_invasive, last_day_invasive)
+```
+
+
+```{r}
 data$breathing_data %>% group_by(hospital_id, patient_id) %>%
   summarise(first = min(day, na.rm = TRUE)) %>%
   filter(first > 0)

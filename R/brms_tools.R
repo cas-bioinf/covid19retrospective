@@ -7,13 +7,12 @@ brm_with_cache <- function(cache_file = NULL, ...) {
     if(!is.list(cache_contents) || is.null(cache_contents$stancode) ||
        is.null(cache_contents$standata) || is.null(cache_contents$fit)) {
       message("Invalid cache content")
+    } else if(!identical(normalize_stancode(stancode), normalize_stancode(cache_contents$stancode))) {
+      message("Model code out of date, refitting")
+    } else if(!identical(standata, cache_contents$standata)) {
+      message("Model data out of date, refitting")
     } else {
-      if(identical(normalize_stancode(stancode), normalize_stancode(cache_contents$stancode)) &&
-         identical(standata, cache_contents$standata)) {
-        fit <- cache_contents$fit
-      } else {
-        message("Cache file out of date, refitting")
-      }
+      fit <- cache_contents$fit
     }
   }
 

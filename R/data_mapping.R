@@ -48,7 +48,7 @@ marker_map <- c(
         "ampicillin/sulbactam" = "ampicillin_sulbactam",
         "Ciprofloxacin" = "ciprofloxacin",
         "Meropenem" = "meropenem",
-        "Metronidazol" = "Metronidazol",
+        "Metronidazol" = "metronidazol",
       ## Other drugs
         "Fluconazol" = "fluconazol",
         "zinkorot" = "zinc",
@@ -57,6 +57,27 @@ marker_map <- c(
         "Tamiflu" = "tamiflu",
         "Lexaurin" = "lexaurin"
 )
+
+all_antibiotics <- c(
+  "az",
+  "amoxiclav",
+  "piperacilin_tazobactam",
+  "clarithromycin",
+  "sulfamethoxazol",
+  "trimethoprim",
+  "ofloxacin",
+  "ceftriaxone",
+  "cefuroxime",
+  "cefotaxime",
+  "cefepime",
+  "vancomycin",
+  "ampicillin_sulbactam",
+  "ciprofloxacin",
+  "meropenem",
+  "metronidazol"
+)
+
+all_macrolides <- c("az", "clarithromycin")
 
 pcr_values_positive <- c("pos","neg", "neg and pos", "susp.", "susp", "poz")
 pcr_value_negative <- "neg"

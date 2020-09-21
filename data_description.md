@@ -25,18 +25,38 @@ Patient data is stored in the `patient_data` list element.
 
 #### Basic quantities:
 
-- `patient` a unique ID of the patient
-- `site` a unique string identifying a study site. Study sites will be pseudonymized to increase patient anonymity, so the string will not be interpretable
+- `patient_id` a unique ID of the patient (unique across all study sites)
+- `hospital_id` a unique string identifying a study site. Study sites will be pseudonymized to increase patient anonymity, so the string will not be interpretable, but the IDs will be the same once more data arrives.
 - `age` age in years
+- `age_norm` normalized age
 - `sex` sex, `M` or `F`
-- `bmi` the body mass index at hospital admission
 - `outcome` final outcome of the patient, one of `Discharged`, `Hospitalized` (still hospitalized at the date of data collection), `Transferred` (when transferred to a different hospital) and `Death`. For most purposes `Transferred` can be considered as the same as `Hospitalized`
+- `last_record` day for which we have the last record for the patient, i.e. the date to which the `outcome` column refers (0 is the day of hospital admission)
 - `days_from_symptom_onset` number of days between symptom onset and hospitalization, "symptom onset" is defined as the day  the patient or their carer subjectively first noticed any symptoms associated with Covid-19. It might not be available and is not a very reliable marker, but is relevant to determine if the patient was treated very early in their disease or not.
+- `admitted_for_covid` whether the patient was originally admitted in relation to Covid diagnosis (for some patients the Covid diagnosis was discovered while treating something else)
+- `best_supportive_care_from` day when "best supportive care" was started. If the patient was determined to be too frail for some treatments (e.g. mechanical ventilation), this indicates the first day when treatment that would otherwise be chosen was avoided and best supportive care was initiated (0 is the day of hospital admission)
+- `discontinued_medication` discontinued any of the Covid medications due to adverse evetns? Boolean.
 
 #### Comorbidites:
 
-- `myocardial_infarction` - number of myocardial infarction events ever experienced by the patient. Integer, 0 means never had a myocardial infraction
-- `hypertension_drugs` - the number of different anti-hypertensive drugs the patient uses regularly as a rough measure of the severity of the hypertension condition. Integer 0 means either not diagnost or not treated for hypertension.
+- `BMI` the body mass index at hospital admission
+- `ischemic_heart_disease`
+- `n_hypertension_drugs` - the number of different anti-hypertensive drugs the patient uses regularly as a rough measure of the severity of the hypertension condition. Integer 0 means either not diagnost or not treated for hypertension.
+- `has_hypertension_drugs` boolean equivalent to `n_hypertension_drugs > 0` 
+- `heart_failure` boolean
+- `COPD` boolean, Chronic obstructive pulmonary disease
+- `asthma` boolean
+- `diabetes` boolean
+- `renal_disease` boolean
+- `liver_disease` boolean
+- `NYHA` New York Heart Association score for heart failure, if available or deducible from documentation (“NA” otherwise). The score has 4 levels:
+   * 1: No limitation of physical activity. Ordinary physical activity does not cause undue fatigue, palpitation, dyspnea
+   * 2: Slight limitation of physical activity. Comfortable at rest. Ordinary physical activity results in fatigue, palpitation, dyspnea. 
+   * 3: Marked limitation of physical activity. Comfortable at rest. Less than ordinary activity causes fatigue, palpitation, or dyspnea. 
+   * 4: Unable to carry on any physical activity without discomfort. Symptoms of heart failure at rest. If any physical activity is undertaken, discomfort increases.  
+- `creatinin`  Concentration of creatinine in serum (μmol/L),
+- `pt_inr` Prothrombin time (Quick test) as International Normalized Ratio,
+- `albumin` Concentration of albumin in serum/plasma (g/l)
 - `smoking` - does the patient smoke? Boolean.
 
 
@@ -44,15 +64,18 @@ Patient data is stored in the `patient_data` list element.
 
 Those are  quantities derived from disease progression data that might be useful in analysis:
 
-- `worst_condition` the worst breathing level recorded or `Death` for deceased patients
-- `first_day_invasive`, `last_day_invasive` the first and last days the patient was recorded as having invasive breathing support (`MV` or `ECMO`) - note that if the patient is removed from invasive ventilation and then deteriorates once more, this range will included some days without invasive ventilation.
-- `days_hospitalized` total number of days hospitalized until death, discharge or data collection, ie. is right censored if `outcome` is `Hospitalized` or `Transferred`.
-- `took_hcq` Took Hydroxychloroquine at least once? Boolean
-- `took_az` Took Azithromycin at least once? Boolean
-- `took_kaletra` Took Kaletra (Lopinavir/Ritonavir) at least once? Boolean
-- `took_tocilizumab` Took Tocilizumab at least once? Boolean
-- `first_day_antivirals` First day any of Hydroxychloroquine, Azithromycin or Kaletra was taken
-- `first_day_tocilizumab` First day Tocilizumab was taken
+- `high_creatinin` creatinin above 115 for males or above 97 for females
+- `high_pt_inr` PT INR above 1.2
+- `low_albumin` albumin below 36
+- `heart_problems` NYHA > 1,
+- `obesity` BMI > 30,
+- `worst_breathing` the worst breathing level recorded or `Death` for deceased patients
+- `first_day_invasive`, `last_day_invasive` the first and last days the patient was recorded as having invasive breathing support (`MV` or `ECMO`) - note that if the patient is removed from invasive ventilation and then deteriorates once more, this range will included some days without invasive ventilation. NA if never was invasive.
+- `took_hcq/az/convalescent_plasma/antibiotics` Took the given treatment at least once? Boolean
+- `any_IL_6/d_dimer` was IL-6/D-dimer ever measured? Boolean
+- `comorbidities_sum` number of all known comorbidities (NAs treated as not present)
+- `comorbidities_sum_na` number of all known comorbidities (NAs treated as half)
+
 
 ## Disease progression data
 
@@ -61,9 +84,9 @@ Breathing data is stored in the `breathing_data` list element. The columns are:
 
 - `patient` ID of the patient, matching `patient_data`
 - `day` day of hospitalization (starting with 0 - first day at hospital)
-- `breathing` an ordered factor representing the breathing level as described above
+- `breathing` an ordered factor representing the breathing level as described above, including `Death` and `Discharged` as levels.
 
-Note that `day` can in some rare cases be negative when some data is availabe before hospitalization (this would almost certainly be only PCR test results).
+Note that `day` can in some cases be negative when some data is availabe before hospitalization (this would almost certainly be only PCR test results).
 
 Finally we collect a bunch of clinical markers of which most important are the drugs the patient used. Those are available in both long and wide formats (as `marker_data` and `marker_data_wide`). Markers are not measured every day and can be systematically missing for a whole site. The frequency of measurement of different markers can differ.
 
