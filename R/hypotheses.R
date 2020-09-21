@@ -16,7 +16,7 @@ hypotheses_df <- purrr::map_dfr(hypotheses, as.data.frame) %>%
   mutate(name = factor(name, levels = name))
 
 frequentist_hypothesis_res_from_coxph <- function(
-  hypothesis, coxph_fit, coefficient_name, transition, adjusted) {
+  hypothesis, coxph_fit, coefficient_name, transition, adjusted, model_check = "OK") {
 
   summ <- summary(coxph_fit)
   coefficient_id <- summ$cmap[coefficient_name, transition]
@@ -27,24 +27,27 @@ frequentist_hypothesis_res_from_coxph <- function(
              p_value = summ$coefficients[coefficient_id, "Pr(>|z|)"],
              point_estimate = summ$coefficients[coefficient_id, "coef"],
              ci_low = log(summ$conf.int[coefficient_id, "lower .95"]),
-             ci_high = log(summ$conf.int[coefficient_id, "upper .95"])
+             ci_high = log(summ$conf.int[coefficient_id, "upper .95"]),
+             model_check = model_check,
+             data_version = get_data_version()
   )
 }
 
 
 bayesian_hypothesis_res_from_jm <- function(
-  hypothesis, jm_fit, coefficient_name, adjusted) {
+  hypothesis, jm_fit, coefficient_name, adjusted, model_check = "OK") {
   bayesian_hypothesis_res_from_draws(
     draws = tidybayes::tidy_draws(jm_fit)[[coefficient_name]],
     model = "jm",
     estimand = "log(HR)",
     hypothesis = hypothesis,
-    adjusted = adjusted)
+    adjusted = adjusted,
+    model_check = model_check)
 }
 
 bayesian_hypothesis_res_from_draws <- function(
   draws, model, estimand,
-  hypothesis, adjusted) {
+  hypothesis, adjusted, model_check = "OK") {
 
   reference_point <- 0
   reference_location <- ecdf(draws)(reference_point)
@@ -56,6 +59,8 @@ bayesian_hypothesis_res_from_draws <- function(
              point_estimate = mean(draws),
              ci_low = quantile(draws, 0.025),
              ci_high = quantile(draws, 0.975),
+             model_check = model_check,
+             data_version = get_data_version(),
              row.names = NULL
   )
 }

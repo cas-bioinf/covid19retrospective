@@ -227,3 +227,7 @@ compute_marker_peak <- function(markers_wide, column_name, new_column_name, init
 
   markers_wide
 }
+
+get_data_version <- function() {
+  readLines(here::here("private_data", "data_revision.txt"))
+}

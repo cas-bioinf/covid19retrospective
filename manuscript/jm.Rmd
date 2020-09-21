@@ -76,7 +76,8 @@ jm_hypothesis_res_list[["d_dimer_age_sex"]] <-
     hypotheses$d_dimer_increases_death,
     fit_d_dimer_age_sex,
     coefficient_name = "Assoc|Long1|etavalue",
-    adjusted  = "age, sex")
+    adjusted  = "age, sex",
+    model_check = "Suspicious")
 
 jm_hypothesis_res_list[["d_dimer_age_sex"]]
 ```
@@ -105,7 +106,8 @@ jm_hypothesis_res_list[["d_dimer_age_sex_hcq"]] <-
     hypotheses$d_dimer_increases_death,
     fit_d_dimer_age_sex_hcq,
     coefficient_name = "Assoc|Long1|etavalue",
-    adjusted  = "age, sex, hcq")
+    adjusted  = "age, sex, hcq",
+    model_check = "Problematic")
 
 jm_hypothesis_res_list[["d_dimer_age_sex_hcq"]]
 ```
@@ -160,7 +162,8 @@ jm_hypothesis_res_list[["IL_6_age_sex"]] <-
     hypotheses$IL_6_increases_death,
     fit_IL_6_age_sex,
     coefficient_name = "Assoc|Long1|etavalue",
-    adjusted  = "age, sex")
+    adjusted  = "age, sex",
+    model_check = "Suspicious")
 
 jm_hypothesis_res_list[["IL_6_age_sex"]]
 
@@ -184,7 +187,8 @@ jm_hypothesis_res_list[["IL_6_age_sex_hcq"]] <-
     hypotheses$IL_6_increases_death,
     fit_IL_6_age_sex_hcq,
     coefficient_name = "Assoc|Long1|etavalue",
-    adjusted  = "age, sex, hcq")
+    adjusted  = "age, sex, hcq",
+    model_check = "Suspicious")
 
 jm_hypothesis_res_list[["IL_6_age_sex_hcq"]]
 
