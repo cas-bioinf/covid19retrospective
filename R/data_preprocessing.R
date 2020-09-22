@@ -52,7 +52,7 @@ read_data_for_analysis <- function() {
                               censored = col_character()
                             ))
 
-  multiple_units <- data$marker_data %>%
+  multiple_units <- marker_data %>%
     group_by(marker) %>%
     summarise(n_units = length(unique(unit))) %>%
     filter(n_units > 1)
@@ -146,8 +146,14 @@ compute_derived_quantities_patients <- function(data) {
 
 prepare_marker_data_wide <- function(data) {
   patient_ranges <- data$breathing_data %>%
+    select(hospital_id, patient_id, day) %>%
+    rbind(data$marker_data %>% select(hospital_id, patient_id, day)) %>%
     group_by(hospital_id, patient_id) %>%
     summarise(max_day = max(day), min_day = min(day), .groups = "drop")
+  patient_ranges2 <- data$marker_data %>%
+    group_by(hospital_id, patient_id) %>%
+    summarise(max_day = max(day), min_day = min(day), .groups = "drop")
+
 
   complete_max_day <- max(patient_ranges$max_day)
   complete_min_day <- min(patient_ranges$min_day)
@@ -203,7 +209,10 @@ compute_derived_markers_wide <- function(markers_wide, data) {
     left_join(any_macrolides, by = c("patient_id", "day"))
 
   #treatment_markers <- c("hcq", "kaletra", "az", "tocilizumab", "convalescent_plasma")
-  treatment_markers <- c(quo(hcq), quo(az), quo(convalescent_plasma), quo(antibiotics), quo(macrolides))
+  treatment_markers <- c(quo(hcq), quo(az),
+                         quo(dexamethasone), quo(remdesivir),
+                         quo(convalescent_plasma),
+                         quo(antibiotics), quo(macrolides))
   for(treatment_mark in treatment_markers) {
     first_treatment <- markers_wide %>% filter(!is.na(!!treatment_mark) & !!treatment_mark > 0) %>%
       group_by(hospital_id, patient_id) %>%

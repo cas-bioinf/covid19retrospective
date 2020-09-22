@@ -66,6 +66,13 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
                        `Outcome (Discharged/Hospitalized/Transferred/Death)`)
         )
   }
+  if(hospital_id == "ZDYlY") {
+    patient_data_raw_usable <- patient_data_raw_usable %>%
+      mutate(`Admitted for Covid` = if_else(`Admitted for Covid` == "NA/ne?", "No", `Admitted for Covid`),
+             Smoking = if_else(Smoking == "Exkurak", "no", Smoking),
+             `Best supportive care from:` = if_else(grepl("ano.*hospitalizace, datum NA", patient_data_raw_usable$`Best supportive care from:`), "43920" ,`Best supportive care from:`)
+             )
+  }
 
 
   patient_data_typed <- patient_data_raw_usable %>%
@@ -181,7 +188,14 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
   if(hospital_id == "QKuFp") {
     progression_data <- progression_data %>% mutate(indicator = if_else(!is.na(unit) & unit == "IgG", "IgG", indicator))
   }
-
+  if(hospital_id == "ZDYlY") {
+    progression_data <- progression_data %>%
+      mutate(Day_12 = if_else(
+        indicator == "Breathing" & grepl("z oxygenoterapie na AA$", Day_12),
+        NA_character_,
+        Day_12),
+        indicator = gsub(" [0-9,]* ?m?g( a [0-9]*h)?$", "", indicator)) # Remove stuff like "800mg a 4h"
+  }
 
   # Spread Patient ID and Start date
   last_patient_id <- progression_data$patient_id[1]
@@ -326,6 +340,7 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
   marker_data <- progression_data %>% filter(!(indicator %in% c("Date", "Breathing", "Adverse events", dummy_markers))) %>% rename(marker = indicator)
   marker_data <- correct_first_day_admission(patient_data_typed, marker_data)
 
+
   duplicate_markers <- marker_data %>% group_by(hospital_id,patient_id, marker, day) %>%
     summarise(count = n(), values = paste(value, collapse = ", "), .groups = "drop") %>%
     filter(count > 1)
@@ -385,9 +400,16 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
   # TODO ask at hospital
   if(hospital_id == "QKuFp") {
     marker_data <- marker_data %>% mutate(value = if_else(marker == "SpO2" & value == "NEG", NA_character_, value))
+
+    # The patient got HCQ before admission, but time unknown (should not matter for most models)
+    marker_data <- rbind(marker_data,
+                         data.frame(hospital_id = "QKuFp", patient_id = "12",
+                                    day = -5, marker = "hcq",
+                                    value = ">100", unit = "mg/day"))
   } else if(hospital_id == "YqNbe") {
     marker_data <- marker_data %>% mutate(value = if_else(marker %in% c("hcq","az") & value == "ano", ">100", value))
   }
+
 
   # Handle censoring on everything except PCR
   marker_data <- marker_data %>% filter(marker != "pcr_value") %>%
@@ -485,6 +507,7 @@ check_patient_overlap <- function(hospital_data_1, hospital_data_2, patients_to_
       is.na(BMI1) | is.na(BMI2) | abs(BMI1 - BMI2) < 5,
       is.na(outcome1) | is.na(outcome2) |  !(outcome1 == "Death" & outcome2 == "Discharged"),
       is.na(outcome1) | is.na(outcome2) |  !(outcome2 == "Death" & outcome1 == "Discharged"),
+      outcome1 != "Discharged" | outcome2 != "Discharged",
       is.na(symptom_onset1) | is.na(symptom_onset2) |
         abs(symptom_onset2 - symptom_onset1) <  lubridate::make_difftime(day = 5),
       # # Filter those already merged
