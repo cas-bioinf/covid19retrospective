@@ -1,5 +1,5 @@
 ---
-title: "Detailed disease progression of 88 patients hospitalized with Covid-19 in the Czech Republic: An exploratory analysis" 
+title: "Detailed disease progression of 97 patients hospitalized with Covid-19 in the Czech Republic: An exploratory analysis" 
 output: 
   #rticles::arxiv_article
   #pdf_document
@@ -21,12 +21,12 @@ library(tidyverse)
 library(patchwork)
 theme_set(cowplot::theme_cowplot())
 data <- read_data_for_analysis()
-wide <- prepare_marker_data_wide(data)
+wide <- data$marker_data_wide
 ```
 
 # Introduction 
 
-The Covid-19 pandemic, caused by severe acute respiratory syndrome coronavirus (SARS-CoV-2) has, as of September 2020 led to over 28 million cases and over 900 000 deaths. Proposed treatments include antivirals approved for other indications (Chloroquine, Hydroxychloroquine, Lopinavir/Ritonavir, Remdesivir, Favipiravir, Umifenovir), Azithromycin, corticosteriods, immunoglobulins, Tocilizumab and convalescent plasma [@http://zotero.org/users/5567156/items/8XWTUMUI; @http://zotero.org/users/5567156/items/6Q8Z8VJR; TODO]. Currently, the only treatment that exhibited positive effects in randomized trials is the corticosteriod Dexamethasone for severe cases [@http://zotero.org/users/5567156/items/IW6VZ53Q; @http://zotero.org/users/5567156/items/5VAKEW58]. While initially promising, Hydroxychloroquine has failed to show benefit for both hospitalized patients [@http://zotero.org/users/5567156/items/9X3UH8ZM], as early treatment [@http://zotero.org/users/5567156/items/G6KZKVMI] and as post-exposure profylaxis [@http://zotero.org/users/5567156/items/7C23YCV5; @http://zotero.org/users/5567156/items/GMR9FX9Z]. Further, no improvement could be discerned when adding Azithromycin to Hydroxychloroquine therapy [@http://zotero.org/users/5567156/items/BQLRZGTQ]. Similarly, Lopinavir/Ritonavir also did not show benefit [@http://zotero.org/users/5567156/items/6I6GAVWU]. No benefit was observed for convalscent plasma [@http://zotero.org/users/5567156/items/UEXLDJCB; @http://zotero.org/users/5567156/items/BHGT88US] For additional summary see [@http://zotero.org/users/5567156/items/YP62P6XJ].
+The Covid-19 pandemic, caused by severe acute respiratory syndrome coronavirus (SARS-CoV-2) has, as of September 2020 led to over 28 million cases and over 900 000 deaths. Proposed treatments include antivirals approved for other indications (Chloroquine, Hydroxychloroquine, Lopinavir/Ritonavir, Remdesivir, Favipiravir, Umifenovir), Azithromycin, corticosteriods, immunoglobulins, Tocilizumab and convalescent plasma [@http://zotero.org/users/5567156/items/8XWTUMUI; @http://zotero.org/users/5567156/items/6Q8Z8VJR; TODO]. Currently, the only treatment that exhibited positive effects in randomized trials is the corticosteriod Dexamethasone for severe cases [@http://zotero.org/users/5567156/items/IW6VZ53Q; @http://zotero.org/users/5567156/items/5VAKEW58]. While initially promising, Hydroxychloroquine has failed to show benefit for both hospitalized patients [@http://zotero.org/users/5567156/items/9X3UH8ZM], as early treatment [@http://zotero.org/users/5567156/items/G6KZKVMI], and as both pre- and post-exposure profylaxis [@http://zotero.org/users/5567156/items/7C23YCV5; @http://zotero.org/users/5567156/items/GMR9FX9Z; @http://zotero.org/users/5567156/items/H4CLJNUR]. Further, no improvement could be discerned when adding Azithromycin to Hydroxychloroquine therapy [@http://zotero.org/users/5567156/items/BQLRZGTQ]. Similarly, Lopinavir/Ritonavir also did not show benefit [@http://zotero.org/users/5567156/items/6I6GAVWU]. No benefit was observed for convalscent plasma [@http://zotero.org/users/5567156/items/UEXLDJCB; @http://zotero.org/users/5567156/items/BHGT88US] For additional summary see [@http://zotero.org/users/5567156/items/YP62P6XJ].
 
 In observational studies, Hydroxychloroquine was often found to be associated with better outcomes [e. g., @http://zotero.org/users/5567156/items/WZPNBRYN; @http://zotero.org/users/5567156/items/4HR7MUJ6; @http://zotero.org/users/5567156/items/NXC9CDI9]
 
