@@ -107,6 +107,7 @@ unit_overwrites <- list(
     list(marker = "IgG", old_unit = "", new_unit = "TODO")
   ),
   YqNbe = list(
+    #TODO: check that d_dimer is DDU, not FEU
     #list(marker = "d_dimer", old_unit = "ng/ml DDU", new_unit = "\U03BCg/l"),
     list(marker = "d_dimer", old_unit = "ug/l", new_unit = "ng/ml DDU"),
     list(marker = "procalcitonin", old_unit = "unit", new_unit = "\U03BCg/l")

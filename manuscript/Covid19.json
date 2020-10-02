@@ -1395,6 +1395,343 @@
 		}
 	},
 	{
+		"id": "http://zotero.org/users/5567156/items/INZVABQI",
+		"type": "article-journal",
+		"abstract": "AbstractBackground.  The SARS-CoV-2 outbreak poses a challenge to health care systems due to its high complication rates in patients with cardiometabolic diseas",
+		"container-title": "The Journal of Clinical Endocrinology & Metabolism",
+		"DOI": "10.1210/clinem/dgaa346",
+		"ISSN": "0021-972X",
+		"issue": "8",
+		"journalAbbreviation": "J Clin Endocrinol Metab",
+		"language": "en",
+		"page": "2752-2761",
+		"source": "academic.oup.com",
+		"title": "Predicting Mortality Due to SARS-CoV-2: A Mechanistic Score Relating Obesity and Diabetes to COVID-19 Outcomes in Mexico",
+		"title-short": "Predicting Mortality Due to SARS-CoV-2",
+		"URL": "https://academic.oup.com/jcem/article/105/8/2752/5849337",
+		"volume": "105",
+		"author": [
+			{
+				"family": "Bello-Chavolla",
+				"given": "Omar Yaxmehen"
+			},
+			{
+				"family": "Bahena-López",
+				"given": "Jessica Paola"
+			},
+			{
+				"family": "Antonio-Villa",
+				"given": "Neftali Eduardo"
+			},
+			{
+				"family": "Vargas-Vázquez",
+				"given": "Arsenio"
+			},
+			{
+				"family": "González-Díaz",
+				"given": "Armando"
+			},
+			{
+				"family": "Márquez-Salinas",
+				"given": "Alejandro"
+			},
+			{
+				"family": "Fermín-Martínez",
+				"given": "Carlos A."
+			},
+			{
+				"family": "Naveja",
+				"given": "J. Jesús"
+			},
+			{
+				"family": "Aguilar-Salinas",
+				"given": "Carlos A."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					9,
+					12
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					8,
+					1
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/3A2RN4ZS",
+		"type": "article-journal",
+		"abstract": "<p>Since late December 2019 a new epidemic outbreak has emerged from Whuhan, China. Rapidly the new coronavirus has spread worldwide. China CDC has reported results of a descriptive exploratory analysis of all cases diagnosed until the 11th February 2020, presenting the epidemiologic curves and geo-temporal spread of COVID-19 along with case fatality rate according to some baseline characteristics, such as age, gender and several well-established high prevalence comorbidities. Despite this, we intend to increase even further the predictive value of that manuscript by presenting the odds ratio for mortality due to COVID-19 adjusted for the presence of those comorbidities and baseline characteristics such as age and gender. Besides, we present a way to determine the risk of each particular patient, given his characteristics. We found that age is the variable that presents higher risk of COVID-19 mortality, where 60 or older patients have an OR = 18.8161 (CI95%[7.1997; 41.5517]). Regarding comorbidities, cardiovascular disease appears to be the riskiest (OR=12.8328 CI95%[10.2736; 15.8643], along with chronic respiratory disease (OR=7.7925 CI95%[5.5446; 10.4319]). Males are more likely to die from COVID-19 (OR=1.8518 (CI95%[1.5996; 2.1270]). Some limitations such as the lack of information about the correct prevalence of gender per age or about comorbidities per age and gender or the assumption of independence between risk factors are expected to have a small impact on results. A final point of paramount importance is that the equation presented here can be used to determine the probability of dying from COVID-19 for a particular patient, given its age interval, gender and comorbidities associated.</p>",
+		"container-title": "medRxiv",
+		"DOI": "10.1101/2020.02.24.20027268",
+		"language": "en",
+		"page": "2020.02.24.20027268",
+		"source": "www.medrxiv.org",
+		"title": "Estimation of risk factors for COVID-19 mortality - preliminary results",
+		"URL": "https://www.medrxiv.org/content/10.1101/2020.02.24.20027268v1",
+		"author": [
+			{
+				"family": "Caramelo",
+				"given": "Francisco"
+			},
+			{
+				"family": "Ferreira",
+				"given": "Nuno"
+			},
+			{
+				"family": "Oliveiros",
+				"given": "Barbara"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					9,
+					12
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					2,
+					25
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/4DDUVEKS",
+		"type": "article-journal",
+		"abstract": "<p>Abstract Background Coronavirus disease 2019 (COVID-19) caused by severe acute respiratory syndrome coronavirus 2 (SARS-CoV-2) infection has been spreading globally. The number of deaths has increased with the increase in the number of infected patients. We aimed to develop a clinical model to predict the outcome of severe COVID-19 patients early. Methods Epidemiological, clinical, and first laboratory findings after admission of 183 severe COVID-19 patients (115 survivors and 68 nonsurvivors) from the Sino-French New City Branch of Tongji Hospital were used to develop the predictive models. Five machine learning approaches (logistic regression, partial least squares regression, elastic net, random forest, and bagged flexible discriminant analysis) were used to select the features and predict the patients9 outcomes. The area under the receiver operating characteristic curve (AUROC) was applied to compare the models9 performance. Sixty-four severe COVID-19 patients from the Optical Valley Branch of Tongji Hospital were used to externally validate the final predictive model. Results The baseline characteristics and laboratory tests were significantly different between the survivors and nonsurvivors. Four variables (age, high-sensitivity C-reactive protein level, lymphocyte count, and d-dimer level) were selected by all five models. Given the similar performance among the models, the logistic regression model was selected as the final predictive model because of its simplicity and interpretability. The AUROCs of the derivation and external validation sets were 0.895 and 0.881, respectively. The sensitivity and specificity were 0.892 and 0.687 for the derivation set and 0.839 and 0.794 for the validation set, respectively, when using a probability of death of 50% as the cutoff. The individual risk score based on the four selected variables and the corresponding probability of death can serve as indexes to assess the mortality risk of COVID-19 patients. The predictive model is freely available at https://phenomics.fudan.edu.cn/risk_scores/. Conclusions Age, high-sensitivity C-reactive protein level, lymphocyte count, and d-dimer level of COVID-19 patients at admission are informative for the patients9 outcomes.</p>",
+		"container-title": "medRxiv",
+		"DOI": "10.1101/2020.04.13.20064329",
+		"language": "en",
+		"page": "2020.04.13.20064329",
+		"source": "www.medrxiv.org",
+		"title": "Early prediction of mortality risk among severe COVID-19 patients using machine learning",
+		"URL": "https://www.medrxiv.org/content/10.1101/2020.04.13.20064329v1",
+		"author": [
+			{
+				"family": "Chen",
+				"given": "Xingdong"
+			},
+			{
+				"family": "Liu",
+				"given": "Zhenqiu"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					9,
+					12
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					4,
+					19
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/X4GWJIP5",
+		"type": "article-journal",
+		"container-title": "Critical Care",
+		"DOI": "10.1186/s13054-020-2833-7",
+		"ISSN": "1364-8535",
+		"issue": "1",
+		"journalAbbreviation": "Critical Care",
+		"page": "108",
+		"source": "BioMed Central",
+		"title": "Host susceptibility to severe COVID-19 and establishment of a host risk score: findings of 487 cases outside Wuhan",
+		"title-short": "Host susceptibility to severe COVID-19 and establishment of a host risk score",
+		"URL": "https://doi.org/10.1186/s13054-020-2833-7",
+		"volume": "24",
+		"author": [
+			{
+				"family": "Shi",
+				"given": "Yu"
+			},
+			{
+				"family": "Yu",
+				"given": "Xia"
+			},
+			{
+				"family": "Zhao",
+				"given": "Hong"
+			},
+			{
+				"family": "Wang",
+				"given": "Hao"
+			},
+			{
+				"family": "Zhao",
+				"given": "Ruihong"
+			},
+			{
+				"family": "Sheng",
+				"given": "Jifang"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					9,
+					12
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					3,
+					18
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/EN4GICJ6",
+		"type": "article-journal",
+		"abstract": "<p>Background: Since the severe acute respiratory syndrome coronavirus 2 (SARS-CoV-2) disease (COVID-19) outbreaks in Wuhan, China, healthcare systems capacities in highly endemic areas have been overwhelmed. Approaches to efficient management are urgently needed and key to a quicker control of the outbreaks and casualties. We aimed to characterize the clinical features of hospitalized patients with confirmed or suspected COVID-19, and develop a mortality risk index for COVID-19 patients. Methods: In this retrospective one-centre cohort study, we included all the confirmed or suspected COVID-19 patients hospitalized in a COVID-19-designated hospital from January 21 to February 5, 2020. Demographic, clinical, laboratory, radiological and clinical outcome data were collected from the hospital information system, nursing records and laboratory reports. Results: Of 577 patients with at least one post-admission evaluation, the median age was 55 years (interquartile range [IQR], 39 - 66); 254 (44.0%) were men; 22.8% (100/438) were severe pneumonia on admission, and 37.7% (75/199) patients were SARS-CoV-2 positive. The clinical, laboratory and radiological data were comparable between positive and negative SARS-CoV-2 patients. During a median follow-up of 8.4 days (IQR, 5.8 - 12.0), 39 patients died with a 12-day cumulative mortality of 8.7% (95% CI, 5.9% to 11.5%). A simple mortality risk index (called ACP index), composed of Age and C-reactive Protein, was developed. By applying the ACP index, patients were categorized into three grades. The 12-day cumulative mortality in grade three (age ≥ 60 years and CRP ≥ 34 mg/L) was 33.2% (95% CI, 19.8% to 44.3%), which was significantly higher than those of grade two (age ≥ 60 years and CRP &lt; 34 mg/L; age &lt; 60 years and CRP ≥ 34 mg/L; 5.6% [95% CI, 0 to 11.3%]) and grade one (age &lt; 60 years and CRP &lt; 34 mg/L, 0%) (P &lt;0.001), respectively. Conclusion: The ACP index can predict COVID-19 related short-term mortality, which may be a useful and convenient tool for quickly establishing a COVID-19 hierarchical management system that can greatly reduce the medical burden and therefore mortality in highly endemic areas.</p>",
+		"container-title": "medRxiv",
+		"DOI": "10.1101/2020.02.20.20025510",
+		"language": "en",
+		"page": "2020.02.20.20025510",
+		"source": "www.medrxiv.org",
+		"title": "ACP risk grade: a simple mortality index for patients with confirmed or suspected severe acute respiratory syndrome coronavirus 2 disease (COVID-19) during the early stage of outbreak in Wuhan, China",
+		"title-short": "ACP risk grade",
+		"URL": "https://www.medrxiv.org/content/10.1101/2020.02.20.20025510v1",
+		"author": [
+			{
+				"family": "Lu",
+				"given": "Jiatao"
+			},
+			{
+				"family": "Hu",
+				"given": "Shufang"
+			},
+			{
+				"family": "Fan",
+				"given": "Rong"
+			},
+			{
+				"family": "Liu",
+				"given": "Zhihong"
+			},
+			{
+				"family": "Yin",
+				"given": "Xueru"
+			},
+			{
+				"family": "Wang",
+				"given": "Qiongya"
+			},
+			{
+				"family": "Lv",
+				"given": "Qingquan"
+			},
+			{
+				"family": "Cai",
+				"given": "Zhifang"
+			},
+			{
+				"family": "Li",
+				"given": "Haijun"
+			},
+			{
+				"family": "Hu",
+				"given": "Yuhai"
+			},
+			{
+				"family": "Han",
+				"given": "Ying"
+			},
+			{
+				"family": "Hu",
+				"given": "Hongping"
+			},
+			{
+				"family": "Gao",
+				"given": "Wenyong"
+			},
+			{
+				"family": "Feng",
+				"given": "Shibo"
+			},
+			{
+				"family": "Liu",
+				"given": "Qiongfang"
+			},
+			{
+				"family": "Li",
+				"given": "Hui"
+			},
+			{
+				"family": "Sun",
+				"given": "Jian"
+			},
+			{
+				"family": "Peng",
+				"given": "Jie"
+			},
+			{
+				"family": "Yi",
+				"given": "Xuefeng"
+			},
+			{
+				"family": "Zhou",
+				"given": "Zixiao"
+			},
+			{
+				"family": "Guo",
+				"given": "Yabing"
+			},
+			{
+				"family": "Hou",
+				"given": "Jinlin"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					9,
+					12
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					2,
+					23
+				]
+			]
+		}
+	},
+	{
 		"id": "http://zotero.org/users/5567156/items/F9K2L5Q8",
 		"type": "article-journal",
 		"container-title": "Journal of the American Statistical Association",
