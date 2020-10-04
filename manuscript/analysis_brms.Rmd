@@ -1,0 +1,436 @@
+---
+title: "Analysis of Retrospective COVID-19 data"
+author: "Paul Bürkner"
+output:
+  html_document:
+    theme: default
+encoding: UTF-8
+editor_options: 
+  chunk_output_type: console
+---
+
+<style>
+pre {
+  overflow-x: auto;
+}
+pre code {
+  word-wrap: normal;
+  white-space: pre;
+}
+</style>
+
+---
+
+# {.tabset}
+
+## Setup
+
+```{r setup, include=FALSE, cache=FALSE}
+knitr::opts_chunk$set(cache = TRUE, fig.width = 10)
+```
+
+```{r general_options, cache=FALSE}
+devtools::load_all()
+library(tidyverse)
+library(tidybayes)
+library(brms)
+options(width = 160)
+options(brms.backend = "cmdstanr")
+options(mc.cores = 4)
+theme_set(bayesplot::theme_default())
+
+cache_dir <- here::here("local_temp_data")
+if (!dir.exists(cache_dir)) {
+  dir.create(cache_dir)
+}
+```
+
+```{r functions}
+scale2 <- function(x, na.rm = TRUE) {
+  (x - mean(x, na.rm = na.rm)) / sd(x, na.rm = na.rm)
+}
+
+center <- function(x, na.rm = TRUE) {
+  x - mean(x, na.rm = na.rm)
+}
+
+SW <- suppressWarnings
+
+sum_coding <- function(x, lvls = levels(x)) {
+  # codes the first category with -1
+  nlvls <- length(lvls)
+  stopifnot(nlvls > 1)
+  cont <- diag(nlvls)[, -nlvls, drop = FALSE]
+  cont[nlvls, ] <- -1
+  cont <- cont[c(nlvls, 1:(nlvls - 1)), , drop = FALSE]
+  colnames(cont) <- lvls[-1]
+  x <- factor(x, levels = lvls)
+  contrasts(x) <- cont
+  x
+}
+
+dummy_coding <- function(x, lvls = levels(x)) {
+  x <- factor(x, levels = lvls)
+  contrasts(x) <- contr.treatment(levels(x))
+  x
+}
+```
+
+## Data preparation
+
+```{r}
+data <- read_data_for_analysis()
+```
+
+```{r}
+data$patient_data <- data$patient_data %>%
+  mutate(
+    survival = outcome != "Death",
+    discharged = outcome == "Discharged"
+  )
+```
+
+```{r}
+data$surv_data <- data$marker_data_wide %>%  
+  filter(day > 0) %>%
+  mutate(
+    daym1 = day - 1,
+    status = fct_collapse(breathing, Hospitalized = breathing_levels) %>%
+      factor(ordered = FALSE) %>% 
+      fct_relevel("Hospitalized", "Discharged", "Death") %>%
+      fct_explicit_na("Hospitalized"),
+    censored = case_when(
+      status == "Death" ~ "none",
+      status %in% c("Hospitalized", "Discharged") ~ "right"
+    ),
+    censored_discharged = case_when(
+      status == "Discharged" ~ "none",
+      # approximation since patients who died cannot be 
+      # discharged in the future
+      status %in% c("Hospitalized", "Death") ~ "right"
+    )
+  ) %>%
+  inner_join(data$patient_data, by = c("hospital_id", "patient_id")) 
+
+data$surv_data_last_day <- data$surv_data %>%
+  group_by(patient_id) %>%
+  filter(day == max(day)) %>%
+  ungroup()
+```
+
+```{r}
+hypothesis_res_list <- list()
+```
+
+### Notes:
+
+- first and last day invasive: Martin will check
+- days_from_symptom_onset. Days from symptom onset until hospitalization. 
+Uncertain marker but contains some information. 
+Required for anti viral (< 7 days) hypothesis.
+- first_day_*: time from day 0 (arrived at hospital) to getting antivirals
+- some sites only support patients with mild disease and some only with
+strong disease symptoms
+
+## Analysis: Survival 
+
+### Basic binary model
+
+```{r, results="hide"}
+form_survival_base <- bf(
+  survival ~ sex + age_norm + 
+    smoking + BMI + ever_hcq + ever_az +
+    (1 | hospital_id),
+  family = bernoulli("logit")
+)
+
+prior_survival_base <- 
+  prior(normal(0, 5), class = "b") +
+  prior(normal(0, 5), class = "sd")
+
+fit_survival_base <- brm(
+  formula = form_survival_base,
+  data = data$patient_data,
+  prior = prior_survival_base,
+  file = "models/fit_survival_base"
+)
+fit_survival_base <- add_criterion(fit_survival_base, "loo")
+```
+
+```{r}
+summary(fit_survival_base)
+# ce <- conditional_effects(fit_survival_base)
+# plot(ce, ask = FALSE)
+```
+
+```{r}
+draws <- tidy_draws(fit_survival_base)
+hypothesis_res_list[["competing_hcq_az_survival_base"]] <- rbind(
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_hcqTRUE,
+    model = "brms_binary",
+    estimand = "logit(survival)",
+    hypothesis = hypotheses$hcq_reduces_death,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_azTRUE,
+    model = "brms_binary",
+    estimand = "logit(survival)",
+    hypothesis = hypotheses$az_reduces_death,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  )
+)
+```
+
+### TODOs
+
+- model varying slopes?
+- model interactions?
+- use horseshoe prior
+- use projpred
+- add ever_keltara as soon as there is a lest one patient who took it.
+
+## Analysis: Survival time
+
+```{r, results="hide"}
+form_survival_time <- bf(
+  day | cens(censored) ~ sex + age_norm + 
+    smoking + BMI + ever_hcq + ever_az + 
+    (1 | hospital_id),
+  family = brmsfamily("cox", "log")
+)
+
+prior_survival_time <- 
+  prior(normal(0, 5), class = "b") +
+  prior(normal(0, 5), class = "sd")
+
+fit_survival_time <- brm(
+  formula = form_survival_time,
+  data = data$surv_data_last_day,
+  prior = prior_survival_time,
+  inits = 0,
+  file = "models/fit_survival_time"
+)
+fit_survival_time <- add_criterion(fit_survival_time, "loo")
+```
+
+```{r}
+summary(fit_survival_time)
+```
+
+```{r}
+draws <- tidy_draws(fit_survival_time)
+hypothesis_res_list[["competing_hcq_az_survival_time"]] <- rbind(
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_hcqTRUE,
+    model = "brms_cox",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_reduces_death,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_azTRUE,
+    model = "brms_cox",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$az_reduces_death,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  )
+)
+```
+
+### TODOs:
+
+- How does that relate to days of hospitalization? (Answer: could be analysed;
+could be an interesting end point when people are discharged)
+
+
+## Analysis: Discharged
+
+### Basic binary model
+
+```{r, results="hide"}
+form_discharged_base <- bf(
+  discharged ~ sex + age_norm + 
+    smoking + BMI + ever_hcq + ever_az +
+    (1 | hospital_id),
+  family = bernoulli("logit")
+)
+
+prior_discharged_base <- 
+  prior(normal(0, 5), class = "b") +
+  prior(normal(0, 5), class = "sd")
+
+fit_discharged_base <- brm(
+  formula = form_discharged_base,
+  data = data$patient_data,
+  prior = prior_discharged_base,
+  file = "models/fit_discharged_base"
+)
+fit_discharged_base <- add_criterion(fit_discharged_base, "loo")
+```
+
+```{r}
+summary(fit_discharged_base)
+# ce <- conditional_effects(fit_discharged_base)
+# plot(ce, ask = FALSE)
+```
+
+```{r}
+draws <- tidy_draws(fit_discharged_base)
+hypothesis_res_list[["competing_hcq_az_discharged_base"]] <- rbind(
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_hcqTRUE,
+    model = "brms_binary",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$hcq_increases_discharged,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_azTRUE,
+    model = "brms_binary",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$az_increases_discharged,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  )
+)
+```
+
+### TODOs
+
+- model varying slopes?
+- model interactions?
+- use horseshoe prior
+- use projpred
+- add ever_keltara as soon as there is a lest one patient who took it.
+
+## Analysis: discharged time
+
+```{r, results="hide"}
+form_discharged_time <- bf(
+  day | cens(censored_discharged) ~ sex + age_norm + 
+    smoking + BMI + ever_hcq + ever_az + 
+    (1 | hospital_id),
+  family = brmsfamily("cox", "log")
+)
+
+prior_discharged_time <- 
+  prior(normal(0, 5), class = "b") +
+  prior(normal(0, 5), class = "sd")
+
+fit_discharged_time <- brm(
+  formula = form_discharged_time,
+  data = data$surv_data_last_day,
+  prior = prior_discharged_time,
+  inits = 0,
+  control = list(adapt_delta = 0.95),
+  file = "models/fit_discharged_time"
+)
+fit_discharged_time <- add_criterion(fit_discharged_time, "loo")
+```
+
+```{r}
+summary(fit_discharged_time)
+```
+
+```{r}
+draws <- tidy_draws(fit_discharged_time)
+hypothesis_res_list[["competing_hcq_az_discharged_time"]] <- rbind(
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_hcqTRUE,
+    model = "brms_cox",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$hcq_increases_discharged,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_azTRUE,
+    model = "brms_cox",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$az_increases_discharged,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  )
+)
+```
+
+
+## Analysis: Worst Breathing {.tabset}
+
+### Basic ordinal model
+
+```{r, results="hide"}
+form_worst_breathing_base <- bf(
+  worst_breathing ~ sex + age_norm + 
+    smoking + BMI + ever_hcq + ever_az +
+    (1 | hospital_id),
+  family = sratio("logit")
+)
+
+prior_worst_breathing_base <- 
+  prior(normal(0, 5), class = "b") +
+  prior(normal(0, 5), class = "sd")
+
+fit_worst_breathing_base <- brm(
+  formula = form_worst_breathing_base,
+  data = data$patient_data,
+  prior = prior_worst_breathing_base,
+  file = "models/fit_worst_breathing_base"
+)
+fit_worst_breathing_base <- add_criterion(fit_worst_breathing_base, "loo")
+```
+
+```{r}
+summary(fit_worst_breathing_base)
+# ce <- conditional_effects(fit_worst_breathing_base, categorical = TRUE)
+# plot(ce, ask = FALSE)
+```
+
+### Category-specific ordinal model
+
+```{r, results="hide"}
+form_worst_breathing_cs <- bf(
+  worst_breathing ~ cs(sex + age_norm + 
+    smoking + BMI + ever_hcq + ever_az) +
+    (1 | hospital_id),
+  family = sratio("logit")
+)
+
+prior_worst_breathing_cs <- 
+  prior(normal(0, 5), class = "b") +
+  prior(normal(0, 5), class = "sd")
+
+fit_worst_breathing_cs <- brm(
+  formula = form_worst_breathing_cs,
+  data = data$patient_data,
+  prior = prior_worst_breathing_cs,
+  inits = 0,
+  file = "models/fit_worst_breathing_cs"
+)
+fit_worst_breathing_cs <- add_criterion(fit_worst_breathing_cs, "loo")
+```
+
+```{r}
+summary(fit_worst_breathing_cs)
+# ce <- conditional_effects(fit_worst_breathing_cs, categorical = TRUE)
+# plot(ce, ask = FALSE)
+```
+
+### Model Comparison
+
+```{r}
+loo(fit_worst_breathing_base, fit_worst_breathing_cs)
+```
+
+### TODOs 
+
+- How to handle missing values in `worst_breathing`?
+- decide which predictors to include 
+- model interactions?
+- model varying slopes?
+- use horseshoe or similar sparsity priors?
+
+
+```{r}
+hypothesis_res_all <- do.call(rbind, hypothesis_res_list)
+write_csv(hypothesis_res_all, path = paste0(cache_dir, "/analysis_brms.csv"))
+```

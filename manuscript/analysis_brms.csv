@@ -1,0 +1,9 @@
+hypothesis,model,adjusted,estimand,widest_CI_excl_reference,point_estimate,ci_low,ci_high,model_check,data_version
+hcq_reduces_death,brms_binary,"az, sex, age_norm, smoking, BMI",logit(survival),0.989,3.1291048649925,0.67904455,5.9443185000000005,OK,0a4c409324baf148f74ea5a7869cb315
+az_reduces_death,brms_binary,"hcq, sex, age_norm, smoking, BMI",logit(survival),0.6194999999999999,-1.1864726183345,-3.94293575,1.4234982500000002,OK,0a4c409324baf148f74ea5a7869cb315
+hcq_reduces_death,brms_cox,"az, sex, age_norm, smoking, BMI",log(HR),0.992,-2.99574489357,-5.608754,-0.6591127499999994,OK,0a4c409324baf148f74ea5a7869cb315
+az_reduces_death,brms_cox,"hcq, sex, age_norm, smoking, BMI",log(HR),0.871,2.06952262459,-0.5976791,4.86274925,OK,0a4c409324baf148f74ea5a7869cb315
+hcq_increases_discharged,brms_binary,"az, sex, age_norm, smoking, BMI",logit(discharged),0.2965,0.23454590082425,-1.05898,1.4676762500000002,OK,0a4c409324baf148f74ea5a7869cb315
+az_increases_discharged,brms_binary,"hcq, sex, age_norm, smoking, BMI",logit(discharged),0.9595,1.452710781727,0.06575380000000002,2.852730250000001,OK,0a4c409324baf148f74ea5a7869cb315
+hcq_increases_discharged,brms_cox,"az, sex, age_norm, smoking, BMI",log(HR),0.9604999999999999,-0.952236984794,-1.94860625,-0.04942054749999976,OK,0a4c409324baf148f74ea5a7869cb315
+az_increases_discharged,brms_cox,"hcq, sex, age_norm, smoking, BMI",log(HR),0.978,0.994561846455,0.14052182500000002,1.9173875,OK,0a4c409324baf148f74ea5a7869cb315
