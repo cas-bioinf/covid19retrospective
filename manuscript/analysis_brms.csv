@@ -7,3 +7,7 @@ hcq_increases_discharged,brms_binary,"az, sex, age_norm, smoking, BMI",logit(dis
 az_increases_discharged,brms_binary,"hcq, sex, age_norm, smoking, BMI",logit(discharged),0.9595,1.452710781727,0.06575380000000002,2.852730250000001,OK,0a4c409324baf148f74ea5a7869cb315
 hcq_increases_discharged,brms_cox,"az, sex, age_norm, smoking, BMI",log(HR),0.9604999999999999,-0.952236984794,-1.94860625,-0.04942054749999976,OK,0a4c409324baf148f74ea5a7869cb315
 az_increases_discharged,brms_cox,"hcq, sex, age_norm, smoking, BMI",log(HR),0.978,0.994561846455,0.14052182500000002,1.9173875,OK,0a4c409324baf148f74ea5a7869cb315
+hcq_reduces_death,brms_categorical,"az, sex, age_norm, smoking, BMI",logit(death),0.946,-3.298300815155,-7.086306749999999,0.053936620000000005,OK,0a4c409324baf148f74ea5a7869cb315
+az_reduces_death,brms_categorical,"hcq, sex, age_norm, smoking, BMI",logit(death),0.836,2.64377850086,-1.053684,6.623229500000001,OK,0a4c409324baf148f74ea5a7869cb315
+hcq_increases_discharged,brms_categorical,"az, sex, age_norm, smoking, BMI",logit(discharged),0.09450000000000003,0.131197711768325,-2.2011912499999995,2.401082,OK,0a4c409324baf148f74ea5a7869cb315
+az_increases_discharged,brms_categorical,"hcq, sex, age_norm, smoking, BMI",logit(discharged),0.6765,1.270921482103,-1.17485125,3.922746500000002,OK,0a4c409324baf148f74ea5a7869cb315

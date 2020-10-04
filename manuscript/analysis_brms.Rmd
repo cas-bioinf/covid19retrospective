@@ -86,7 +86,9 @@ data <- read_data_for_analysis()
 data$patient_data <- data$patient_data %>%
   mutate(
     survival = outcome != "Death",
-    discharged = outcome == "Discharged"
+    discharged = outcome == "Discharged",
+    outcome3 = fct_collapse(outcome, Discharged = c("Discharged", "Transferred")) %>%
+      fct_relevel("Hospitalized", "Discharged", "Death")
   )
 ```
 
@@ -165,7 +167,7 @@ summary(fit_survival_base)
 
 ```{r}
 draws <- tidy_draws(fit_survival_base)
-hypothesis_res_list[["competing_hcq_az_survival_base"]] <- rbind(
+hypothesis_res_list[["hcq_az_survival_base"]] <- rbind(
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_hcqTRUE,
     model = "brms_binary",
@@ -221,7 +223,7 @@ summary(fit_survival_time)
 
 ```{r}
 draws <- tidy_draws(fit_survival_time)
-hypothesis_res_list[["competing_hcq_az_survival_time"]] <- rbind(
+hypothesis_res_list[["hcq_az_survival_time"]] <- rbind(
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_hcqTRUE,
     model = "brms_cox",
@@ -278,7 +280,7 @@ summary(fit_discharged_base)
 
 ```{r}
 draws <- tidy_draws(fit_discharged_base)
-hypothesis_res_list[["competing_hcq_az_discharged_base"]] <- rbind(
+hypothesis_res_list[["hcq_az_discharged_base"]] <- rbind(
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_hcqTRUE,
     model = "brms_binary",
@@ -335,7 +337,7 @@ summary(fit_discharged_time)
 
 ```{r}
 draws <- tidy_draws(fit_discharged_time)
-hypothesis_res_list[["competing_hcq_az_discharged_time"]] <- rbind(
+hypothesis_res_list[["hcq_az_discharged_time"]] <- rbind(
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_hcqTRUE,
     model = "brms_cox",
@@ -347,6 +349,73 @@ hypothesis_res_list[["competing_hcq_az_discharged_time"]] <- rbind(
     draws = draws$b_ever_azTRUE,
     model = "brms_cox",
     estimand = "log(HR)",
+    hypothesis = hypotheses$az_increases_discharged,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  )
+)
+```
+
+## Analysis: Hospitalized vs. Discharged vs. Death
+
+### Basic Categorical model
+
+```{r, results="hide"}
+form_outcome_base <- bf(
+  outcome3 ~ sex + age_norm + 
+    smoking + BMI + ever_hcq + ever_az +
+    (1 | hospital_id),
+  family = categorical("logit")
+)
+
+prior_outcome_base <- 
+  prior(normal(0, 5), class = "b", dpar = "muDeath") +
+  prior(normal(0, 5), class = "sd", dpar = "muDeath") +
+  prior(normal(0, 5), class = "b", dpar = "muDischarged") +
+  prior(normal(0, 5), class = "sd", dpar = "muDischarged")
+
+fit_outcome_base <- brm(
+  formula = form_outcome_base,
+  data = data$patient_data,
+  prior = prior_outcome_base,
+  file = "models/fit_outcome_base"
+)
+fit_outcome_base <- add_criterion(fit_outcome_base, "loo")
+```
+
+```{r}
+summary(fit_outcome_base)
+# ce <- conditional_effects(fit_outcome_base)
+# plot(ce, ask = FALSE)
+```
+
+```{r}
+draws <- tidy_draws(fit_outcome_base)
+hypothesis_res_list[["hcq_az_outcome_base"]] <- rbind(
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDeath_ever_hcqTRUE,
+    model = "brms_categorical",
+    estimand = "logit(death)",
+    hypothesis = hypotheses$hcq_reduces_death,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDeath_ever_azTRUE,
+    model = "brms_categorical",
+    estimand = "logit(death)",
+    hypothesis = hypotheses$az_reduces_death,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDischarged_ever_hcqTRUE,
+    model = "brms_categorical",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$hcq_increases_discharged,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDischarged_ever_azTRUE,
+    model = "brms_categorical",
+    estimand = "logit(discharged)",
     hypothesis = hypotheses$az_increases_discharged,
     adjusted = "hcq, sex, age_norm, smoking, BMI"
   )
