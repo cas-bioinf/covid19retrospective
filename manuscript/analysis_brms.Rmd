@@ -121,6 +121,16 @@ data$surv_data_last_day <- data$surv_data %>%
 ```
 
 ```{r}
+# all patients for which we have data for at least 7 days
+data$surv_data_7 <- data$surv_data_last_day %>%
+  filter(!(day < 7 & outcome3 == "Hospitalized"))
+
+# all patients for which we have data for at least 7 days
+data$surv_data_28 <- data$surv_data_last_day %>%
+  filter(!(day < 28 & outcome3 == "Hospitalized"))
+```
+
+```{r}
 hypothesis_res_list <- list()
 ```
 
@@ -178,6 +188,84 @@ hypothesis_res_list[["hcq_az_survival_base"]] <- rbind(
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_binary",
+    estimand = "logit(survival)",
+    hypothesis = hypotheses$az_reduces_death,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  )
+)
+```
+
+
+### Basic binary model (7 days)
+
+```{r, results="hide"}
+fit_survival_base_7 <- brm(
+  formula = form_survival_base,
+  data = data$surv_data_7,
+  prior = prior_survival_base,
+  file = "models/fit_survival_base_7"
+)
+fit_survival_base_7 <- add_criterion(fit_survival_base_7, "loo")
+```
+
+```{r}
+summary(fit_survival_base_7)
+# ce <- conditional_effects(fit_survival_base_7)
+# plot(ce, ask = FALSE)
+```
+
+```{r}
+draws <- tidy_draws(fit_survival_base_7)
+hypothesis_res_list[["hcq_az_survival_base_7"]] <- rbind(
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_hcqTRUE,
+    model = "brms_binary_7",
+    estimand = "logit(survival)",
+    hypothesis = hypotheses$hcq_reduces_death,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_azTRUE,
+    model = "brms_binary_7",
+    estimand = "logit(survival)",
+    hypothesis = hypotheses$az_reduces_death,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  )
+)
+```
+
+
+### Basic binary model (28 days)
+
+```{r, results="hide"}
+fit_survival_base_28 <- brm(
+  formula = form_survival_base,
+  data = data$surv_data_28,
+  prior = prior_survival_base,
+  file = "models/fit_survival_base_28"
+)
+fit_survival_base_28 <- add_criterion(fit_survival_base_28, "loo")
+```
+
+```{r}
+summary(fit_survival_base_28)
+# ce <- conditional_effects(fit_survival_base_28)
+# plot(ce, ask = FALSE)
+```
+
+```{r}
+draws <- tidy_draws(fit_survival_base_28)
+hypothesis_res_list[["hcq_az_survival_base_28"]] <- rbind(
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_hcqTRUE,
+    model = "brms_binary_28",
+    estimand = "logit(survival)",
+    hypothesis = hypotheses$hcq_reduces_death,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_azTRUE,
+    model = "brms_binary_28",
     estimand = "logit(survival)",
     hypothesis = hypotheses$az_reduces_death,
     adjusted = "hcq, sex, age_norm, smoking, BMI"
@@ -291,6 +379,83 @@ hypothesis_res_list[["hcq_az_discharged_base"]] <- rbind(
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_binary",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$az_increases_discharged,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  )
+)
+```
+
+
+### Basic binary model (7 Days)
+
+```{r, results="hide"}
+fit_discharged_base_7 <- brm(
+  formula = form_discharged_base,
+  data = data$surv_data_7,
+  prior = prior_discharged_base,
+  file = "models/fit_discharged_base_7"
+)
+fit_discharged_base_7 <- add_criterion(fit_discharged_base_7, "loo")
+```
+
+```{r}
+summary(fit_discharged_base_7)
+# ce <- conditional_effects(fit_discharged_base_7)
+# plot(ce, ask = FALSE)
+```
+
+```{r}
+draws <- tidy_draws(fit_discharged_base_7)
+hypothesis_res_list[["hcq_az_discharged_base_7"]] <- rbind(
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_hcqTRUE,
+    model = "brms_binary_7",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$hcq_increases_discharged,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_azTRUE,
+    model = "brms_binary_7",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$az_increases_discharged,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  )
+)
+```
+
+### Basic binary model (28 Days)
+
+```{r, results="hide"}
+fit_discharged_base_28 <- brm(
+  formula = form_discharged_base,
+  data = data$surv_data_28,
+  prior = prior_discharged_base,
+  file = "models/fit_discharged_base_28"
+)
+fit_discharged_base_28 <- add_criterion(fit_discharged_base_28, "loo")
+```
+
+```{r}
+summary(fit_discharged_base_28)
+# ce <- conditional_effects(fit_discharged_base_28)
+# plot(ce, ask = FALSE)
+```
+
+```{r}
+draws <- tidy_draws(fit_discharged_base_28)
+hypothesis_res_list[["hcq_az_discharged_base_28"]] <- rbind(
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_hcqTRUE,
+    model = "brms_binary_28",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$hcq_increases_discharged,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_azTRUE,
+    model = "brms_binary_28",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$az_increases_discharged,
     adjusted = "hcq, sex, age_norm, smoking, BMI"
@@ -415,6 +580,113 @@ hypothesis_res_list[["hcq_az_outcome_base"]] <- rbind(
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDischarged_ever_azTRUE,
     model = "brms_categorical",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$az_increases_discharged,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  )
+)
+```
+
+
+### Basic Categorical model (7 Days)
+
+```{r, results="hide"}
+fit_outcome_base_7 <- brm(
+  formula = form_outcome_base,
+  data = data$surv_data_7,
+  prior = prior_outcome_base,
+  file = "models/fit_outcome_base_7"
+)
+fit_outcome_base_7 <- add_criterion(fit_outcome_base_7, "loo")
+```
+
+```{r}
+summary(fit_outcome_base_7)
+# ce <- conditional_effects(fit_outcome_base_7)
+# plot(ce, ask = FALSE)
+```
+
+```{r}
+draws <- tidy_draws(fit_outcome_base_7)
+hypothesis_res_list[["hcq_az_outcome_base_7"]] <- rbind(
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDeath_ever_hcqTRUE,
+    model = "brms_categorical_7",
+    estimand = "logit(death)",
+    hypothesis = hypotheses$hcq_reduces_death,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDeath_ever_azTRUE,
+    model = "brms_categorical_7",
+    estimand = "logit(death)",
+    hypothesis = hypotheses$az_reduces_death,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDischarged_ever_hcqTRUE,
+    model = "brms_categorical_7",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$hcq_increases_discharged,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDischarged_ever_azTRUE,
+    model = "brms_categorical_7",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$az_increases_discharged,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  )
+)
+```
+
+
+
+### Basic Categorical model (28 Days)
+
+```{r, results="hide"}
+fit_outcome_base_28 <- brm(
+  formula = form_outcome_base,
+  data = data$surv_data_28,
+  prior = prior_outcome_base,
+  file = "models/fit_outcome_base_28"
+)
+fit_outcome_bas_28 <- add_criterion(fit_outcome_base_28, "loo")
+```
+
+```{r}
+summary(fit_outcome_base_28)
+# ce <- conditional_effects(fit_outcome_base_28)
+# plot(ce, ask = FALSE)
+```
+
+```{r}
+draws <- tidy_draws(fit_outcome_base_28)
+hypothesis_res_list[["hcq_az_outcome_base_28"]] <- rbind(
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDeath_ever_hcqTRUE,
+    model = "brms_categorical_28",
+    estimand = "logit(death)",
+    hypothesis = hypotheses$hcq_reduces_death,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDeath_ever_azTRUE,
+    model = "brms_categorical_28",
+    estimand = "logit(death)",
+    hypothesis = hypotheses$az_reduces_death,
+    adjusted = "hcq, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDischarged_ever_hcqTRUE,
+    model = "brms_categorical_28",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$hcq_increases_discharged,
+    adjusted = "az, sex, age_norm, smoking, BMI"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDischarged_ever_azTRUE,
+    model = "brms_categorical_28",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$az_increases_discharged,
     adjusted = "hcq, sex, age_norm, smoking, BMI"
