@@ -18,13 +18,13 @@ data <- read_data_for_analysis()
 ```
 
 ```{r}
-baseline <- data$patient_data %>%
-  mutate(alive_12_admission = case_when(
+at_admission <- data$patient_data %>%
+  mutate(alive_12 = case_when(
     last_record >= 12 ~ TRUE,
     outcome == "Discharged" ~ TRUE,
     outcome == "Death" ~ FALSE,
     TRUE ~ NA),
-    alive_30_admission = case_when(
+    alive_30 = case_when(
     last_record >= 30 ~ TRUE,
     outcome == "Discharged" ~ TRUE,
     outcome == "Death" ~ FALSE,
@@ -77,6 +77,7 @@ acp_data %>%
 #   group_by(ACP_grade, worst_breathing_12) %>%
 #   summarise(mean(alive_12))
 ```
+
 ```{r}
 li_et_al_data <- data.frame(
   ACP_grade = c(rep(1, 194), rep(2, 145), rep(3, 95)),
@@ -90,38 +91,7 @@ acp_auc_orig$summary
 ```
 
 
-```{r}
-outcome_caption = c("alive_12" = "12-day mortality", "alive_30" = "30-day mortality")
-score_caption = c("ACP_grade" = "Li et al. (ACP)")
 
-my_auc <- function(f, d) {
-  roc = pROC::roc(f, d, direction = "<", levels = c(TRUE, FALSE))
-  ci = pROC::ci.auc(roc)
-  
-  outcome = as.character(formula.tools::lhs(f))
-  score = as.character(formula.tools::rhs(f))
-  
-
-  list(roc = roc,
-       summary = data.frame(
-         auc = ci[2],
-         auc_low = ci[1],
-         auc_high = ci[3],
-         outcome = outcome,
-         score = score
-       )
-  )
-}
-
-plot_my_auc <- function(my_auc) {
-  caption = paste0(score_caption[my_auc$summary$score], ", ", outcome_caption[my_auc$summary$outcome])
-  plot(my_auc$roc, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE, main = caption)
-}
-
-plot_all_auc <- function(my_auc_list) {
-  my_auc_list %>% walk(plot_my_auc)
-}
-```
 
 
 ```{r}
@@ -132,6 +102,12 @@ acp_auc <- list(
 plot_all_auc(acp_auc)
 
 ```
+
+```{r}
+compare_auc_to_orig(list(acp_auc_orig), list(acp_auc))
+#acp_auc
+```
+
 
 
 # Chen and Liu
@@ -187,10 +163,10 @@ chen_liu_data <- data$marker_data_wide %>%
   inner_join(data$patient_data, by = c("patient_id")) %>%
   mutate(    
     inclusion_criterium = breathing_first < "NIPPV" & (outcome %in% c("Discharged", "Death") | last_record >= first_day + 7),
-    score =  -4.21167 + 0.058699 * age + 0.013391 * first_CRP + 0.112055 * first_d_dimer_converted - 1.983733 * first_lymphocyte_count,
-    risk = 1 / (1 + exp(-score)),
-    risk_lower = 1 / (1 + exp(-score + 1.96*0.1721)),
-    risk_upper = 1 / (1 + exp(-score - 1.96*0.1721)),
+    chen_liu = -4.21167 + 0.058699 * age + 0.013391 * first_CRP + 0.112055 * first_d_dimer_converted - 1.983733 * first_lymphocyte_count,
+    risk = 1 / (1 + exp(-chen_liu)),
+    risk_lower = 1 / (1 + exp(-chen_liu + 1.96*0.1721)),
+    risk_upper = 1 / (1 + exp(-chen_liu - 1.96*0.1721)),
     alive_12 = case_when(last_record >= first_day + 12 | outcome == "Discharged" ~ TRUE,
                          outcome == "Death" ~ FALSE,
                          TRUE ~ NA),
@@ -203,33 +179,103 @@ chen_liu_data <- data$marker_data_wide %>%
     alive_imputed = outcome != "Death"
     
                          
-  ) %>% select(age, starts_with("first"), score, starts_with("risk"), breathing_first, starts_with("alive"), inclusion_criterium)
+  ) %>% select(age, starts_with("first"), chen_liu, starts_with("risk"), breathing_first, starts_with("alive"), inclusion_criterium)
 ```
 
 ```{r}
-chen_liu_data %>% ggplot(aes(x = score, y = alive_30)) + geom_point()
+chen_liu_data %>% ggplot(aes(x = chen_liu, y = alive_30)) + geom_point()
 ```
 
 
 ```{r}
-roc_chen_liu_12 <- pROC::roc(alive_12 ~ score, chen_liu_data, direction = "<", levels = c(TRUE, FALSE), plot = TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE)
-roc_chen_liu_30 <- pROC::roc(alive_30 ~ score, chen_liu_data, direction = "<", levels = c(TRUE, FALSE), plot = TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE)
-roc_chen_liu_all <- pROC::roc(alive_all ~ score, chen_liu_data, direction = "<", levels = c(TRUE, FALSE), plot = TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE)
+chen_liu_data_inclusion <- chen_liu_data %>% filter(inclusion_criterium)
+chen_liu_auc <- list(
+  my_auc(alive_12 ~ chen_liu, chen_liu_data),
+  my_auc(alive_30 ~ chen_liu, chen_liu_data),
+  my_auc(alive_all ~ chen_liu, chen_liu_data),
+  my_auc(alive_imputed ~ chen_liu, chen_liu_data),
+  my_auc(alive_12 ~ chen_liu, chen_liu_data_inclusion, "incl"),
+  my_auc(alive_30 ~ chen_liu, chen_liu_data_inclusion, "incl"),
+  my_auc(alive_all ~ chen_liu, chen_liu_data_inclusion, "incl"),
+  my_auc(alive_imputed ~ chen_liu, chen_liu_data_inclusion, "incl")
+)
 
-roc_chen_liu_12_incl <- pROC::roc(alive_12 ~ score, chen_liu_data %>% filter(inclusion_criterium), direction = "<", levels = c(TRUE, FALSE), plot = TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE)
-roc_chen_liu_30_incl <- pROC::roc(alive_30 ~ score, chen_liu_data %>% filter(inclusion_criterium), direction = "<", levels = c(TRUE, FALSE), plot = TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE)
-roc_chen_liu_all_incl <- pROC::roc(alive_all ~ score, chen_liu_data %>% filter(inclusion_criterium), direction = "<", levels = c(TRUE, FALSE), plot = TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE)
-roc_chen_liu_imputed_incl <- pROC::roc(alive_imputed ~ score, chen_liu_data %>% filter(inclusion_criterium), direction = "<", levels = c(TRUE, FALSE), plot = TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE)
+plot_all_auc(chen_liu_auc)
 
 ```
 
+```{r}
+chen_liu_auc_orig <- my_auc_from_estimate(0.881, "alive", "chen_liu", "incl")
+compare_auc_to_orig(list(chen_liu_auc_orig), list(chen_liu_auc)) 
+
+```
 
 
 # Shi et al.
 
 1 point for Age >= 50, Male, Hypertension
 
-Not sure what "severe" means
+Not sure what "severe" means, will test both "not ventilated", "not needing Oxygen"
+
+```{r}
+shi_et_al_data <- data$marker_data_wide %>%  
+  group_by(patient_id) %>%
+  summarise(
+    breathing_admission = max(breathing[!is.na(breathing) & day < 2]),
+    not_ventilated_admission = breathing_admission < "NIPPV",
+    not_oxygen_admission = breathing_admission < "Oxygen",
+    .groups = "drop") %>% 
+  inner_join(at_admission, by = c("patient_id")) %>%
+  mutate(shi = (age >= 50) + (sex == "M") + has_hypertension_drugs,
+         not_ventilated_all = case_when(
+           outcome == "Death" ~ FALSE,
+           outcome != "Discharged" ~ NA,
+           worst_breathing < "NIPPV" ~ TRUE
+         ),
+         not_oxygen_all = case_when(
+           outcome == "Death" ~ FALSE,
+           outcome != "Discharged" ~ NA,
+           worst_breathing < "Oxygen" ~ TRUE
+         )
+         )
+
+shi_et_al_auc <- list(
+  my_auc(alive_12 ~ shi, shi_et_al_data),
+  my_auc(alive_30 ~ shi, shi_et_al_data),
+  my_auc(not_ventilated_all ~ shi, shi_et_al_data),
+  my_auc(not_oxygen_all ~ shi, shi_et_al_data),
+  my_auc(not_ventilated_admission ~ shi, shi_et_al_data),
+  my_auc(not_oxygen_admission ~ shi, shi_et_al_data)
+)
+
+plot_all_auc(shi_et_al_auc)
+```
+
+From Fig1 B,C:
+```{r}
+shi_et_al_reported <- data.frame(
+  score = c(0,1,2,3), shi_severe_admission = c(0,0.057,0.19,0.4), shi_severe_all = c(0.083, 0.138,0.389,0.429)
+)
+
+shi_et_al_compare <- shi_et_al_data %>%
+  group_by(shi) %>%
+  summarise(
+    across(
+      one_of(c("not_ventilated_admission", "not_ventilated_all", "not_oxygen_admission", "not_oxygen_all")), 
+      ~ mean(.x, na.rm = TRUE), .names = "our_{col}"), 
+    n_our_admission = sum(!is.na(not_ventilated_admission)), 
+    n_our_all = sum(!is.na(not_ventilated_all)),
+    .groups = "drop") %>%
+  inner_join(shi_et_al_reported, by = c("shi" = "score"))
+
+shi_et_al_compare %>%
+  transmute(score = shi, `Shi et al. (admission)` = shi_severe_admission, `Ventilated (admission)` = 1 - our_not_ventilated_admission, `Oxygen (admission)` = 1 - our_not_oxygen_admission, N = n_our_admission)
+
+shi_et_al_compare %>%
+  transmute(score = shi, `Shi et al. (hospitalization)` = shi_severe_all, `Ventilated (hospitalization)` = 1 - our_not_ventilated_all, `Oxygen (hospitalization)` = 1 - our_not_oxygen_all, N = n_our_all)
+
+```
+
 
 # Caramelo
 
@@ -269,7 +315,7 @@ atb_first_day <- data$marker_data_wide %>% select(patient_id, day, took_antibiot
   summarise(atb0 = any(took_antibiotics[day <= 0]), 
             atb1 = any(took_antibiotics[day <= 1]), .groups = "drop")
 
-bello_chavolla_data <- baseline %>%
+bello_chavolla_data <- at_admission %>%
   inner_join(atb_first_day, by = "patient_id") %>%
   mutate(bc_base =  3 *  (age >= 65) +
            diabetes +
