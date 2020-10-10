@@ -14,7 +14,7 @@ score_caption = c("ACP_grade" = "Li et al. (ACP)",
 
 outcome_note_caption = c("incl" = " (inclusion crit.)")
 
-my_auc <- function(f, d, outcome_note = "") {
+my_auc <- function(f, d, outcome_note = "", subgroup = "") {
   roc = pROC::roc(f, d, direction = "<", levels = c(TRUE, FALSE))
   ci = pROC::ci.auc(roc)
 
@@ -29,7 +29,8 @@ my_auc <- function(f, d, outcome_note = "") {
          auc_high = ci[3],
          outcome = outcome,
          score = score,
-         outcome_note = outcome_note
+         outcome_note = outcome_note,
+         subgroup = subgroup
        )
   )
 }
@@ -61,7 +62,7 @@ plot_all_auc <- function(my_auc_list) {
   my_auc_list %>% walk(plot_my_auc)
 }
 
-my_auc_from_estimate <- function(auc_estimate, outcome, score, outcome_note) {
+my_auc_from_estimate <- function(auc_estimate, outcome, score, outcome_note, subgroup = "") {
   list(roc = NULL,
        summary = tibble::tibble(
          auc = auc_estimate,
@@ -69,32 +70,37 @@ my_auc_from_estimate <- function(auc_estimate, outcome, score, outcome_note) {
          auc_high = NA_real_,
          outcome = outcome,
          score = score,
-         outcome_note = outcome_note
+         outcome_note = outcome_note,
+         subgroup = subgroup
        )
   )
 
 }
 
-compare_auc_to_orig <- function(orig_auc_list, our_auc_list, show_outcome = TRUE) {
+compare_auc_to_orig <- function(orig_auc_list, our_auc_list, show_outcome = TRUE, ...) {
   get_summaries <- function(x) {
     map_df(x, ~ .x$summary)
   }
+
+  source_factor <- function(x) {
+    factor(x, levels = c("our","orig"), labels = c("Present study", "Original study"))
+  }
   all_auc <- our_auc_list %>% map_df(get_summaries) %>%
-    mutate(source = "our", score = score_caption[score])
-  all_orig <- orig_auc_list %>% get_summaries() %>% mutate(source = "orig", score = score_caption[score])
+    mutate(source = source_factor("our"), score = paste(score_caption[score], subgroup))
+  all_orig <- orig_auc_list %>% get_summaries() %>% mutate(source = source_factor("orig"), score = paste(score_caption[score], subgroup))
   data_for_plot <- rbind(all_auc, all_orig) %>%
     mutate(
-      source = factor(source, levels = c("our","orig"), labels = c("Present study", "Original study")),
       id = interaction(outcome_note, outcome, source),
            size = if_else(source == "orig", 2, 1))
 
-  res <- data_for_plot %>% ggplot(aes(x = auc, xmin = auc_low, xmax = auc_high, y = id, color = source)) +
+  res <- data_for_plot %>% ggplot(aes(x = auc, xmin = auc_low, xmax = auc_high, y = id, color = source, shape = source)) +
     geom_vline(aes(xintercept = auc),data = all_orig, color = "gray", linetype = "dashed") +
-    geom_errorbarh(height = 0, na.rm = TRUE) + geom_point(aes(size = size, shape = source)) +
+    geom_errorbarh(height = 0, na.rm = TRUE) + geom_point(aes(size = size)) +
     scale_size(range = c(2,4), guide = FALSE) +
     scale_x_continuous("C-statistic") +
     scale_shape_discrete("Source") +
-    facet_wrap(~score, scales = "free")
+    scale_color_discrete("Source") +
+    facet_wrap(~score, scales = "free", ...)
 
   if(!show_outcome) {
     res <- res + theme(axis.text.y = element_blank(), axis.title.y = element_blank(), axis.ticks.y = element_blank())

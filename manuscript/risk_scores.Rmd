@@ -79,15 +79,27 @@ acp_data %>%
 ```
 
 ```{r}
-li_et_al_data <- data.frame(
-  ACP_grade = c(rep(1, 194), rep(2, 145), rep(3, 95)),
-  alive_12 = c(rep(TRUE, 194), #Grade 1, 0% mortality
-               rep(FALSE, 8), rep(TRUE, 145-8), #Gred 2, 5.6% mortality
-               rep(FALSE, 32), rep(TRUE, 95 - 32) #Grade 3, 33.2% mortality
-  ))
-  
+auc_data_from_counts <- function(score_values, positive_counts, negative_counts) {
+  res <- list()
+  for(i in 1:length(score_values)) {
+    res[[i]] <- rbind(
+      data.frame(score = rep(score_values[i], positive_counts[i]), outcome = rep(TRUE, positive_counts[i])),
+      data.frame(score = rep(score_values[i], negative_counts[i]), outcome = rep(FALSE, negative_counts[i]))
+    )
+  }
+  do.call(rbind, res)
+}
+
+#Grade 1, 0% mortality,Grade 2, 5.6% mortality, Grade 3, 33.2% mortality
+li_et_al_data <-  auc_data_from_counts(c(1,2,3), 
+                                            positive_counts = c(194, 145-8, 95-32), 
+                                            negative_counts = c(0, 8, 32)) %>%
+                         transmute(alive_12 = outcome, ACP_grade = score)
+
+
 acp_auc_orig <- my_auc(alive_12 ~ ACP_grade, li_et_al_data)
 acp_auc_orig$summary
+
 ```
 
 
@@ -200,7 +212,7 @@ chen_liu_auc <- list(
   my_auc(alive_imputed ~ chen_liu, chen_liu_data_inclusion, "incl")
 )
 
-plot_all_auc(chen_liu_auc)
+#plot_all_auc(chen_liu_auc)
 
 ```
 
@@ -244,18 +256,47 @@ shi_et_al_auc <- list(
   my_auc(alive_30 ~ shi, shi_et_al_data),
   my_auc(not_ventilated_all ~ shi, shi_et_al_data),
   my_auc(not_oxygen_all ~ shi, shi_et_al_data),
-  my_auc(not_ventilated_admission ~ shi, shi_et_al_data),
-  my_auc(not_oxygen_admission ~ shi, shi_et_al_data)
+  my_auc(not_ventilated_admission ~ shi, shi_et_al_data, subgroup = " (at admission)"),
+  my_auc(not_oxygen_admission ~ shi, shi_et_al_data, subgroup = " (at admission)")
 )
 
-plot_all_auc(shi_et_al_auc)
+#plot_all_auc(shi_et_al_auc)
 ```
 
 From Fig1 B,C:
 ```{r}
 shi_et_al_reported <- data.frame(
-  score = c(0,1,2,3), shi_severe_admission = c(0,0.057,0.19,0.4), shi_severe_all = c(0.083, 0.138,0.389,0.429)
-)
+  score = c(0,1,2,3), shi_severe_admission = c(0,0.057,0.19,0.4), shi_severe_all = c(0.083, 0.138,0.389,0.429),
+  mild_cases_admission = c(118, 199, 98, 21), all_cases_admission = c(118, 211, 121, 35),
+  mild_cases_hospitalization = c(11, 25, 11, 4), all_cases_hospitalization = c(12, 29, 18, 7)
+) 
+
+# Check that the proportions match
+# shi_et_al_reported %>% mutate(sev2 = (all_cases_admission - mild_cases_admission)/all_cases_admission) %>%
+#   select(score, shi_severe_admission,sev2)
+# 
+# shi_et_al_reported %>% mutate(sev2 = (all_cases_hospitalization - mild_cases_hospitalization)/all_cases_hospitalization) %>%
+#   select(score, shi_severe_all,sev2)
+shie_et_al_auc_data_admission <- auc_data_from_counts(score_values = shi_et_al_reported$score,
+                                                      positive_counts = shi_et_al_reported$mild_cases_admission,
+                                                      negative_counts = shi_et_al_reported$all_cases_admission - shi_et_al_reported$mild_cases_admission) %>% 
+  transmute(shi = score, severe_admission = outcome)
+
+shi_et_al_auc_reported_admission <- my_auc(severe_admission ~ shi, shie_et_al_auc_data_admission, subgroup = " (at admission)")
+#shi_et_al_auc_reported_admission$summary
+
+shie_et_al_auc_data_all <- auc_data_from_counts(score_values = shi_et_al_reported$score,
+                                                      positive_counts = shi_et_al_reported$mild_cases_hospitalization,
+                                                      negative_counts = shi_et_al_reported$all_cases_hospitalization - shi_et_al_reported$mild_cases_hospitalization) %>% 
+  transmute(shi = score, severe_hospitalized = outcome)
+
+shi_et_al_auc_reported_all <- my_auc(severe_hospitalized ~ shi, shie_et_al_auc_data_all)
+ 
+compare_auc_to_orig(list(shi_et_al_auc_reported_admission, shi_et_al_auc_reported_all), list(shi_et_al_auc), ncol = 1)
+```
+
+
+```{r}
 
 shi_et_al_compare <- shi_et_al_data %>%
   group_by(shi) %>%
