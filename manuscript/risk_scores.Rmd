@@ -34,7 +34,9 @@ at_admission <- data$patient_data %>%
 ```
 
 
-In all of the following we focus on the C-statistic, also often called area under curve (AUC). We compute AUC using the  `pROC` package, which also reports bootstrapped confidence intervals.
+In all of the following we focus on the area under curve (AUC), also often called  C-statistic. We compute AUC using the  `pROC` package [@http://zotero.org/users/5567156/items/UN6BIC67], which also reports bootstrapped confidence intervals.
+
+For all risk scores we look at 12-day mortality and 30-day mortality - simply because those are the time horizons reported in the studies we looked at. When needed or when it is uncertain how the outcome was coded in the original study, we can also look at "indefinite horizon" where we only include patients that were not censored and had a known outcome.
 
 # ACP
 
@@ -100,73 +102,62 @@ li_et_al_data <-  auc_data_from_counts(c(1,2,3),
                                             negative_counts = c(0, 8, 32)) %>%
                          transmute(alive_12 = outcome, ACP_grade = score)
 
-li_et_al_data
+li_et_al_data %>% group_by(ACP_grade, alive_12) %>% summarise(N = n(), .groups = "drop")
 
 ```
 Giving us this AUC:
 
 ```{r}
 acp_auc_orig <- my_auc_summary(alive_12 ~ ACP_grade, li_et_al_data)
-acp_auc_orig %>% transmute(`C-static` = auc, `95% CI` = paste0("(",auc_low, ", ",auc_high, ")"))
+acp_auc_orig %>% transmute(AUC = format(auc, digits = 3), `95% CI` = paste0("(",format(auc_low, digits = 3), ", ", format(auc_high, digits = 3), ")")) %>% knitr::kable(booktabs = TRUE)
 
 ```
 
 
 So we can now compare AUC computed on our data for both 12-day mortality (as in the original study) and 30-day mortality.
 
-```{r, fig.cap="The AUC and it's 95% credible intervals for the ACP score. The thick blue vertical line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison."}
+```{r, fig.cap="The AUC and it's 95% credible intervals for the ACP score. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison."}
 acp_auc <- rbind(
   my_auc_summary(alive_12 ~ ACP_grade, acp_data),
   my_auc_summary(alive_30 ~ ACP_grade, acp_data)
 )
-compare_auc_to_orig(acp_auc_orig, acp_auc)
+compare_auc_to_orig(acp_auc_orig, acp_auc) + theme(axis.text.x = element_text(angle = 45, hjust = 1))
 
 ```
 
-```{r}
-#acp_auc
-```
-
+We see that the score noticeably underperforms in the present dataset.
 
 
 # Chen and Liu
 
+Chen and Liu [@http://zotero.org/users/5567156/items/4DDUVEKS] propose a score based on a logistic regression model as follows.
+
 $$
-Score = −4.211+0.013 \times CRP+0.059 \times Age +0.112 \times DD −1.984 \times LYM
+Score = -4.211+0.013 \times CRP+0.059 \times Age +0.112 \times DD -1.984 \times LYM
 $$
 
-The paper does not have units, but the web app
+Where CRP is C-reactive protein (mg/l) DD is D-dimer (the paper does not have units, but the associated web app is clear that it expects D-dimer as ug/ml FEU) and LYM is the Lympohocyte count (10^9 / L). The paper states:
 
 > patients  who  were  with  >10%  missing  values,  stayed  in  the  hospital  <  7  days,  afflicted  by  a  severe  disease  before  admission  (e.g.,  cancer,  aplastic  anemia,  and  uremia),  were  unconscious  at  admission, and were directly admitted to the intensive care unit (ICU) were excluded.
 
 > Non-normally   distributed   continuous   variables   were   transformed   using   a   Box-Cox   transformation.
 
-Slightly unclear how they computed the outcome.
+However, reverse engineering the asociated web app (https://phenomics.fudan.edu.cn/risk_scores/), no transform appears to have been done to the variables that were finally selected. It is also slightly unclear how they computed the outcome (i.e. how they treated censoring).
 
-CRP: mg/l
-D-dimer: ug / mL FEU (we use ng/ml DDU, FEU value is double the DDU)
-Lymphocytes: 10^9 / L
+The units in our dataset are:
 
 ```{r}
 data$marker_data %>% filter(marker %in% c("CRP", "d_dimer", "lymphocyte_count")) %>%
   select(marker, unit) %>% distinct()
 ```
 
+Which matches the model except for D-dimer (we use ng/ml DDU, FEU value is double the DDU).
 
-
-Results for the validation dataset:
-AUROC = 0.881
-Cutoff (0.5)
-Sensitivity = 0.839
-Specificity = 0.794
-
-
-
-
-Precise coefficient values and the CI range determined by reverse engineering the webapp at https://phenomics.fudan.edu.cn/risk_scores/
 
 
 ```{r}
+# More precise coefficient values and the CI range determined by reverse engineering the webapp
+
 chen_liu_data <- data$marker_data_wide %>%  
   mutate(has_all_values = !is.na(CRP) & !is.na(d_dimer) & !is.na(lymphocyte_count),
          d_dimer_converted = d_dimer * 2 / 1000) %>%
@@ -179,31 +170,37 @@ chen_liu_data <- data$marker_data_wide %>%
     first_lymphocyte_count = lymphocyte_count[day == first_day],
     breathing_first = breathing[day == first_day],
     .groups = "drop") %>% 
-  inner_join(data$patient_data, by = c("patient_id")) %>%
+  inner_join(at_admission, by = c("patient_id")) %>%
   mutate(    
     inclusion_criterium = breathing_first < "NIPPV" & (outcome %in% c("Discharged", "Death") | last_record >= first_day + 7),
     chen_liu = -4.21167 + 0.058699 * age + 0.013391 * first_CRP + 0.112055 * first_d_dimer_converted - 1.983733 * first_lymphocyte_count,
     risk = 1 / (1 + exp(-chen_liu)),
     risk_lower = 1 / (1 + exp(-chen_liu + 1.96*0.1721)),
     risk_upper = 1 / (1 + exp(-chen_liu - 1.96*0.1721)),
-    alive_12 = case_when(last_record >= first_day + 12 | outcome == "Discharged" ~ TRUE,
+    alive_12_data = case_when(last_record >= first_day + 12 | outcome == "Discharged" ~ TRUE,
                          outcome == "Death" ~ FALSE,
                          TRUE ~ NA),
-    alive_30 = case_when(last_record >= first_day + 30 | outcome == "Discharged" ~ TRUE,
+    alive_30_data = case_when(last_record >= first_day + 30 | outcome == "Discharged" ~ TRUE,
                          outcome == "Death" ~ FALSE,
                          TRUE ~ NA),
     alive_all = case_when(outcome == "Discharged" ~ TRUE,
                          outcome == "Death" ~ FALSE,
-                         TRUE ~ NA),
-    alive_imputed = outcome != "Death"
-    
+                         TRUE ~ NA)
                          
   ) %>% select(age, starts_with("first"), chen_liu, starts_with("risk"), breathing_first, starts_with("alive"), inclusion_criterium)
 ```
 
+A plot of the computed values for our dataset.
+
+
+
 ```{r}
 chen_liu_data %>% ggplot(aes(x = chen_liu, y = alive_30)) + geom_point()
 ```
+
+We look at survival since first day when all of the values required for the score are available, or we ignore when the values were computed and look at survival since admission. Finally we also tried emulating the inclusion criteria from Chen & Lie
+
+Chen & Liu report AUC = 0.881 for the validation dataset and don't provide enough information to let us recompute it with credible intervals.
 
 
 ```{r}
@@ -211,19 +208,21 @@ chen_liu_data_inclusion <- chen_liu_data %>% filter(inclusion_criterium)
 chen_liu_auc <- rbind(
   my_auc_summary(alive_12 ~ chen_liu, chen_liu_data),
   my_auc_summary(alive_30 ~ chen_liu, chen_liu_data),
+  my_auc_summary(alive_12_data ~ chen_liu, chen_liu_data),
+  my_auc_summary(alive_30_data ~ chen_liu, chen_liu_data),
   my_auc_summary(alive_all ~ chen_liu, chen_liu_data),
-  my_auc_summary(alive_imputed ~ chen_liu, chen_liu_data),
   my_auc_summary(alive_12 ~ chen_liu, chen_liu_data_inclusion, "incl"),
   my_auc_summary(alive_30 ~ chen_liu, chen_liu_data_inclusion, "incl"),
-  my_auc_summary(alive_all ~ chen_liu, chen_liu_data_inclusion, "incl"),
-  my_auc_summary(alive_imputed ~ chen_liu, chen_liu_data_inclusion, "incl")
+  my_auc_summary(alive_12_data ~ chen_liu, chen_liu_data_inclusion, "incl"),
+  my_auc_summary(alive_30_data ~ chen_liu, chen_liu_data_inclusion, "incl"),
+  my_auc_summary(alive_all ~ chen_liu, chen_liu_data_inclusion, "incl")
 )
 
 #plot_all_auc(chen_liu_auc)
 
 ```
 
-```{r}
+```{r, fig.cap = "The AUC and it's 95% credible intervals for the Chen & Liu score. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison. The outcomes ending with `_data` mean mortality was counted since the first day all the lab markers were measured, otherwise it is since hospitalization. `alive_all` mens that only patients that were not censored were included. "}
 chen_liu_auc_orig <- my_auc_summary_from_estimate(0.881, "alive", "chen_liu", "incl")
 compare_auc_to_orig(chen_liu_auc_orig, chen_liu_auc) 
 
@@ -232,9 +231,7 @@ compare_auc_to_orig(chen_liu_auc_orig, chen_liu_auc)
 
 # Shi et al.
 
-1 point for Age >= 50, Male, Hypertension
-
-Not sure what "severe" means, will test both "not ventilated", "not needing Oxygen"
+Shi et al. [@http://zotero.org/users/5567156/items/X4GWJIP5] report a simple score: 1 point for Age >= 50, Male and Hypertension each. They try to predict "severe" illness, but it is not clear what "severe" means. Here, we test both "not ventilated" (or worse, including death) and "not needing supplementary oxygen" as proxy for "severe". They also create a risk score for both "severe" on admission and "severe" during hospitalization. As for other scores we also look at 12- and 30- day mortality.
 
 ```{r}
 shi_et_al_data <- data$marker_data_wide %>%  
@@ -263,20 +260,29 @@ shi_et_al_auc <- rbind(
   my_auc_summary(alive_30 ~ shi, shi_et_al_data),
   my_auc_summary(not_ventilated_all ~ shi, shi_et_al_data),
   my_auc_summary(not_oxygen_all ~ shi, shi_et_al_data),
-  my_auc_summary(not_ventilated_admission ~ shi, shi_et_al_data, subgroup = " (at admission)"),
-  my_auc_summary(not_oxygen_admission ~ shi, shi_et_al_data, subgroup = " (at admission)")
+  my_auc_summary(not_ventilated_admission ~ shi, shi_et_al_data, subgroup = " (admission)"),
+  my_auc_summary(not_oxygen_admission ~ shi, shi_et_al_data, subgroup = " (admission)")
 )
 
 #plot_all_auc(shi_et_al_auc)
 ```
 
-From Fig1 B,C:
+We extract the original data from Fig1 B,C using WebPlotDigitizer.
+
 ```{r}
 shi_et_al_reported <- data.frame(
-  score = c(0,1,2,3), shi_severe_admission = c(0,0.057,0.19,0.4), shi_severe_all = c(0.083, 0.138,0.389,0.429),
+  score = c(0,1,2,3), 
+  shi_severe_admission = c(0,0.057,0.19,0.4), shi_severe_all = c(0.083, 0.138,0.389,0.429),
   mild_cases_admission = c(118, 199, 98, 21), all_cases_admission = c(118, 211, 121, 35),
   mild_cases_hospitalization = c(11, 25, 11, 4), all_cases_hospitalization = c(12, 29, 18, 7)
 ) 
+
+shi_et_al_reported %>% select(-starts_with("shi_")) %>% knitr::kable(booktabs = TRUE)
+
+```
+
+
+```{r}
 
 # Check that the proportions match
 # shi_et_al_reported %>% mutate(sev2 = (all_cases_admission - mild_cases_admission)/all_cases_admission) %>%
@@ -289,7 +295,7 @@ shie_et_al_auc_data_admission <- auc_data_from_counts(score_values = shi_et_al_r
                                                       negative_counts = shi_et_al_reported$all_cases_admission - shi_et_al_reported$mild_cases_admission) %>% 
   transmute(shi = score, severe_admission = outcome)
 
-shi_et_al_auc_reported_admission <- my_auc_summary(severe_admission ~ shi, shie_et_al_auc_data_admission, subgroup = " (at admission)")
+shi_et_al_auc_reported_admission <- my_auc_summary(severe_admission ~ shi, shie_et_al_auc_data_admission, subgroup = " (admission)")
 #shi_et_al_auc_reported_admission$summary
 
 shie_et_al_auc_data_all <- auc_data_from_counts(score_values = shi_et_al_reported$score,
@@ -298,10 +304,17 @@ shie_et_al_auc_data_all <- auc_data_from_counts(score_values = shi_et_al_reporte
   transmute(shi = score, severe_hospitalized = outcome)
 
 shi_et_al_auc_reported_all <- my_auc_summary(severe_hospitalized ~ shi, shie_et_al_auc_data_all)
- 
-compare_auc_to_orig(rbind(shi_et_al_auc_reported_admission, shi_et_al_auc_reported_all), shi_et_al_auc, ncol = 1)
+
 ```
 
+
+```{r, fig.cap="The AUC and it's 95% credible intervals for the Shi et al. score. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison."}
+ 
+compare_auc_to_orig(rbind(shi_et_al_auc_reported_admission, shi_et_al_auc_reported_all), shi_et_al_auc, nrow = 1)
+```
+We see that the score consistently underperforms, although some of the CIs are quite wide.
+
+We can also compare the ratios of "severe" cases reported by Shi et al. to ratios in our dataset.
 
 ```{r}
 
@@ -325,11 +338,13 @@ shi_et_al_compare %>%
 ```
 
 
-# Caramelo
+# Caramelo et al.
 
-Uses simulations to get patient-level characterstics from aggregate data.
+Caramelo et al. [@http://zotero.org/users/5567156/items/3A2RN4ZS] uses simulations to get patient-level characterstics from aggregate data and then fit a logistic regression model. We use the coefficients they report for the model (the model can't be used directly, because the intercept is not reported). The covariates in the model are age (by decades), sex, presence of hypertension, presence of diabetes, presence of cardiac disease, presence of chronic respiratory disease and presence of cancer. It is unclear whether NYHA > 1 would be considered "cardiac disease" and similarly whether asthma is chronic respiratory disease, so we compute two versions of the score. Our dataset also does not contain cancer, so we ignore it (cancer has one of the lowest reported OR in the model).
 
-```{r}
+Caramelo et al. have not computed AUC in their paper and do not give us any mean to reconstruct it, so we only present our results for the risk score.
+
+```{r, fig.cap="The AUC and it's 95% credible intervals for the Caramelo et al. score. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. "}
 caramelo_data <- at_admission %>%
   mutate(
     caramelo_base = 0 + 
@@ -363,7 +378,7 @@ caramelo_auc <- rbind(
 
 compare_auc_to_orig(tibble(), caramelo_auc)
 ```
-
+The results look somewhat encouraging for the score - the AUC values float around 0.8. 
 
 
 # Bello-Chavolla 
@@ -416,20 +431,20 @@ bello_chavolla_data <- at_admission %>%
 ```
 
 ```{r}
-bello_chavolla_data %>% ggplot(aes(x = bc0, y = as.integer(alive_30))) +
-  geom_smooth() + geom_jitter(width = 0.3, height = 0.3) 
-bello_chavolla_data %>% ggplot(aes(x = bc_base, y = as.integer(alive_30))) +
-  geom_smooth() + geom_jitter(width = 0.3, height = 0.3) 
+# bello_chavolla_data %>% ggplot(aes(x = bc0, y = as.integer(alive_30))) +
+#   geom_smooth() + geom_jitter(width = 0.3, height = 0.3) 
+# bello_chavolla_data %>% ggplot(aes(x = bc_base, y = as.integer(alive_30))) +
+#   geom_smooth() + geom_jitter(width = 0.3, height = 0.3) 
 
 ```
 
 
-```{r}
+```{r, fig.cap = "The AUC and it's 95% credible intervals for the Bello-Chavolla et al. score. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison. We use 3 variants of the score - `base` means not inferring pneumonia at all, `day0` means that pneumonia is inferred from antibiotics at hospitalization, `day1` - inferring pneumonia from antibiotics within 1 day of hospitalization "}
 bc_auc <- rbind(
   my_auc_summary(alive_30 ~ bc_base, bello_chavolla_data, outcome_note = "base"),
   my_auc_summary(alive_12 ~ bc_base, bello_chavolla_data, outcome_note = "base"),
-  my_auc_summary(alive_30 ~ bc0, bello_chavolla_data),
-  my_auc_summary(alive_12 ~ bc0, bello_chavolla_data),
+  my_auc_summary(alive_30 ~ bc0, bello_chavolla_data, outcome_note = "day0"),
+  my_auc_summary(alive_12 ~ bc0, bello_chavolla_data, outcome_note = "day0"),
   my_auc_summary(alive_30 ~ bc1, bello_chavolla_data, outcome_note = "day1"),
   my_auc_summary(alive_12 ~ bc1, bello_chavolla_data, outcome_note = "day1")
 )
@@ -438,15 +453,18 @@ bc_auc_orig <- my_auc_summary_from_estimate(0.830, "alive_30", "bc0")
 
 compare_auc_to_orig(bc_auc_orig, bc_auc)
 ```
+The main surprise here is that not inferring pneumonia (shown as "base" in the figure) works best. This indicates that our data may not be well suited to the use of the score. 
+
 # Age only
 
-As a simple baseline we use age in years as the sole predictor.
+As a simple baseline we use age in years as the sole predictor and compute AUC for this.  
 
 ```{r}
 age_auc <-rbind(
   my_auc_summary(alive_30 ~ age, at_admission),
   my_auc_summary(alive_12 ~ age, at_admission)
 )
+age_auc
 
 plot_my_auc(alive_30 ~ age, at_admission)
 plot_my_auc(alive_12 ~ age, at_admission)
@@ -456,10 +474,22 @@ plot_my_auc(alive_12 ~ age, at_admission)
 
 # All together now
 
-```{r}
+```{r, fig.cap = "The AUC and it's 95% credible intervals for all of the scores considered so far. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison."}
+
+all_auc <- rbind(acp_auc, chen_liu_auc, shi_et_al_auc, caramelo_auc, bc_auc, age_auc)
 compare_auc_to_orig(rbind(acp_auc_orig, chen_liu_auc_orig, shi_et_al_auc_reported_admission,
                          shi_et_al_auc_reported_all, bc_auc_orig),
-                    rbind(acp_auc, chen_liu_auc, shi_et_al_auc, caramelo_auc, bc_auc), show_outcome = FALSE)
+                    all_auc, show_outcome = FALSE)
 
 ```
+We see that the "age only" baseline actually outperforms all of the other scores - although there is some uncertainty prohibiting us to be very sure about it. And the second best performing score (Caramelo et al.) is actually heavily based on age. Table of the results below as the small differences are not well visible in the plot.
 
+```{r}
+all_auc %>% mutate(score = score_caption[score]) %>%
+  group_by(score, subgroup) %>% 
+  summarise(best_auc = max(auc), .groups = "drop") %>%
+  arrange(desc(best_auc))
+```
+
+
+# References

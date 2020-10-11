@@ -107,19 +107,19 @@ compare_auc_to_orig <- function(orig_auc, our_auc, show_outcome = TRUE, ...) {
       id = interaction(outcome_note, outcome, source),
            size = if_else(source == "orig", 2, 1))
 
-  res <- data_for_plot %>% ggplot(aes(x = auc, xmin = auc_low, xmax = auc_high, y = id, color = source, shape = source)) +
-    geom_vline(xintercept = 0.5, color = "darkblue", size = 2) +
-    geom_vline(aes(xintercept = auc),data = all_orig, color = "gray", linetype = "dashed") +
-    geom_errorbarh(height = 0, na.rm = TRUE) + geom_point(aes(size = size)) +
+  res <- data_for_plot %>% ggplot(aes(y = auc, ymin = auc_low, ymax = auc_high, x = id, color = source, shape = source)) +
+    geom_hline(yintercept = 0.5, color = "darkblue", size = 2) +
+    geom_hline(aes(yintercept = auc),data = all_orig, color = "gray", linetype = "dashed") +
+    geom_errorbar(width = 0, na.rm = TRUE) + geom_point(aes(size = size)) +
     scale_size(range = c(2,4), guide = FALSE) +
-    scale_x_continuous("AUC") +
+    scale_y_continuous("AUC") +
     scale_shape_discrete("Source") +
     scale_color_discrete("Source") +
-    facet_wrap(~score, scales = "free_y", ...) +
-    theme(axis.title.y = element_blank())
+    facet_wrap(~score, scales = "free_x", ...) +
+    theme(axis.title.x = element_blank(), axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.2))
 
   if(!show_outcome) {
-    res <- res + theme(axis.text.y = element_blank(), axis.ticks.y = element_blank())
+    res <- res + theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
   }
 
   res
