@@ -34,10 +34,12 @@ at_admission <- data$patient_data %>%
 ```
 
 
+In all of the following we focus on the C-statistic, also often called area under curve (AUC). We compute AUC using the  `pROC` package, which also reports bootstrapped confidence intervals.
+
 # ACP
 
 The ACP index [@http://zotero.org/users/5567156/items/EN4GICJ6] is a simple score that categorizes the patients into 3 categories based on age and C-reactive protein (CRP): grade 1 (age $<$ 60 years and CRP $<$ 34 mg/L), grade 2 (age $\geq$ 60
-years and CRP $<$ 34 mg/L or age $<$ 60 years and CRP $\geq$ 34 mg/L), grade 3 (age $\geq$ 60 years and CRP $\geq$ 34 mg/L) and was evaluated primarily on 12-day mortality. Despite the score being developed on patients in Wuhan, China, the 12-day mortality in our dataset is in agreement with the values in the original manuscript as shown in Table \@ref(tab:acpresults).     
+years and CRP $<$ 34 mg/L or age $<$ 60 years and CRP $\geq$ 34 mg/L), grade 3 (age $\geq$ 60 years and CRP $\geq$ 34 mg/L) and was evaluated primarily on 12-day mortality. Despite the score being developed on patients in Wuhan, China, the 12-day mortality in our dataset is in rough agreement with the values in the original manuscript as shown in Table \@ref(tab:acpresults).     
 
 ```{r acpresults, echo=FALSE}
 acp_data <- data$marker_data_wide %>%  
@@ -78,6 +80,8 @@ acp_data %>%
 #   summarise(mean(alive_12))
 ```
 
+The original authors do not report AUC (C-statistic), but they report the overall counts of alive and death patients, letting us compute it. The counts are:
+
 ```{r}
 auc_data_from_counts <- function(score_values, positive_counts, negative_counts) {
   res <- list()
@@ -96,27 +100,30 @@ li_et_al_data <-  auc_data_from_counts(c(1,2,3),
                                             negative_counts = c(0, 8, 32)) %>%
                          transmute(alive_12 = outcome, ACP_grade = score)
 
+li_et_al_data
 
-acp_auc_orig <- my_auc(alive_12 ~ ACP_grade, li_et_al_data)
-acp_auc_orig$summary
+```
+Giving us this AUC:
+
+```{r}
+acp_auc_orig <- my_auc_summary(alive_12 ~ ACP_grade, li_et_al_data)
+acp_auc_orig %>% transmute(`C-static` = auc, `95% CI` = paste0("(",auc_low, ", ",auc_high, ")"))
 
 ```
 
 
+So we can now compare AUC computed on our data for both 12-day mortality (as in the original study) and 30-day mortality.
 
-
-
-```{r}
-acp_auc <- list(
-  alive_12 = my_auc(alive_12 ~ ACP_grade, acp_data),
-  alive_30 = my_auc(alive_30 ~ ACP_grade, acp_data)
+```{r, fig.cap="The AUC and it's 95% credible intervals for the ACP score. The thick blue vertical line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison."}
+acp_auc <- rbind(
+  my_auc_summary(alive_12 ~ ACP_grade, acp_data),
+  my_auc_summary(alive_30 ~ ACP_grade, acp_data)
 )
-plot_all_auc(acp_auc)
+compare_auc_to_orig(acp_auc_orig, acp_auc)
 
 ```
 
 ```{r}
-compare_auc_to_orig(list(acp_auc_orig), list(acp_auc))
 #acp_auc
 ```
 
@@ -201,15 +208,15 @@ chen_liu_data %>% ggplot(aes(x = chen_liu, y = alive_30)) + geom_point()
 
 ```{r}
 chen_liu_data_inclusion <- chen_liu_data %>% filter(inclusion_criterium)
-chen_liu_auc <- list(
-  my_auc(alive_12 ~ chen_liu, chen_liu_data),
-  my_auc(alive_30 ~ chen_liu, chen_liu_data),
-  my_auc(alive_all ~ chen_liu, chen_liu_data),
-  my_auc(alive_imputed ~ chen_liu, chen_liu_data),
-  my_auc(alive_12 ~ chen_liu, chen_liu_data_inclusion, "incl"),
-  my_auc(alive_30 ~ chen_liu, chen_liu_data_inclusion, "incl"),
-  my_auc(alive_all ~ chen_liu, chen_liu_data_inclusion, "incl"),
-  my_auc(alive_imputed ~ chen_liu, chen_liu_data_inclusion, "incl")
+chen_liu_auc <- rbind(
+  my_auc_summary(alive_12 ~ chen_liu, chen_liu_data),
+  my_auc_summary(alive_30 ~ chen_liu, chen_liu_data),
+  my_auc_summary(alive_all ~ chen_liu, chen_liu_data),
+  my_auc_summary(alive_imputed ~ chen_liu, chen_liu_data),
+  my_auc_summary(alive_12 ~ chen_liu, chen_liu_data_inclusion, "incl"),
+  my_auc_summary(alive_30 ~ chen_liu, chen_liu_data_inclusion, "incl"),
+  my_auc_summary(alive_all ~ chen_liu, chen_liu_data_inclusion, "incl"),
+  my_auc_summary(alive_imputed ~ chen_liu, chen_liu_data_inclusion, "incl")
 )
 
 #plot_all_auc(chen_liu_auc)
@@ -217,8 +224,8 @@ chen_liu_auc <- list(
 ```
 
 ```{r}
-chen_liu_auc_orig <- my_auc_from_estimate(0.881, "alive", "chen_liu", "incl")
-compare_auc_to_orig(list(chen_liu_auc_orig), list(chen_liu_auc)) 
+chen_liu_auc_orig <- my_auc_summary_from_estimate(0.881, "alive", "chen_liu", "incl")
+compare_auc_to_orig(chen_liu_auc_orig, chen_liu_auc) 
 
 ```
 
@@ -251,13 +258,13 @@ shi_et_al_data <- data$marker_data_wide %>%
          )
          )
 
-shi_et_al_auc <- list(
-  my_auc(alive_12 ~ shi, shi_et_al_data),
-  my_auc(alive_30 ~ shi, shi_et_al_data),
-  my_auc(not_ventilated_all ~ shi, shi_et_al_data),
-  my_auc(not_oxygen_all ~ shi, shi_et_al_data),
-  my_auc(not_ventilated_admission ~ shi, shi_et_al_data, subgroup = " (at admission)"),
-  my_auc(not_oxygen_admission ~ shi, shi_et_al_data, subgroup = " (at admission)")
+shi_et_al_auc <- rbind(
+  my_auc_summary(alive_12 ~ shi, shi_et_al_data),
+  my_auc_summary(alive_30 ~ shi, shi_et_al_data),
+  my_auc_summary(not_ventilated_all ~ shi, shi_et_al_data),
+  my_auc_summary(not_oxygen_all ~ shi, shi_et_al_data),
+  my_auc_summary(not_ventilated_admission ~ shi, shi_et_al_data, subgroup = " (at admission)"),
+  my_auc_summary(not_oxygen_admission ~ shi, shi_et_al_data, subgroup = " (at admission)")
 )
 
 #plot_all_auc(shi_et_al_auc)
@@ -282,7 +289,7 @@ shie_et_al_auc_data_admission <- auc_data_from_counts(score_values = shi_et_al_r
                                                       negative_counts = shi_et_al_reported$all_cases_admission - shi_et_al_reported$mild_cases_admission) %>% 
   transmute(shi = score, severe_admission = outcome)
 
-shi_et_al_auc_reported_admission <- my_auc(severe_admission ~ shi, shie_et_al_auc_data_admission, subgroup = " (at admission)")
+shi_et_al_auc_reported_admission <- my_auc_summary(severe_admission ~ shi, shie_et_al_auc_data_admission, subgroup = " (at admission)")
 #shi_et_al_auc_reported_admission$summary
 
 shie_et_al_auc_data_all <- auc_data_from_counts(score_values = shi_et_al_reported$score,
@@ -290,9 +297,9 @@ shie_et_al_auc_data_all <- auc_data_from_counts(score_values = shi_et_al_reporte
                                                       negative_counts = shi_et_al_reported$all_cases_hospitalization - shi_et_al_reported$mild_cases_hospitalization) %>% 
   transmute(shi = score, severe_hospitalized = outcome)
 
-shi_et_al_auc_reported_all <- my_auc(severe_hospitalized ~ shi, shie_et_al_auc_data_all)
+shi_et_al_auc_reported_all <- my_auc_summary(severe_hospitalized ~ shi, shie_et_al_auc_data_all)
  
-compare_auc_to_orig(list(shi_et_al_auc_reported_admission, shi_et_al_auc_reported_all), list(shi_et_al_auc), ncol = 1)
+compare_auc_to_orig(rbind(shi_et_al_auc_reported_admission, shi_et_al_auc_reported_all), shi_et_al_auc, ncol = 1)
 ```
 
 
@@ -320,7 +327,43 @@ shi_et_al_compare %>%
 
 # Caramelo
 
-???
+Uses simulations to get patient-level characterstics from aggregate data.
+
+```{r}
+caramelo_data <- at_admission %>%
+  mutate(
+    caramelo_base = 0 + 
+           case_when(age < 20 ~ 0,
+                     age < 30 ~ 0.2017,
+                     age < 40 ~ 0.3271,
+                     age < 50 ~ 5.6030,
+                     age < 60 ~ 6.7626,
+                     age < 70 ~ 18.8161,
+                     age < 80 ~ 43.7291,
+                     TRUE ~ 86.8680) +
+           if_else(sex == "M", 1.8518, 0) +
+           if_else(has_hypertension_drugs, 7.4191, 0) +
+           if_else(diabetes, 9.0329, 0),
+    caramelo1 = caramelo_base +            
+           if_else(heart_failure | ischemic_heart_disease | NYHA > 1, 12.8328, 0) +
+           if_else(COPD | asthma, 7.7925, 0),
+    caramelo2 = caramelo_base +            
+           if_else(heart_failure | ischemic_heart_disease, 12.8328, 0) +
+           if_else(COPD, 7.7925, 0)
+         )
+
+caramelo_auc <- rbind(
+  my_auc_summary(alive_12 ~ caramelo1, caramelo_data),
+  my_auc_summary(alive_30 ~ caramelo1, caramelo_data),
+  my_auc_summary(alive_12 ~ caramelo2, caramelo_data, outcome_note = "v2"),
+  my_auc_summary(alive_30 ~ caramelo2, caramelo_data, outcome_note = "v2"),
+  my_auc_summary(alive_12 ~ caramelo_base, caramelo_data, outcome_note = "base"),
+  my_auc_summary(alive_30 ~ caramelo_base, caramelo_data, outcome_note = "base")
+)
+
+compare_auc_to_orig(tibble(), caramelo_auc)
+```
+
 
 
 # Bello-Chavolla 
@@ -373,22 +416,50 @@ bello_chavolla_data <- at_admission %>%
 ```
 
 ```{r}
-bello_chavolla_data %>% ggplot(aes(x = bc0, y = as.integer(alive_30_admission))) +
+bello_chavolla_data %>% ggplot(aes(x = bc0, y = as.integer(alive_30))) +
   geom_smooth() + geom_jitter(width = 0.3, height = 0.3) 
-bello_chavolla_data %>% ggplot(aes(x = bc_base, y = as.integer(alive_30_admission))) +
+bello_chavolla_data %>% ggplot(aes(x = bc_base, y = as.integer(alive_30))) +
   geom_smooth() + geom_jitter(width = 0.3, height = 0.3) 
 
 ```
 
 
 ```{r}
-roc_bc_base_30 <- pROC::roc(alive_30_admission ~ bc_base, bello_chavolla_data, direction = "<", levels = c(TRUE, FALSE), plot = TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE)
-roc_bc_base_12 <- pROC::roc(alive_12_admission ~ bc_base, bello_chavolla_data, direction = "<", levels = c(TRUE, FALSE), plot = TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE)
-roc_bc0_30 <- pROC::roc(alive_30_admission ~ bc0, bello_chavolla_data, direction = "<", levels = c(TRUE, FALSE), plot = TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE)
-roc_bc0_12 <- pROC::roc(alive_12_admission ~ bc0, bello_chavolla_data, direction = "<", levels = c(TRUE, FALSE), plot = TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE)
-roc_bc1_30 <- pROC::roc(alive_30_admission ~ bc1, bello_chavolla_data, direction = "<", levels = c(TRUE, FALSE), plot = TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE)
-roc_bc1_12 <- pROC::roc(alive_12_admission ~ bc1, bello_chavolla_data, direction = "<", levels = c(TRUE, FALSE), plot = TRUE, auc.polygon=TRUE, max.auc.polygon=TRUE, print.auc = TRUE)
+bc_auc <- rbind(
+  my_auc_summary(alive_30 ~ bc_base, bello_chavolla_data, outcome_note = "base"),
+  my_auc_summary(alive_12 ~ bc_base, bello_chavolla_data, outcome_note = "base"),
+  my_auc_summary(alive_30 ~ bc0, bello_chavolla_data),
+  my_auc_summary(alive_12 ~ bc0, bello_chavolla_data),
+  my_auc_summary(alive_30 ~ bc1, bello_chavolla_data, outcome_note = "day1"),
+  my_auc_summary(alive_12 ~ bc1, bello_chavolla_data, outcome_note = "day1")
+)
+
+bc_auc_orig <- my_auc_summary_from_estimate(0.830, "alive_30", "bc0")
+
+compare_auc_to_orig(bc_auc_orig, bc_auc)
+```
+# Age only
+
+As a simple baseline we use age in years as the sole predictor.
+
+```{r}
+age_auc <-rbind(
+  my_auc_summary(alive_30 ~ age, at_admission),
+  my_auc_summary(alive_12 ~ age, at_admission)
+)
+
+plot_my_auc(alive_30 ~ age, at_admission)
+plot_my_auc(alive_12 ~ age, at_admission)
 
 ```
 
+
+# All together now
+
+```{r}
+compare_auc_to_orig(rbind(acp_auc_orig, chen_liu_auc_orig, shi_et_al_auc_reported_admission,
+                         shi_et_al_auc_reported_all, bc_auc_orig),
+                    rbind(acp_auc, chen_liu_auc, shi_et_al_auc, caramelo_auc, bc_auc), show_outcome = FALSE)
+
+```
 
