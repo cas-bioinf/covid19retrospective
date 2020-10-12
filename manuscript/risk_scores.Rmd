@@ -116,12 +116,12 @@ acp_auc_orig %>% transmute(AUC = format(auc, digits = 3), `95% CI` = paste0("(",
 
 So we can now compare AUC computed on our data for both 12-day mortality (as in the original study) and 30-day mortality.
 
-```{r, fig.cap="The AUC and it's 95% credible intervals for the ACP score. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison."}
+```{r, fig.cap="The AUC and it's 95\\% credible intervals for the ACP score. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison."}
 acp_auc <- rbind(
   my_auc_summary(alive_12 ~ ACP_grade, acp_data),
   my_auc_summary(alive_30 ~ ACP_grade, acp_data)
 )
-compare_auc_to_orig(acp_auc_orig, acp_auc) + theme(axis.text.x = element_text(angle = 45, hjust = 1))
+compare_auc_to_orig(acp_auc_orig, acp_auc)
 
 ```
 
@@ -307,11 +307,13 @@ shi_et_al_auc_reported_all <- my_auc_summary(severe_hospitalized ~ shi, shie_et_
 
 ```
 
+Here is the comparison to original data.
 
 ```{r, fig.cap="The AUC and it's 95% credible intervals for the Shi et al. score. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison."}
  
 compare_auc_to_orig(rbind(shi_et_al_auc_reported_admission, shi_et_al_auc_reported_all), shi_et_al_auc, nrow = 1)
 ```
+
 We see that the score consistently underperforms, although some of the CIs are quite wide.
 
 We can also compare the ratios of "severe" cases reported by Shi et al. to ratios in our dataset.
@@ -370,18 +372,19 @@ caramelo_data <- at_admission %>%
 caramelo_auc <- rbind(
   my_auc_summary(alive_12 ~ caramelo1, caramelo_data),
   my_auc_summary(alive_30 ~ caramelo1, caramelo_data),
-  my_auc_summary(alive_12 ~ caramelo2, caramelo_data, outcome_note = "v2"),
-  my_auc_summary(alive_30 ~ caramelo2, caramelo_data, outcome_note = "v2"),
-  my_auc_summary(alive_12 ~ caramelo_base, caramelo_data, outcome_note = "base"),
-  my_auc_summary(alive_30 ~ caramelo_base, caramelo_data, outcome_note = "base")
+  my_auc_summary(alive_12 ~ caramelo2, caramelo_data, note = "v2"),
+  my_auc_summary(alive_30 ~ caramelo2, caramelo_data, note = "v2"),
+  my_auc_summary(alive_12 ~ caramelo_base, caramelo_data, note = "base"),
+  my_auc_summary(alive_30 ~ caramelo_base, caramelo_data, note = "base")
 )
 
 compare_auc_to_orig(tibble(), caramelo_auc)
 ```
+
 The results look somewhat encouraging for the score - the AUC values float around 0.8. 
 
 
-# Bello-Chavolla 
+# Bello-Chavolla et al.
 
 The index given in [@http://zotero.org/users/5567156/items/INZVABQI] is built from following elements:
 
@@ -441,34 +444,42 @@ bello_chavolla_data <- at_admission %>%
 
 ```{r, fig.cap = "The AUC and it's 95% credible intervals for the Bello-Chavolla et al. score. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison. We use 3 variants of the score - `base` means not inferring pneumonia at all, `day0` means that pneumonia is inferred from antibiotics at hospitalization, `day1` - inferring pneumonia from antibiotics within 1 day of hospitalization "}
 bc_auc <- rbind(
-  my_auc_summary(alive_30 ~ bc_base, bello_chavolla_data, outcome_note = "base"),
-  my_auc_summary(alive_12 ~ bc_base, bello_chavolla_data, outcome_note = "base"),
-  my_auc_summary(alive_30 ~ bc0, bello_chavolla_data, outcome_note = "day0"),
-  my_auc_summary(alive_12 ~ bc0, bello_chavolla_data, outcome_note = "day0"),
-  my_auc_summary(alive_30 ~ bc1, bello_chavolla_data, outcome_note = "day1"),
-  my_auc_summary(alive_12 ~ bc1, bello_chavolla_data, outcome_note = "day1")
+  my_auc_summary(alive_30 ~ bc_base, bello_chavolla_data, note = "base"),
+  my_auc_summary(alive_12 ~ bc_base, bello_chavolla_data, note = "base"),
+  my_auc_summary(alive_30 ~ bc0, bello_chavolla_data, note = "day0"),
+  my_auc_summary(alive_12 ~ bc0, bello_chavolla_data, note = "day0"),
+  my_auc_summary(alive_30 ~ bc1, bello_chavolla_data, note = "day1"),
+  my_auc_summary(alive_12 ~ bc1, bello_chavolla_data, note = "day1")
 )
 
 bc_auc_orig <- my_auc_summary_from_estimate(0.830, "alive_30", "bc0")
 
 compare_auc_to_orig(bc_auc_orig, bc_auc)
 ```
+
 The main surprise here is that not inferring pneumonia (shown as "base" in the figure) works best. This indicates that our data may not be well suited to the use of the score. 
 
 # Age only
 
-As a simple baseline we use age in years as the sole predictor and compute AUC for this.  
+As a simple baseline we use age in years and the decade of age as the sole predictor and compute AUC for this.  
 
 ```{r}
+age_only_data <- at_admission %>%
+  mutate(age_decade = floor(age / 10))
 age_auc <-rbind(
-  my_auc_summary(alive_30 ~ age, at_admission),
-  my_auc_summary(alive_12 ~ age, at_admission)
+  my_auc_summary(alive_30 ~ age, age_only_data),
+  my_auc_summary(alive_12 ~ age, age_only_data),
+  my_auc_summary(alive_30 ~ age_decade, age_only_data, note = "decade"),
+  my_auc_summary(alive_12 ~ age_decade, age_only_data, note = "decade")
 )
 age_auc
 
-plot_my_auc(alive_30 ~ age, at_admission)
-plot_my_auc(alive_12 ~ age, at_admission)
+# plot_my_auc(alive_12 ~ age, at_admission)
 
+```
+
+```{r, fig.cap = "The ROC curve for age in years as the sole predictor of 30-day mortality."}
+plot_my_auc(alive_30 ~ age, at_admission)
 ```
 
 
@@ -482,13 +493,15 @@ compare_auc_to_orig(rbind(acp_auc_orig, chen_liu_auc_orig, shi_et_al_auc_reporte
                     all_auc, show_outcome = FALSE)
 
 ```
-We see that the "age only" baseline actually outperforms all of the other scores - although there is some uncertainty prohibiting us to be very sure about it. And the second best performing score (Caramelo et al.) is actually heavily based on age. Table of the results below as the small differences are not well visible in the plot.
+
+We see that the "age only" baseline actually outperforms all of the other scores - although there is some uncertainty prohibiting us to be very sure about it. This holds even if we only take the decade of age. And the second best performing score (Caramelo et al.) is actually heavily based on the decade of age. Table of the results is shown below as the small differences are not well visible in the plot.
 
 ```{r}
 all_auc %>% mutate(score = score_caption[score]) %>%
-  group_by(score, subgroup) %>% 
+  group_by(score, subgroup, note) %>% 
   summarise(best_auc = max(auc), .groups = "drop") %>%
-  arrange(desc(best_auc))
+  arrange(desc(best_auc)) %>%
+  knitr::kable(booktabs = TRUE)
 ```
 
 

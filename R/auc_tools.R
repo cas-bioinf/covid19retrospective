@@ -15,12 +15,13 @@ score_caption = c("ACP_grade" = "Li et al. (ACP)",
                   "caramelo_base" = "Caramelo et al.",
                   "caramelo1" = "Caramelo et al.",
                   "caramelo2" = "Caramelo et al.",
-                  "age" = "Age only"
+                  "age" = "Age only",
+                  "age_decade" = "Age only"
 )
 
-outcome_note_caption = c("incl" = " (inclusion crit.)")
+note_caption = c("incl" = " (inclusion crit.)")
 
-my_auc_summary <- function(f, d, outcome_note = "", subgroup = "") {
+my_auc_summary <- function(f, d, note = "", subgroup = "") {
   roc = pROC::roc(f, d, direction = "<", levels = c(TRUE, FALSE))
   ci = pROC::ci.auc(roc)
 
@@ -34,25 +35,25 @@ my_auc_summary <- function(f, d, outcome_note = "", subgroup = "") {
          auc_high = ci[3],
          outcome = outcome,
          score = score,
-         outcome_note = outcome_note,
+         note = note,
          subgroup = subgroup
    )
 }
 
-my_auc_summary_from_estimate <- function(auc_estimate, outcome, score, outcome_note = "", subgroup = "") {
+my_auc_summary_from_estimate <- function(auc_estimate, outcome, score, note = "", subgroup = "") {
   tibble::tibble(
     auc = auc_estimate,
     auc_low = NA_real_,
     auc_high = NA_real_,
     outcome = outcome,
     score = score,
-    outcome_note = outcome_note,
+    note = note,
     subgroup = subgroup
   )
 }
 
 
-plot_my_auc <- function(f, d, outcome_note = "") {
+plot_my_auc <- function(f, d, note = "") {
 
   outcome = as.character(formula.tools::lhs(f))
   score = as.character(formula.tools::rhs(f))
@@ -64,18 +65,18 @@ plot_my_auc <- function(f, d, outcome_note = "") {
     stop("Outcome does not have caption")
   }
 
-  if(outcome_note != "") {
-    if(!(outcome_note %in% names(outcome_note_caption))) {
+  if(note != "") {
+    if(!(note %in% names(note_caption))) {
       stop("Outcome note does not have caption")
     }
-    outcome_note_caption_value <- outcome_note_caption[outcome_note]
+    note_caption_value <- note_caption[note]
   } else {
-    outcome_note_caption_value <- ""
+    note_caption_value <- ""
   }
 
 
   caption = paste0(score_caption[score], ", ", outcome_caption[outcome],
-                   outcome_note_caption_value)
+                   note_caption_value)
 
   roc = pROC::roc(f, d, direction = "<", levels = c(TRUE, FALSE))
 
@@ -104,7 +105,7 @@ compare_auc_to_orig <- function(orig_auc, our_auc, show_outcome = TRUE, ...) {
   }
   data_for_plot <- data_for_plot_base %>%
     mutate(
-      id = interaction(outcome_note, outcome, source),
+      id = interaction(note, outcome, source),
            size = if_else(source == "orig", 2, 1))
 
   res <- data_for_plot %>% ggplot(aes(y = auc, ymin = auc_low, ymax = auc_high, x = id, color = source, shape = source)) +
