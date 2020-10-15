@@ -416,7 +416,8 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
     mutate(censored = case_when(startsWith(value, "<") ~ "right",
                                 startsWith(value, ">") ~ "left",
                                 TRUE ~ "none"),
-           value_parsed = as.numeric(gsub("^[<>]? *", "", value)))
+           value_parsed =  as.numeric(if_else(tolower(value) == "no", "0",
+                                              gsub("^[<>]? *", "", value))))
 
 
   bad_parse_value <- marker_data %>% filter(is.na(value_parsed) & !is.na(value))
@@ -621,3 +622,4 @@ anonymize_for_analysis <- function(complete_data) {
 
   anonymized_data
 }
+

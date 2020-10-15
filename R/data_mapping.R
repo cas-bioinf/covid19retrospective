@@ -14,10 +14,12 @@ marker_map <- c(
         "CRP" = "CRP",
         "IL-6" = "IL_6",
         "PCT" = "procalcitonin",
+        "Prokalcitonin" = "procalcitonin",
         "Lymphocyte count" = "lymphocyte_count",
         "Leukocyte count" = "leukocyte_count",
         "Leukocytes" = "leukocyte_count",
         "Leukocyte" = "leukocyte_count",
+        "creatinine" = "creatinine",
         "urea" = "urea",
         "IgG" = "IgG",
         "ARO" = "ICU", # We know the patient was on ICU, but no details on breathing
@@ -29,17 +31,20 @@ marker_map <- c(
         "Covalescent plasma" = "convalescent_plasma",
         "Dexametason" = "dexamethasone",
         "Dexamethasone" = "dexamethasone",
+        "Dexamethason" = "dexamethasone",
         "Remdesivir" = "remdesivir",
       ## Antibiotics
         "Amoxicillin/Clavulanic" = "amoxiclav",
         "Amoxicillin/Clavulanate" = "amoxiclav",
         "amoxiclin/klavulanat" = "amoxiclav",
+        "Amoxicilin/klavulan\U00e1t" = "amoxiclav",
         "Augmentin" = "amoxiclav",
         "Piperacilin/tazobactam" = "piperacilin_tazobactam",
         "Piperacillin/Tazobactam" = "piperacilin_tazobactam",
         "Piperacilin Tazobactam" = "piperacilin_tazobactam",
         "Clarithromycin" = "clarithromycin", # Also a macrolide
         "Clarithomcin" = "clarithromycin",
+        "Klarithromycin" = "clarithromycin",
         "sulfamethoxazol" = "sulfamethoxazol", # Combines with trimethoprim to "Cotrimoxazol"
         "trimethoprim" = "trimethoprim",
         "ofloxacin" = "ofloxacin",
@@ -47,6 +52,7 @@ marker_map <- c(
         "Ceftriaxon" = "ceftriaxone",
         "cefuroxime" = "cefuroxime",
         "cefuroxim" = "cefuroxime",
+        "Cefuroxim axetim" = "cefuroxime",
         "cefotaxim" = "cefotaxime",
         "cefotaxime" = "cefotaxime",
         "cefepim" = "cefepime",
@@ -131,6 +137,11 @@ unit_overwrites <- list(
     list(marker = "hcq", old_unit = "mg", new_unit = "mg/day"),
     list(marker = "remdesivir", old_unit = "mg", new_unit = "mg/day"),
     list(marker = "dexamethasone", old_unit = "", new_unit = "mg/day")
+  ),
+  tMdnA = list(
+    list(marker = "d_dimer", old_unit = "mg/l DDU", new_unit = "ng/ml DDU"),
+    list(marker = "clarithromycin", old_unit = "mg/den", new_unit = "mg/day"),
+    list(marker = "amoxiclav", old_unit = "mg/den", new_unit = "mg/day")
   )
 
 

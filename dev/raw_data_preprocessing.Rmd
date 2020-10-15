@@ -8,6 +8,15 @@ devtools::load_all()
 library(tidyverse)
 ```
 
+```{r}
+res <- list()
+for(f in list.files("H:/raw/FTN/Laborky/", full.names = TRUE)) {
+  print(f)
+  res[[f]] <- read_special_lab_data(f, f, 1, lubridate::ymd("2020-04-01"))
+}
+```
+
+
 TODO: code adverse events, code discontinued_medication_reason
 TODO: check last day, add outcome to breathing data, possibly
 
