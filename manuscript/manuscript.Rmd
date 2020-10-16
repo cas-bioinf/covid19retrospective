@@ -3,8 +3,10 @@ title: "Detailed disease progression of 97 patients hospitalized with Covid-19 i
 output: 
   #rticles::arxiv_article
   #pdf_document
-  bookdown::pdf_document2: 
+  bookdown::pdf_document2:
      toc: false
+  # bookdown::word_document2: 
+  #     toc: false
   # bookdown::pdf_book: 
   #    base_format: rticles::arxiv_article
 abstract: "We collected a multi-centric retrospective dataset of patients who were admitted to N hospitals in Czech Republic and tested positive for SARS-CoV-2. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. To assess association between treatments, markers and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom. Additionally we performed external validation of several proposed prognostic models for Covid-19 severity."
@@ -97,11 +99,15 @@ data_table_1 <- rbind(
 data_table_1 %>% group_by(group) %>% 
   summarise(
     N = n(),
-   # `Distinct sites` = length(unique(hospital_id)),
+    `Distinct sites` = length(unique(hospital_id)),
     Male = sum_percent(sex == "M"),
     `Age (mean, IQR)` = mean_iqr(age),
     `Admitted for Covid` = sum_percent(admitted_for_covid),
     `Took Azithromycin` = sum_percent(ever_az),
+    `Took Dexamethasone` = sum_percent(ever_dexamethasone),
+    `Took Favipiravir` = sum_percent(ever_favipiravir),
+    `Took Remdesivir` = sum_percent(ever_remdesivir),
+    `Convalescent plasma` = sum_percent(ever_convalescent_plasma),
     `Ischemic Heart Disease` = sum_percent(ischemic_heart_disease),
     `Takes antihypertensives` = sum_percent(has_hypertension_drugs),	
     `Heart Failure` = sum_percent(heart_failure),
@@ -128,20 +134,35 @@ data_table_1 %>% group_by(group) %>%
 
 In Figure&nbsp;\@ref(fig:progression) we show the disease progression for all patients.
 
-```{r progression, fig.cap="Disease progression for all patients included in the study as determined by breathing support required. AA = Ambient air, Oxygen = Nasal oxygen, NIPPV = Non-invasive positive-pressure ventilation, ECMO = Extra-corporeal membrane oxygenation."}
+```{r progression, fig.cap="Disease progression for all patients included in the study as determined by breathing support required."}
 my_paste <- function(x) {
   paste0(as.integer(x), collapse = "")
 }
-wide  %>% 
-  filter(!is.na(breathing)) %>%
+
+
+
+data_for_fig_progression <- wide  %>% 
+  filter(!is.na(breathing_s), day >= 0) %>%
   arrange(hospital_id, patient_id, day) %>%
-  mutate(patient_id = factor(patient_id), patient_id = fct_reorder(patient_id, breathing,  .fun = my_paste, .desc = FALSE)) %>%
-  ggplot(aes(x = day, y = patient_id, fill = breathing)) + 
+  mutate(patient_id = factor(patient_id), patient_id = fct_reorder(patient_id, breathing_s,  .fun = my_paste, .desc = FALSE)) %>%
+  mutate(first_half = as.integer(patient_id) < length(levels(patient_id)) / 2 + 1, 
+         is_outcome =  breathing_s %in% c("Discharged", "Death"),
+         breathing_s = fct_recode(breathing_s, `Ambient air` = "AA")
+         ) 
+
+data_for_fig_progression %>% 
+  filter(!is_outcome) %>%
+  ggplot(aes(x = day, y = patient_id, fill = breathing_s)) + 
   geom_tile(height = 0.7) + 
+  geom_point(data = data_for_fig_progression %>% filter(is_outcome) %>% mutate(outcome = factor(breathing_s, ordered = FALSE)),
+             inherit.aes = FALSE, aes(x = day, y = patient_id, shape = outcome)) +
   scale_fill_viridis_d("", direction = -1) +
   scale_x_continuous("Days since hospitalization") +
-  theme(axis.text.y = element_blank()) +
-  theme(axis.title.y = element_blank(), axis.ticks.y = element_blank())
+  scale_shape_manual("", values = c(1, 15) ) +
+  facet_wrap(~first_half, scales = "free_y") +
+  theme(axis.text.y = element_blank(), strip.background = element_blank(), strip.text = element_blank(),
+        legend.direction = "horizontal", legend.position = "bottom") +
+  theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.line.y = element_blank()) 
 
 ```
 
@@ -213,6 +234,8 @@ plot_multiverse(all_hypo %>% filter(group == "markers"))
 The results of the multiverse analysis for association between drugs used and outcomes is shown in Figure&nbsp;\@ref(fig:multiverseresultsdrugs). In the current dataset, we see a possibly strong negative association between using Hydroxychloroquine and risk of death across all models, although for several models we cannot rule out that the association is of negligible strength. Across all models, the data offer no definitive conclusions on the association between taking Hydroxychloroquine and length of hospital stay (represented as risk for being discharged). After adjusting for Hydroxychloroquine usage, we also cannot make any strong claims on the association of using Azithromycin with either outcome. In all cases, the results seem to not be strongly affected by model choice.
 
 We additionally investigated the association of several markers with disease progression. Due to low number of patients in the current dataset, the results are inconclusive and heavily dependent on model choice. All of the coefficient estimates can be seen in Figure&nbsp;\@ref(fig:multiverseresultsmarkers)
+
+## Survey of antimicrobial treatment
 
 ## Evaluating prediction models
 
