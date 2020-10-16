@@ -19,6 +19,7 @@ read_data_for_analysis <- function() {
                              liver_disease = col_logical(),
                              smoking = col_logical(),
                              BMI = col_double(),
+                             obesity = col_character(),
                              NYHA = col_factor(levels = c(1,2,3,4), ordered = TRUE),
                              creatinin = col_double(),
                              pt_inr = col_double(),
@@ -31,15 +32,29 @@ read_data_for_analysis <- function() {
     mutate(age_norm = (age - 65) / 20,
            high_creatinin = if_else(sex == "M", creatinin > 115, creatinin > 97),
            high_pt_inr = pt_inr > 1.2,
-           low_albumin = albumin < 36)
+           low_albumin = albumin < 36,
+           obesity = factor(case_when(is.na(BMI) ~ obesity,
+                               BMI <= 25 ~ "No",
+                               BMI <= 30 ~ "Overweight",
+                               TRUE ~ "Obese")
+                            ,levels = c("No", "Overweight", "Obese"), ordered = TRUE)
+           )
 
+  collapse_breathing <- function(x) {
+    fct_collapse(x, Ventilated = c("NIPPV", "MV", "ECMO"))
+  }
   breathing_data <- read_csv(here::here("private_data", "breathing_data.csv"),
                            col_types = cols(
                             patient_id = col_character(),
                             hospital_id = col_character(),
                             day = col_integer(),
-                            breathing = col_factor(levels = disease_levels, ordered = TRUE)
-                          ))
+                            breathing = col_factor(levels = disease_levels, ordered = TRUE),
+                            breathing_low = col_factor(levels = disease_levels, ordered = TRUE),
+                            breathing_high = col_factor(levels = disease_levels, ordered = TRUE)
+                           )) %>%
+    mutate(breathing_s = collapse_breathing(breathing),
+           breathing_s_low = collapse_breathing(breathing_low),
+           breathing_s_high = collapse_breathing(breathing_low))
 
   marker_data <- read_csv(here::here("private_data", "marker_data.csv"),
                              col_types = cols(
@@ -89,6 +104,9 @@ compute_derived_quantities_patients <- function(data) {
     summarise(ever_hcq = any(took_hcq),
               ever_az = any(took_az),
               ever_convalescent_plasma = any(took_convalescent_plasma),
+              ever_favipiravir = any(took_favipiravir),
+              ever_dexamethasone = any(took_dexamethasone),
+              ever_remdesivir = any(took_remdesivir),
               ever_antibiotics = any(took_antibiotics),
               any_d_dimer = any(!is.na(d_dimer)),
               any_IL_6 = any(!is.na(IL_6)),
@@ -99,43 +117,33 @@ compute_derived_quantities_patients <- function(data) {
               .groups = "drop"
     )
 
-  warning("REDO comorbidities")
   data$patient_data <- data$patient_data %>%
     mutate(
-      heart_problems = NYHA > 1,
+      is_obese = obesity == "Obese",
+      heart_problems = NYHA > 1 | ischemic_heart_disease | heart_failure,
+      lung_problems = COPD | asthma | other_lung_disease,
+      markers_out_of_range = high_creatinin | high_pt_inr | low_albumin,
       comorbidities_sum =
-        replace_na(ischemic_heart_disease, FALSE) +
+        replace_na(heart_problems, FALSE) +
         replace_na(has_hypertension_drugs, FALSE) +
-        replace_na(heart_failure, FALSE) +
-        replace_na(COPD, FALSE) +
-        replace_na(asthma, FALSE) +
-        replace_na(other_lung_disease, FALSE) +
+        replace_na(lung_problems, FALSE) +
         replace_na(diabetes, FALSE) +
         replace_na(renal_disease, FALSE) +
         replace_na(liver_disease, FALSE) +
         replace_na(smoking, FALSE) +
-        replace_na(heart_problems, FALSE) +
-        replace_na(high_creatinin, FALSE) +
-        replace_na(high_pt_inr, FALSE) +
-        replace_na(low_albumin, FALSE) +
-        replace_na(obesity, FALSE),
+        replace_na(markers_out_of_range, FALSE) +
+        replace_na(is_obese, FALSE),
       comorbidities_sum_na = 2 * (
-        replace_na(ischemic_heart_disease, 0.5) +
-        replace_na(has_hypertension_drugs, 0.5) +
-        replace_na(heart_failure, 0.5) +
-        replace_na(COPD, 0.5) +
-        replace_na(asthma, 0.5) +
-        replace_na(other_lung_disease, 0.5) +
-        replace_na(diabetes, 0.5) +
-        replace_na(renal_disease, 0.5) +
-        replace_na(liver_disease, 0.5) +
-        replace_na(smoking, 0.5) +
         replace_na(heart_problems, 0.5) +
-        replace_na(high_creatinin, 0.5) +
-        replace_na(high_pt_inr, 0.5) +
-        replace_na(low_albumin, 0.5) +
-        replace_na(obesity, 0.5))
-    )
+          replace_na(has_hypertension_drugs, 0.5) +
+          replace_na(lung_problems, 0.5) +
+          replace_na(diabetes, 0.5) +
+          replace_na(renal_disease, 0.5) +
+          replace_na(liver_disease, 0.5) +
+          replace_na(smoking, 0.5) +
+          replace_na(markers_out_of_range, 0.5) +
+          replace_na(is_obese, 0.5))
+      )
 
   data$patient_data <- data$patient_data %>%
     left_join(derived_from_wide, by = "patient_id")
@@ -195,7 +203,7 @@ compute_derived_markers_wide <- function(markers_wide, data) {
   nrow_before <- nrow(markers_wide)
 
   any_antibiotics <-  data$marker_data %>%
-    filter(marker %in% all_antibiotics) %>%
+    filter(marker %in% setdiff(all_antibiotics, antibiotics_not_for_pneumonia)) %>%
     group_by(patient_id, day) %>%
     summarise(antibiotics = any(!is.na(value) & value > 0))
 
@@ -208,10 +216,10 @@ compute_derived_markers_wide <- function(markers_wide, data) {
     left_join(any_antibiotics, by = c("patient_id", "day")) %>%
     left_join(any_macrolides, by = c("patient_id", "day"))
 
-  #treatment_markers <- c("hcq", "kaletra", "az", "tocilizumab", "convalescent_plasma")
   treatment_markers <- c(quo(hcq), quo(az),
                          quo(dexamethasone), quo(remdesivir),
                          quo(convalescent_plasma),
+                         quo(favipiravir),
                          quo(antibiotics), quo(macrolides))
   for(treatment_mark in treatment_markers) {
     first_treatment <- markers_wide %>% filter(!is.na(!!treatment_mark) & !!treatment_mark > 0) %>%

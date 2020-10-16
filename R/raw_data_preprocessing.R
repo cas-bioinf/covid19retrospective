@@ -6,6 +6,58 @@ read_raw_data <- function(file, hospital_id, lang, file_version, remove_examples
 
   progression_data <- read_progression_data(file, hospital_id, lang, file_version, patient_data)
 
+  if(file_version == "Special" && any(progression_data$marker_data$marker == "weight")) {
+    #Use Height/Weight from lab markers to calculate BMI
+    BMI_lab_data <-  progression_data$marker_data %>%
+      select(patient_id, marker, value, day) %>%
+      filter(marker %in% c("height", "weight")) %>%
+      pivot_wider(names_from = "marker", values_from = "value") %>%
+      group_by(patient_id) %>%
+      filter(day == min(day)) %>%
+      ungroup() %>%
+      mutate(BMI_lab = weight / (( height /100) ^ 2)) %>%
+      select(patient_id, BMI_lab)
+
+    nrow_before <- nrow(patient_data)
+
+    patient_data <- patient_data %>%
+      left_join(BMI_lab_data, by = "patient_id") %>%
+      mutate(BMI = if_else(!is.na(BMI_lab), BMI_lab, BMI)) %>%
+      select(-BMI_lab)
+
+    if(nrow(patient_data) != nrow_before) {
+      stop("Bad join")
+    }
+
+    progression_data$marker_data <-
+      progression_data$marker_data %>% filter(!(marker %in% c("height", "weight")))
+
+    # Use markers from first two days to impute markers at admission
+    markers_lab_data <- progression_data$marker_data %>%
+      select(patient_id, marker, value, day) %>%
+      filter(day >= 0, day <= 1, marker %in% c("pt_inr", "albumin", "creatinin")) %>%
+      pivot_wider(names_from = "marker", values_from = "value") %>%
+      group_by(patient_id) %>%
+      filter(day == min(day)) %>%
+      select(-day)
+
+    # Make sure all columns exist
+    for(m in c("pt_inr", "albumin", "creatinin")) {
+      if(is.null(markers_lab_data[[m]])) {
+        markers_lab_data[[m]] <- array(NA_real_, nrow(markers_lab_data))
+      }
+    }
+
+    patient_data <- patient_data %>%
+      select(-pt_inr, -albumin, -creatinin) %>% # I now those were not filled
+      left_join(markers_lab_data, by = "patient_id")
+
+    if(nrow(patient_data) != nrow_before) {
+      stop("Bad join")
+    }
+  }
+
+
   # TODO code adverse events
   loo::nlist(patient_data,
              breathing_data = progression_data$breathing_data,
@@ -130,6 +182,12 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
     if(any(is.na(patient_data_typed[[no_NAs]]))) {
       stop(paste0("NAs in ", no_NAs))
     }
+  }
+
+  invalid_dates <- patient_data_typed %>% filter(admission > last_record_date)
+  if(nrow(invalid_dates) > 0) {
+    print(invalid_dates)
+    stop("Invalid dates")
   }
 
   patient_data_typed
@@ -342,18 +400,19 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
       case_when(
         value == "ARO" ~ "MV",
         value %in% c("Oxygen or better", "Oxygen (or better)") ~ "Oxygen",
+        value == "Likely AA" ~ "AA",
         TRUE ~ value
       )),
     breathing_low = to_breathing_factor(
       case_when(
         value == "ARO" ~ "Oxygen",
-        value %in% c("Oxygen or better", "Oxygen (or better)") ~ "AA",
+        value %in% c("Oxygen or better", "Oxygen (or better)", "Likely AA") ~ "AA",
         TRUE ~ value
       )),
     breathing_high = to_breathing_factor(
       case_when(
         value == "ARO" ~ "MV",
-        value %in% c("Oxygen or better", "Oxygen (or better)") ~ "Oxygen",
+        value %in% c("Oxygen or better", "Oxygen (or better)", "Likely AA") ~ "Oxygen",
         TRUE ~ value
       ))
   )
@@ -528,6 +587,48 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
                unit =  if_else(marker %in% conversion$markers & unit == conversion$old_unit, conversion$new_unit, unit))
   }
 
+  # Check that marker and breathing data are within admission
+  markers_allowed_before_admission <- c("pcr_value", "pcr_positive", "hcq", "az")
+  markers_allowed_after_discharge <- c("pcr_value", "pcr_positive")
+  ranges_markers <- marker_data %>%
+    group_by(patient_id) %>%
+    summarise(min_day = min(c(0, day[!(marker %in% markers_allowed_before_admission)])),
+              max_day = max(c(0, day[!(marker %in% markers_allowed_after_discharge)])),
+              markers_min = paste(marker[day == min_day], collapse = ","),
+              markers_max = paste(marker[day == max_day], collapse = ","),
+              .groups = "drop")
+
+  markers_out_of_range <- patient_data_typed %>%
+    select(patient_id, last_record) %>%
+    inner_join(ranges_markers, by = "patient_id") %>%
+    filter(min_day < -1 | max_day > last_record)
+
+  if(hospital_id == "bAbUl") {
+    # Checked manually
+    markers_out_of_range <- markers_out_of_range %>% filter(min_day < - 2)
+  }
+
+  if(nrow(markers_out_of_range) > 0) {
+    print(markers_out_of_range)
+    stop("Markers out of range")
+  }
+
+  ranges_breathing <- breathing_data %>%
+    group_by(patient_id) %>%
+    summarise(min_day = min(day), max_day = max(day),
+              breathing_min = breathing[day == min_day],
+              breathing_max = breathing[day == max_day],
+              .groups = "drop")
+
+  breathing_out_of_range <- patient_data_typed %>%
+    select(patient_id, last_record) %>%
+    inner_join(ranges_breathing, by = "patient_id") %>%
+    filter(min_day < -1 | max_day > last_record + 1)
+
+  if(nrow(breathing_out_of_range) > 0) {
+    print(breathing_out_of_range)
+    stop("Breathing out of range")
+  }
 
   #TODO check SuppO2 only with Oxygen
 
@@ -670,6 +771,23 @@ merge_patients <- function(complete_data, patients_to_merge) {
 merge_hospitals <- function(complete_data, hospitals_to_merge) {
   for(i in 1:nrow(hospitals_to_merge)) {
     row <- hospitals_to_merge[i, ]
+    if(row$unique_ids != "no") {
+      ids1 <- c(
+        complete_data$patient_data %>% filter(hospital_id == row$hospital_id1) %>% pull(patient_id),
+        complete_data$marker_data %>% filter(hospital_id == row$hospital_id1) %>% pull(patient_id),
+        complete_data$breathing_data %>% filter(hospital_id == row$hospital_id1) %>% pull(patient_id)
+      )
+      ids2 <- c(
+        complete_data$patient_data %>% filter(hospital_id == row$hospital_id2) %>% pull(patient_id),
+        complete_data$marker_data %>% filter(hospital_id == row$hospital_id2) %>% pull(patient_id),
+        complete_data$breathing_data %>% filter(hospital_id == row$hospital_id2) %>% pull(patient_id)
+      )
+      if(length(intersect(ids1, ids2) > 0)) {
+        print(row)
+        print(intersect(ids1, ids2))
+        stop("IDs not unique")
+      }
+    }
     complete_data <- complete_data %>%
       mutate_complete_data(patient_id = if_else(hospital_id == row$hospital_id2,
                                                 paste0(row$hospital_id2,"_", patient_id),

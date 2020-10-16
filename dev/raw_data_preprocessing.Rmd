@@ -81,6 +81,25 @@ for(conversion in unit_conversions) {
 
 
 
+## Some more checks
+
+unknown_breathing
+
+```{r}
+max_days <- complete_data$breathing_data %>% group_by(hospital_id, patient_id) %>%
+  summarise(max_day = max(day))
+
+max_max_day = max(max_days$max_day)
+
+crossing(max_days, day = 0:max_max_day) %>% filter(day <= max_day, day >= 0) %>%
+  anti_join(complete_data$breathing_data, by = c("hospital_id", "patient_id", "day"))
+
+complete_data$breathing_data %>% filter(is.na(breathing)) 
+```
+
+Markers outside breathing
+
+
 ## Merging patients/wards
 
 
@@ -125,21 +144,25 @@ for(i in 1:(length(hospital_data) - 1)) {
 
 ```{r}
 typeof(patients_to_merge$patient_id1)
-complete_data_merged <- merge_patients(complete_data, patients_to_merge)
+complete_data_merged_1 <- merge_patients(complete_data, patients_to_merge)
+```
 
+```{r}
+complete_data_merged <- merge_hospitals(complete_data_merged_1, hospitals_to_merge)
 
-complete_data$patient_data %>% filter(hospital_id == "Oriik", patient_id == 3)
-complete_data_merged$breathing_data %>% filter(hospital_id == "cTdij")
-complete_data_merged$patient_data %>% filter(hospital_id == "cTdij")
-complete_data$patient_data %>% filter(hospital_id == "cTdij")
+complete_data_merged$patient_data %>% filter(hospital_id == "Oriik")
+
 
 ```
 
 ```{r}
-complete_data <- merge_hospitals(complete_data, hospitals_to_merge)
-
-complete_data$patient_data %>% filter(hospital_id == "Oriik")
+complete_data <- complete_data_merged
 ```
+
+
+```{r}
+```
+
 
 ## Final processing steps
 
@@ -154,6 +177,14 @@ if(nrow(no_data_pts) > 0) {
   stop("Some patients have no data")
 }
 ```
+
+Patient counts
+
+```{r}
+complete_data$patient_data %>% group_by(hospital_id) %>%
+  summarise(n())
+```
+
 
 ```{r}
 anonymized_data <- anonymize_for_analysis(complete_data)

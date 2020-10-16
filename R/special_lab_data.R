@@ -36,13 +36,15 @@ special_lab_data_markers_to_collect <-
     "Ddim" = "d_dimer",
     "Ly#" = "lymphocyte_count",
     "LYa" = "lymphocyte_count",
-    "Kre" = "creatinine",
+    "Kre" = "creatinin",
     "CRP" = "CRP",
     "PCT" = "procalcitonin",
     "Alb" = "albumin",
     "Ferr" = "ferritin",
     "IL-6" = "IL_6",
-    "IL6" = "IL_6"
+    "IL6" = "IL_6",
+    "Vyska" = "height",
+    "Vaha" = "weight"
   )
 
 special_lab_data_markers_to_collect_units <-
@@ -56,7 +58,9 @@ special_lab_data_markers_to_collect_units <-
     "Alb" = "g/l",
     "Ferr" = "\U03BCg/l",
     "IL-6" = "ng/l",
-    "IL6" = "ng/l"
+    "IL6" = "ng/l",
+    "Vyska" = "cm",
+    "Vaha" = "kg"
   )
 
 if(!identical(names(special_lab_data_markers_to_collect), names(special_lab_data_markers_to_collect_units))){

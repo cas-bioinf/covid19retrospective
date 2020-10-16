@@ -23,7 +23,6 @@ marker_map <- c(
         "creatinine" = "creatinine",
         "urea" = "urea",
         "IgG" = "IgG",
-        "ARO" = "ARO", # We know the patient was on anesthesia-resuscitation ward, but no details on breathing
       ## Covid-specific drugs
         "Hydroxychloroquine" = "hcq",
         "Kaletra" = "kaletra",
