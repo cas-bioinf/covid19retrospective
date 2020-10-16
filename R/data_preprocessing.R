@@ -99,10 +99,10 @@ compute_derived_quantities_patients <- function(data) {
               .groups = "drop"
     )
 
+  warning("REDO comorbidities")
   data$patient_data <- data$patient_data %>%
     mutate(
       heart_problems = NYHA > 1,
-      obesity = BMI > 30,
       comorbidities_sum =
         replace_na(ischemic_heart_disease, FALSE) +
         replace_na(has_hypertension_drugs, FALSE) +

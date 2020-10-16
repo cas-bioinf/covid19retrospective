@@ -3,22 +3,13 @@ title: "Developing data load and processing"
 output: html_notebook
 ---
 
-```{r}
+```{r setup}
 devtools::load_all()
 library(tidyverse)
 ```
 
-```{r}
-res <- list()
-for(f in list.files("H:/raw/FTN/Laborky/", full.names = TRUE)) {
-  print(f)
-  res[[f]] <- read_special_lab_data(f, f, 1, lubridate::ymd("2020-04-01"))
-}
-```
 
-
-TODO: code adverse events, code discontinued_medication_reason
-TODO: check last day, add outcome to breathing data, possibly
+TODO: check last day
 
 ```{r}
 raw_data_dir <- "H:/raw/"
@@ -47,7 +38,7 @@ for(i in 1:nrow(raw_data_map)) {
   
   cat("Processing ", i, "-", hospital_id, "\n")
   
-  hospital_data[[i]] <- read_raw_data(file, hospital_id, lang, file_version)
+  hospital_data[[hospital_id]] <- read_raw_data(file, hospital_id, lang, file_version)
 }
 
 ```
@@ -57,7 +48,7 @@ complete_data <- join_hospital_data(hospital_data)
 # TODO check:last day vs. breathing data
 # MAx. day vs. read columns
 differing_units <- complete_data$marker_data %>% group_by(marker) %>% filter(length(unique(unit)) > 1) %>% 
-  group_by(marker, unit) %>% summarise(count = n(), .groups = "drop")
+  group_by(marker, unit) %>% summarise(count = n(), hospitals = paste0(unique(hospital_id), collapse = ","), .groups = "drop")
 
 if(nrow(differing_units) > 0) {
   print(differing_units)
@@ -67,8 +58,6 @@ if(nrow(differing_units) > 0) {
 
   stop("Differing units")
 }
-
-
 
 ```
 
@@ -89,22 +78,15 @@ for(conversion in unit_conversions) {
   }
 }
 ```
-```{r}
-complete_data$marker_data %>% filter(marker == "amoxiclav", value == 0)
-```
 
-
-```{r}
-complete_data$marker_data %>% filter(marker == "CRP", unit == "mg/l") %>% pull(hospital_id) %>%   unique()
-
-```
 
 
 ## Merging patients/wards
 
 
 ```{r}
-patients_to_merge <- readxl::read_excel(mapping_file, sheet = "PatientsToMerge")
+patients_to_merge <- readxl::read_excel(mapping_file, sheet = "PatientsToMerge", 
+                                        col_types = c("text", "text", "text", "text", "text", "numeric", "text"))
 hospitals_to_merge <- readxl::read_excel(mapping_file, sheet = "HospitalsToMerge")
 ```
 
@@ -113,9 +95,15 @@ Check for candidates to merge
 
 ```{r}
 for(i in 1:(length(hospital_data) - 1)) {
+  if(names(hospital_data)[i] %in% c("cTdij", "iVMlA","bGzOO", "tMdnA", "nDINR", "vQNDS")) {
+    next # Checked manually during date entry
+  }
   for(j in (i + 1):length(hospital_data)) {
     #cat(i,",", j,"\n")
-
+    if(names(hospital_data)[j] %in% c("cTdij", "iVMlA","bGzOO", "tMdnA", "nDINR","vQNDS")) {
+      next # Checked manually during date entry
+    }
+    
     candidate_overlap <-  check_patient_overlap(hospital_data[[i]], hospital_data[[j]], 
                                                 patients_to_merge, hospitals_to_merge) %>% 
       select(hospital_id1, patient_id1, hospital_id2, patient_id2, 
@@ -136,9 +124,15 @@ for(i in 1:(length(hospital_data) - 1)) {
 
 
 ```{r}
-complete_data <- merge_patients(complete_data, patients_to_merge)
+typeof(patients_to_merge$patient_id1)
+complete_data_merged <- merge_patients(complete_data, patients_to_merge)
+
 
 complete_data$patient_data %>% filter(hospital_id == "Oriik", patient_id == 3)
+complete_data_merged$breathing_data %>% filter(hospital_id == "cTdij")
+complete_data_merged$patient_data %>% filter(hospital_id == "cTdij")
+complete_data$patient_data %>% filter(hospital_id == "cTdij")
+
 ```
 
 ```{r}

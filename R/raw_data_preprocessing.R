@@ -22,7 +22,7 @@ update_and_check_version <- function(file, lang, file_version) {
     file_version <- readxl::read_excel(file, sheet = version_sheet(lang), range = "C7:C7", col_types = "text", col_names = "version")$version
   }
 
-  if(!grepl("^(Old|1\\.[2-4]\\.[0-9])$", file_version)) {
+  if(!grepl("^(Old|Special|1\\.[2-4]\\.[0-9])$", file_version)) {
     print(file_version)
     stop("Invalid version")
   }
@@ -33,7 +33,7 @@ update_and_check_version <- function(file, lang, file_version) {
 read_patient_data <- function(file, hospital_id, lang, file_version, remove_examples) {
   patient_data_raw <- read_patient_data_raw(file, hospital_id, lang, file_version)
 
-  patient_data_raw_usable <- patient_data_raw %>% filter(!is.na(Age), !is.na(Sex))
+  patient_data_raw_usable <- patient_data_raw %>% filter(!is.na(`Patient ID`), !is.na(Age), !is.na(Sex))
 
   if(remove_examples) {
     patient_data_raw_usable <- patient_data_raw_usable %>%
@@ -50,22 +50,6 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
 
   outcome_labels <- c("Discharged","Hospitalized","Transferred","Death")
 
-  # Special handling of badly filled outcomes
-  if(hospital_id == "QKuFp") {
-    mismatched_outcomes <- grepl("^439[0-9]{2}$", patient_data_raw_usable$`Outcome (Discharged/Hospitalized/Transferred/Death)`)
-    patient_data_raw_usable <- patient_data_raw_usable %>%
-      mutate(
-        `Date of last record` =
-          if_else(mismatched_outcomes,
-                  janitor::excel_numeric_to_date(
-                    as.integer(if_else(mismatched_outcomes, `Outcome (Discharged/Hospitalized/Transferred/Death)`, "0"))),
-                  lubridate::as_date(`Date of last record`)),
-        `Outcome (Discharged/Hospitalized/Transferred/Death)` =
-               if_else(mismatched_outcomes,
-                       "Hospitalized",
-                       `Outcome (Discharged/Hospitalized/Transferred/Death)`)
-        )
-  }
   if(hospital_id == "ZDYlY") {
     patient_data_raw_usable <- patient_data_raw_usable %>%
       mutate(`Admitted for Covid` = if_else(`Admitted for Covid` == "NA/ne?", "No", `Admitted for Covid`),
@@ -74,6 +58,22 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
              )
   }
 
+  if(file_version == "Special") {
+    BMI_raw <- patient_data_raw_usable$BMI
+    BMI_new <- array(NA_real_, length(BMI_raw))
+
+    height_weight_match <- grepl("[0-9]*cm/[0-9]*kg", BMI_raw)
+    BMI_match <- BMI_raw[height_weight_match]
+    BMI_split <- strsplit(BMI_match, "cm/", fixed = TRUE)
+    BMI_new[height_weight_match] <- BMI_split %>%
+      map_dbl( ~ as.numeric(gsub("kg", "", .x[2])) / ((as.numeric(.x[1]) / 100) ^ 2))
+
+    special_match <- BMI_raw == "105kg"
+    BMI_new[special_match] <- NA_real_
+
+    patient_data_raw_usable$Obesity[special_match] <- "Overweight"
+    patient_data_raw_usable$BMI <- BMI_new
+  }
 
   patient_data_typed <- patient_data_raw_usable %>%
     transmute(
@@ -101,6 +101,7 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
       liver_disease = logical_column(`Liver Disease`),
       smoking = logical_column(Smoking),
       BMI = BMI,
+      obesity = Obesity,
       NYHA = NYHA,
       creatinin = `Creatinin [μmol/L]`,
       pt_inr = `PT INR (Quick)`,
@@ -135,27 +136,48 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
 }
 
 read_patient_data_raw <- function(file, hospital_id, lang, file_version) {
-  if(file_version == "Old") {
-    n_middle_text_columns <- 12
-    last_column <- "AA"
+  if(file_version == "Special") {
+    patient_col_types <- c("text","numeric","text","date","date", #ID - Date of admission
+                           rep("text", 15), #Transferred from - Smoking, BMI, Obesity
+                           "numeric", #NYHA
+                           "text", "text", "date", "text", "text") #Discontinued medication - Transferred to
+    last_column <- "Z"
   } else {
-    n_middle_text_columns <- 13
-    last_column <- "AB"
+    if(file_version == "Old") {
+      n_middle_text_columns <- 12
+      last_column <- "AA"
+    } else {
+      n_middle_text_columns <- 13
+      last_column <- "AB"
+    }
+    patient_col_types <- c("text","numeric","text","date","date", #ID - Date of admission
+                           rep("text", n_middle_text_columns), #Transferred from - Smoking
+                           rep("numeric", 5), # BMI - Albumin
+                           "text", "text", "date", "text", "text") #Discontinued medication - Transferred to
   }
-
-  patient_col_types <- c("text","numeric","text","date","date", #ID - Date of admission
-                         rep("text", n_middle_text_columns), #Transferred from - Smoking
-                         rep("numeric", 5), # BMI - Albumin
-                         "text", "text", "date", "text", "text") #Discontinued medication - Transferred to
 
   patients_range <- paste0("A2:",last_column, "100")
 
 
-  patient_data_raw <- readxl::read_excel(file, sheet = patients_sheet(lang), range = patients_range, na = "NA", col_types = patient_col_types) %>%
+  patient_data_raw <- readxl::read_excel(file, sheet = patients_sheet(lang), range = patients_range, na = c("NA","N/A", "na"), col_types = patient_col_types) %>%
     translate_patient_columns(lang)
 
   patient_data_raw <- patient_data_raw %>%
     mutate(`Outcome (Discharged/Hospitalized/Transferred/Death)` = translate_outcomes(`Outcome (Discharged/Hospitalized/Transferred/Death)`, lang))
+
+  if(file_version != "Special") {
+    patient_data_raw <- patient_data_raw %>% mutate(`Obesity` = NA_character_)
+  } else {
+    # Using 2019 as anchor because for the "Special" format most data is before June, so presumably the
+    # patients are more likely born later in the year
+    # Lab markers at admission will be extracted from the lab data
+    patient_data_raw <- patient_data_raw %>% mutate(Age = 2019 - `Year of birth`,
+                                                    `Creatinin [μmol/L]` = NA_real_,
+                                                    `PT INR (Quick)`  = NA_real_,
+                                                    `Albumin [g/L]` = NA_real_
+                                                    ) %>%
+      select(-`Year of birth`)
+  }
 
   if(file_version == "Old") {
     patient_data_raw <- patient_data_raw %>% mutate(`Covid Medications before admission` = NA_character_)
@@ -312,11 +334,32 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
     rbind(final_outcomes)
 
   # Translate to factor
+  to_breathing_factor <- function(value) {
+    factor(tolower(value), levels = tolower(disease_levels), labels = disease_levels, ordered = TRUE)
+  }
   breathing_data <- breathing_data %>% mutate(
-    breathing = factor(tolower(value), levels = tolower(disease_levels), labels = disease_levels, ordered = TRUE)
+    breathing = to_breathing_factor(
+      case_when(
+        value == "ARO" ~ "MV",
+        value %in% c("Oxygen or better", "Oxygen (or better)") ~ "Oxygen",
+        TRUE ~ value
+      )),
+    breathing_low = to_breathing_factor(
+      case_when(
+        value == "ARO" ~ "Oxygen",
+        value %in% c("Oxygen or better", "Oxygen (or better)") ~ "AA",
+        TRUE ~ value
+      )),
+    breathing_high = to_breathing_factor(
+      case_when(
+        value == "ARO" ~ "MV",
+        value %in% c("Oxygen or better", "Oxygen (or better)") ~ "Oxygen",
+        TRUE ~ value
+      ))
   )
 
-  breathing_unrecognized <- breathing_data %>% filter(is.na(breathing))
+  breathing_unrecognized <- breathing_data %>%
+    filter(is.na(breathing) | is.na(breathing_low) | is.na(breathing_high))
   if(nrow(breathing_unrecognized) > 0) {
     print(unique(breathing_unrecognized$value))
     stop("Breathing NAs check failed")
@@ -340,15 +383,6 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
   marker_data <- progression_data %>% filter(!(indicator %in% c("Date", "Breathing", "Adverse events", dummy_markers))) %>% rename(marker = indicator)
   marker_data <- correct_first_day_admission(patient_data_typed, marker_data)
 
-
-  duplicate_markers <- marker_data %>% group_by(hospital_id,patient_id, marker, day) %>%
-    summarise(count = n(), values = paste(value, collapse = ", "), .groups = "drop") %>%
-    filter(count > 1)
-
-  if(nrow(duplicate_markers) > 0)  {
-    print(duplicate_markers)
-    stop("Duplicate markers")
-  }
 
   # Correct Excel error
   marker_data <- marker_data %>%
@@ -390,7 +424,7 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
                                        pcr_value = as.numeric(if_else(grepl("^[0-9]+$",value), value, NA_character_))) %>%
     select(-value, -marker) %>%
     pivot_longer(c("pcr_value","pcr_positive"), names_to = "marker", values_to = "value") %>%
-    mutate(censored = "none")
+    mutate(censored = "none", unit = if_else(marker == "pcr_value", "Ct", ""))
 
   # Handle NT for SpO2_native
   marker_data <- marker_data %>%
@@ -417,7 +451,7 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
                                 startsWith(value, ">") ~ "left",
                                 TRUE ~ "none"),
            value_parsed =  as.numeric(if_else(tolower(value) == "no", "0",
-                                              gsub("^[<>]? *", "", value))))
+                                              gsub("^[<>]? *", "", gsub(",", ".", value, fixed = TRUE)))))
 
 
   bad_parse_value <- marker_data %>% filter(is.na(value_parsed) & !is.na(value))
@@ -432,6 +466,43 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
     mutate(value = value_parsed) %>%
     select(-value_parsed) %>%
     rbind(pcr_data_long)
+
+  if(file_version == "Special") {
+    marker_data_lab <- read_special_lab_data_all(dir = paste0(dirname(file), "/Laborky"),
+                                                 hospital_id = hospital_id,
+                                                 patient_ids = patient_data_typed$patient_id,
+                                                 first_days = patient_data_typed$admission)
+
+
+    duplicates <- rbind(marker_data, marker_data_lab) %>%
+      group_by(marker, patient_id, day) %>%
+      summarise(count = n(), n_unique_vals = length(unique(value))) %>%
+      filter(count > 1)
+
+    duplicates_problematic <- duplicates %>%
+      filter(marker != "pcr_positive" | n_unique_vals > 1)
+
+    if(nrow(duplicates_problematic) > 0) {
+      print(duplicates_problematic)
+      stop("Duplicates in special lab data")
+    }
+
+    # Remove non-problematic duplicates (basically only PCR)
+    marker_data_lab <- marker_data_lab %>%
+      anti_join(marker_data, by = c("patient_id", "marker", "day"))
+
+    marker_data <- rbind(marker_data, marker_data_lab)
+  }
+
+  duplicate_markers <- marker_data %>% group_by(hospital_id,patient_id, marker, day) %>%
+    summarise(count = n(), values = paste(value, collapse = ", "), .groups = "drop") %>%
+    filter(count > 1)
+
+  if(nrow(duplicate_markers) > 0)  {
+    print(duplicate_markers)
+    stop("Duplicate markers")
+  }
+
 
   # Some special handling
   all_overwrites <- unit_overwrites$all
@@ -544,10 +615,55 @@ merge_patients <- function(complete_data, patients_to_merge) {
     if(row$resolution == "use2") {
       complete_data <- complete_data %>%
         filter_complete_data(!(hospital_id  == row$hospital_id1 & patient_id == row$patient_id1))
+    } else if(row$resolution == "merge_to_1") {
+      # Remove patient row
+      complete_data$patient_data <- complete_data$patient_data %>%
+        filter(!(hospital_id  == row$hospital_id2 & patient_id == row$patient_id2))
+      # Merge marker rows
+      complete_data$marker_data <- complete_data$marker_data %>%
+        mutate(
+          should_change = hospital_id  == row$hospital_id2 & patient_id == row$patient_id2,
+          hospital_id = if_else(should_change, row$hospital_id1, hospital_id),
+          patient_id = if_else(should_change, row$patient_id1, patient_id),
+          day = if_else(should_change, day + row$shift, day)
+        ) %>%
+        #Avoid duplicates from the transfer day. Currently sensible for all transfers to just
+        #Drop the data from hospital 2
+        filter(!(should_change & day == row$shift)) %>%
+        select(-should_change)
+
+      # Merge breathing rows
+      complete_data$breathing_data <- complete_data$breathing_data %>%
+        mutate(
+          should_change = hospital_id  == row$hospital_id2 & patient_id == row$patient_id2,
+          hospital_id = if_else(should_change, row$hospital_id1, hospital_id),
+          patient_id = if_else(should_change, row$patient_id1, patient_id),
+          day = if_else(should_change, day + row$shift, day)
+        ) %>%
+        #Avoid duplicates from the transfer day. Currently sensible for all transfers to just
+        #Drop the data from hospital 2
+        filter(!(should_change & day == row$shift)) %>%
+        select(-should_change)
+
     } else {
       stop(paste0("Unknown resolution: ", row$resolution))
     }
   }
+
+  duplicate_breathing <- complete_data$breathing_data %>%
+    group_by(hospital_id, patient_id, day) %>%
+    summarise(count = n()) %>% filter(count > 1)
+
+  duplicate_markers <- complete_data$marker_data %>%
+    group_by(hospital_id, patient_id, marker, day) %>%
+    summarise(count = n()) %>% filter(count > 1)
+
+  if(nrow(duplicate_breathing) > 0 || nrow(duplicate_markers) > 0) {
+    print(duplicate_breathing)
+    print(duplicate_markers)
+    stop("Duplicates")
+  }
+
   complete_data
 }
 

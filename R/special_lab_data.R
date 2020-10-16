@@ -32,7 +32,7 @@ special_lab_data_sections <- c(
 )
 
 special_lab_data_markers_to_collect <-
-  c("PT (QT) INR" = "PT",
+  c("INR" = "pt_inr",
     "Ddim" = "d_dimer",
     "Ly#" = "lymphocyte_count",
     "LYa" = "lymphocyte_count",
@@ -46,7 +46,7 @@ special_lab_data_markers_to_collect <-
   )
 
 special_lab_data_markers_to_collect_units <-
-  c("PT (QT) INR" = "INR",
+  c("INR" = "INR",
     "Ddim" = "ng/ml DDU",
     "Ly#" = "10^9/l",
     "LYa" = "10^9/l",
@@ -55,8 +55,8 @@ special_lab_data_markers_to_collect_units <-
     "PCT" = "\U03BCg/l",
     "Alb" = "g/l",
     "Ferr" = "\U03BCg/l",
-    "IL-6" = "ng/ml",
-    "IL6" = "ng/ml"
+    "IL-6" = "ng/l",
+    "IL6" = "ng/l"
   )
 
 if(!identical(names(special_lab_data_markers_to_collect), names(special_lab_data_markers_to_collect_units))){
@@ -221,7 +221,7 @@ read_special_lab_data <- function(input_file, patient_id, hospital_id, first_day
         if(grepl("pozitivn.$", s)) {
           value = 1
         } else if(grepl("negativn.$", s)) {
-          value = "0"
+          value = 0
         } else {
           stop("Invalid Covid test res")
         }
@@ -264,11 +264,53 @@ read_special_lab_data <- function(input_file, patient_id, hospital_id, first_day
       }
     }
   }
-  do.call(rbind, res)
+  res_all <- do.call(rbind, res)
+
+  if(any(is.na(res_all$value))) {
+    print(res_all %>% filter(is.na(value)))
+    stop("NAs in values")
+  }
+
+  res_all
 }
 
 
+read_special_lab_data_all <- function(dir, hospital_id, patient_ids, first_days) {
+  res <- list()
+  for(i in 1:length(patient_ids)) {
+    filename <- paste0(dir, "/P", patient_ids[i], ".txt")
+    if(!file.exists(filename)) {
+      warning(paste0(filename, " does not exist\n"))
+    } else {
+      print(filename)
+      res[[i]] <- read_special_lab_data(filename, patient_ids[i], hospital_id, first_days[i])
+    }
+  }
 
+  all <- do.call(rbind, res) %>%
+    filter(!startsWith(section,"Punkt")) # Not include punction results
+
+  # Inspect sections where markers occur
+  all %>% group_by(marker, section) %>% summarise(n()) %>% print()
+
+  # Plots to check values across sections
+  # for(m in c("albumin", "creatinine", "CRP", "IL_6", "lymphocyte_count","procalcitonin")) {
+  #   print(all %>% filter(marker == m) %>%
+  #           ggplot(aes(x = as.numeric(value))) + geom_histogram() + facet_wrap(~section, ncol = 1)+ ggtitle(m))
+  # }
+
+
+  # Merging serum and plasma measurements (also microscopy vs. analyzator Lymphocyte counts)
+  # This is not 100% clean, but the values seem to not be _too_ different
+  # Once again, since
+  merged_sections <- all %>%
+    rename(value_raw = value, censored_raw = censored) %>%
+    group_by(hospital_id, patient_id, marker, day, unit) %>%
+    summarise(censored = censored_raw[which.max(value_raw)],
+              value = max(value_raw))
+
+  merged_sections
+}
 
 remove_names_from_special_lab_data <- function(input_file, output_file) {
   #in_con <- file(input_file, encoding = "UTF-8", open = "rt")

@@ -9,6 +9,7 @@ marker_map <- c(
         "SpO2 native" = "SpO2_native",
         "Horowitz index" = "Horowitz_index",
         "PEEP" = "PEEP",
+        "FiO2" = "FiO2",
         "Ferritin" = "ferritin",
         "D-dimer" = "d_dimer",
         "CRP" = "CRP",
@@ -22,22 +23,27 @@ marker_map <- c(
         "creatinine" = "creatinine",
         "urea" = "urea",
         "IgG" = "IgG",
-        "ARO" = "ICU", # We know the patient was on ICU, but no details on breathing
+        "ARO" = "ARO", # We know the patient was on anesthesia-resuscitation ward, but no details on breathing
       ## Covid-specific drugs
         "Hydroxychloroquine" = "hcq",
         "Kaletra" = "kaletra",
         "Azithromycin" = "az",
+        "Sumamed" = "az",
         "Tocilizumab" = "tocilizumab",
         "Covalescent plasma" = "convalescent_plasma",
+        "Convalescent plasma" = "convalescent_plasma",
         "Dexametason" = "dexamethasone",
         "Dexamethasone" = "dexamethasone",
         "Dexamethason" = "dexamethasone",
         "Remdesivir" = "remdesivir",
+        "Favipiravir" = "favipiravir",
       ## Antibiotics
         "Amoxicillin/Clavulanic" = "amoxiclav",
         "Amoxicillin/Clavulanate" = "amoxiclav",
         "amoxiclin/klavulanat" = "amoxiclav",
         "Amoxicilin/klavulan\U00e1t" = "amoxiclav",
+        "Amoksiklav" = "amoxiclav",
+        "Amoxiclav" = "amoxiclav",
         "Augmentin" = "amoxiclav",
         "Piperacilin/tazobactam" = "piperacilin_tazobactam",
         "Piperacillin/Tazobactam" = "piperacilin_tazobactam",
@@ -45,14 +51,23 @@ marker_map <- c(
         "Clarithromycin" = "clarithromycin", # Also a macrolide
         "Clarithomcin" = "clarithromycin",
         "Klarithromycin" = "clarithromycin",
+        "Clacid" = "clarithromycin",
+        "Klacid" = "clarithromycin",
+        "Biseptol" = "cotrimoxazole",
         "sulfamethoxazol" = "sulfamethoxazol", # Combines with trimethoprim to "Cotrimoxazol"
         "trimethoprim" = "trimethoprim",
         "ofloxacin" = "ofloxacin",
         "ceftriaxone" = "ceftriaxone",
         "Ceftriaxon" = "ceftriaxone",
+        "Ceftriaxom" = "ceftriaxone",
+        "Ceftriaxome" = "ceftriaxone",
         "cefuroxime" = "cefuroxime",
         "cefuroxim" = "cefuroxime",
         "Cefuroxim axetim" = "cefuroxime",
+        "Zinnat" = "cefuroxime",
+        "Sefotak" = "cefotaxime",
+        "Safotak" = "cefotaxime",
+        "Taximed" = "cefotaxime",
         "cefotaxim" = "cefotaxime",
         "cefotaxime" = "cefotaxime",
         "cefepim" = "cefepime",
@@ -60,10 +75,19 @@ marker_map <- c(
         "Vancomycin" = "vancomycin",
         "ampicillin/sulbactam" = "ampicillin_sulbactam",
         "Ampicilin+Sulbactam" = "ampicillin_sulbactam",
+        "Ciprofloksacin" = "ciprofloxacin",
         "Ciprofloxacin" = "ciprofloxacin",
+        "Ciphin" = "ciprofloxacin",
         "Meropenem" = "meropenem",
+        "Meronem" = "meropenem",
         "Metronidazol" = "metronidazol",
         "Linezolid" = "linezolid",
+        "Doxybene" = "doxycycline",
+        "Penicilin" = "penicilin",
+        "Penicilin-G" = "penicilin",
+        "Clindamycin" = "clindamycin",
+        "Furolin" = "nitrofurantoin",
+        "Cefzil" = "cefprozil",
       ## Other drugs
         "Fluconazol" = "fluconazol",
         "Flukonazol" = "fluconazol",
@@ -84,6 +108,7 @@ all_antibiotics <- c(
   "clarithromycin",
   "sulfamethoxazol",
   "trimethoprim",
+  "cotrimoxazole",
   "ofloxacin",
   "ceftriaxone",
   "cefuroxime",
@@ -94,7 +119,16 @@ all_antibiotics <- c(
   "ciprofloxacin",
   "meropenem",
   "metronidazol",
-  "linezolid"
+  "linezolid",
+  "doxycycline",
+  "penicilin",
+  "nitrofurantoin",
+  "cefprozil"
+)
+
+antibiotics_not_for_pneumonia <- c(
+  "nitrofurantoin",
+  "metronidazol"
 )
 
 all_macrolides <- c("az", "clarithromycin")
@@ -142,7 +176,14 @@ unit_overwrites <- list(
     list(marker = "d_dimer", old_unit = "mg/l DDU", new_unit = "ng/ml DDU"),
     list(marker = "clarithromycin", old_unit = "mg/den", new_unit = "mg/day"),
     list(marker = "amoxiclav", old_unit = "mg/den", new_unit = "mg/day")
+  ),
+  cTdij = list(
+    list(marker = "convalescent_plasma", old_unit = "", new_unit = "TU/day")
+  ),
+  iVMlA = list(
+    list(marker = "convalescent_plasma", old_unit = "", new_unit = "TU/day")
   )
+
 
 
 )
@@ -158,6 +199,9 @@ breathing_levels <- c("AA","Oxygen", "NIPPV","MV","ECMO")
 disease_levels <- c("Discharged", breathing_levels, "Death")
 
 unit_conversions <- list(
-  list(markers = c("cefotaxime","cefuroxime", "ampicillin_sulbactam", "amoxiclav", "ceftriaxone", "fluconazol"),
-       old_unit = "g/day", new_unit = "mg/day", mult = 1000)
+  list(markers = c(
+    "cefotaxime","cefuroxime", "ampicillin_sulbactam", "amoxiclav",
+    "ceftriaxone", "fluconazol", "vancomycin", "clarithromycin"),
+       old_unit = "g/day", new_unit = "mg/day", mult = 1000),
+  list(markers = "d_dimer", old_unit = "mg/l FEU", new_unit = "ng/ml DDU", mult = 0.5)
 )
