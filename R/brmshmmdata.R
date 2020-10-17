@@ -2,7 +2,7 @@ brmshmmdata <- function(formula,
                         serie_data, rate_data,
                         hidden_state_data, initial_states,
                         observed_state_data = NULL, prior = NULL,
-                        sensitivity_low_bound = 0.5) {
+                        sensitivity_low_bound = 0.5, optimize_possible = TRUE) {
 
   validate_brmshmmdata(
     structure(loo::nlist(
@@ -13,7 +13,8 @@ brmshmmdata <- function(formula,
       initial_states,
       observed_state_data,
       prior,
-      sensitivity_low_bound),
+      sensitivity_low_bound,
+      optimize_possible),
       class = "brmshmmdata"
       ))
 }
@@ -62,6 +63,11 @@ validate_brmshmmdata <- function(d) {
     stop("Must be of class brmshmmdata")
   }
 
+  d$rate_data <- dplyr::ungroup(d$rate_data)
+  d$serie_data <- dplyr::ungroup(d$serie_data)
+  d$hidden_state_data <- dplyr::ungroup(d$hidden_state_data)
+  d$observed_state_data <- dplyr::ungroup(d$observed_state_data)
+
   if(is.null(d$rate_data$.rate_id)) {
     d$rate_data <- d$rate_data %>% mutate(.rate_id = factor(1:n()))
   } else {
@@ -80,8 +86,8 @@ validate_brmshmmdata <- function(d) {
                                    reference_levels_for_message = "hidden_state_data$id")
 
   d$rate_data$.to <- validate_id(d$rate_data$.to, "rate_data$.to",
-                                   reference_levels = levels(d$hidden_state_data$id),
-                                   reference_levels_for_message = "hidden_state_data$id")
+                                 reference_levels = levels(d$hidden_state_data$id),
+                                 reference_levels_for_message = "hidden_state_data$id")
 
 
   if(is.null(d$observed_state_data)) {
@@ -119,7 +125,7 @@ validate_brmshmmdata <- function(d) {
                                         reference_levels_for_message = "observed_state_data$id")
 
   d$serie_data$.serie <- validate_id(d$serie_data$.serie, "serie_data$.serie",
-                                        force_no_gaps = TRUE)
+                                     force_no_gaps = TRUE)
 
   #TODO make the binding between initial states and series explicit
   if(length(d$initial_state) != length(unique(d$serie_data$.serie))) {

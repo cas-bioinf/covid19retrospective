@@ -131,7 +131,8 @@ make_data_hmm <- function(brmshmmdata) {
     serie_max_time,
     obs_states_rect,
     predictor_sets_rect,
-    rate_predictors
+    rate_predictors,
+    optimize_possible = d$optimize_possible
   )
 
   loo::nlist(standata, brmsdata)

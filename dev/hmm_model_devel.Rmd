@@ -34,21 +34,29 @@ data.frame(day = data$observed$serie_data$.time, patient = data$observed$serie_d
 
 
 ```{r}
+
 adapt_delta <- 0.9
 
-data <- hmm_simulator(5, 10, 2, use_noisy_states = TRUE)
+data <- hmm_simulator(N_series = 10, N_time = 10, N_mid_states = 2, use_noisy_states = FALSE)
+standata <- make_standata_hmm(data$observed)
+
+
+#Temporary hack
+registerS3method("stan_log_lik", class = "rate_hmm", method = stan_log_lik.rate_hmm, envir = asNamespace("brms"))
 
 single_code <- make_stancode_hmm(data$observed)
 
-model_single <- stan_model(model_code = single_code)
+model_file <- here::here("local_temp_data", "devel_single_model.stan")
+write_lines(single_code, path = model_file)
+model_single <- cmdstanr::cmdstan_model(model_file)
 
 
-standata <- make_standata_hmm(data$observed)
 
 
 if(inherits(model_single, "stanmodel")) {
   fit <- sampling(model_single, data = standata, control = list(adapt_delta = adapt_delta))
 } else {
+  standata$optimize_possible = 0
   cmdstan_fit <- model_single$sample(data = standata, adapt_delta = adapt_delta)
   fit <- rstan::read_stan_csv(cmdstan_fit$output_files())
 }

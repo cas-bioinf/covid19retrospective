@@ -54,6 +54,7 @@ rate_hmm_stanvars <- function(standata) {
 
 rate_hmm_functions_code <- "
   // Compute a single transition matrix
+  // The first matrix index is 'from', second is 'to'
   matrix compute_transition_matrix(
     int N_states, int N_rates, int[] rates_from, int[] rates_to, vector rates
   ) {
@@ -123,17 +124,48 @@ rate_hmm_stanvars_data  <- function(standata) {
 \n  int<lower=0, upper=N_states_observed> obs_states_rect[N_series, N_time];", block = "data") +
 
   brms::stanvar(x = standata$predictor_sets_rect, name = "predictor_sets_rect", scode = "  int<lower=0, upper=N_predictor_sets> predictor_sets_rect[N_series, N_time];", block = "data") +
-  brms::stanvar(x = standata$rate_predictors, name = "rate_predictors", scode = "  int<lower=1, upper=N> rate_predictors[N_predictor_sets, N_rates];", block = "data")
+  brms::stanvar(x = standata$rate_predictors, name = "rate_predictors", scode = "  int<lower=1, upper=N> rate_predictors[N_predictor_sets, N_rates];", block = "data") +
+  brms::stanvar(x = standata$optimize_possible, name = "optimize_possible", scode = "  int<lower=0, upper=1> optimize_possible;", block = "data")
 }
 
 rate_hmm_tdata_code <- '
   int<lower=0,upper=1> is_state_noisy[N_states_observed] = rep_array(0, N_states_observed);
   int<lower=0,upper=N_noisy_states> noisy_state_id[N_states_observed] = rep_array(0, N_states_observed);
+  int<lower=1,upper=N_states_hidden> N_possible_states[N_states_observed] = rep_array(0, N_states_observed);
+  int<lower=0,upper=N_states_hidden> possible_states[N_states_observed, N_states_hidden] = rep_array(0, N_states_observed, N_states_hidden);
 
   for(s_index in 1:N_noisy_states) {
     is_state_noisy[noisy_states[s_index]] = 1;
     noisy_state_id[noisy_states[s_index]] = s_index;
   }
+
+  //Compute possible hidden states for each observation
+  //This let\'s us optimize some computation for the case where not all hidden states are possible
+  {
+    int is_state_possible[N_states_observed, N_states_hidden] = rep_array(0, N_states_observed, N_states_hidden);
+    for(s_hidden in 1:N_states_hidden) {
+      int corresponding_obs = corresponding_observation[s_hidden];
+      is_state_possible[corresponding_obs, s_hidden] = 1;
+      if(is_state_noisy[corresponding_obs]) {
+        int noisy_id = noisy_state_id[corresponding_obs];
+        for(other_index in 1:N_other_observations) {
+          int s_observed = noisy_states_other_obs[noisy_id, other_index];
+          is_state_possible[s_observed, s_hidden] = 1;
+        }
+      }
+    }
+    for(s_observed in 1:N_states_observed) {
+      int next_possible_state = 1;
+      N_possible_states[s_observed] = sum(is_state_possible[s_observed, ]);
+      for(s_hidden in 1:N_states_hidden) {
+        if(is_state_possible[s_observed, s_hidden]) {
+          possible_states[s_observed, next_possible_state] = s_hidden;
+          next_possible_state += 1;
+        }
+      }
+    }
+  }
+
 
   //Check data validity
   for(p in 1:N_series) {
@@ -151,31 +183,32 @@ rate_hmm_parameters_code <- "
   simplex[N_other_observations] other_observations_probs[N_noisy_states];
 "
 
-##' @export stan_llh.rate_hmm
-##' @method stan_llh rate_hmm
-##' @importFrom brms stan_llh
-stan_llh.rate_hmm <- function( ... ) {
+##' @export stan_log_lik
+##' @method stan_log_lik rate_hmm
+stan_log_lik.rate_hmm <- function( ... ) {
 "
   matrix[N_states_hidden, N_states_observed] observation_probs = compute_observation_matrix(
    N_states_hidden, N_states_observed, corresponding_observation,
     is_state_noisy, noisy_state_id, sensitivity, N_other_observations, noisy_states_other_obs,
     other_observations_probs);
+  matrix[N_states_hidden, N_states_hidden] transition_matrices[N_predictor_sets];
   matrix[N_states_hidden, N_states_hidden] transition_matrices_t[N_predictor_sets];
   vector[N] exp_mu = exp(mu);
 
   //Compute all transition matrices
   for(ps in 1:N_predictor_sets) {
     vector[N_rates] rate_values = exp_mu[rate_predictors[ps]];
+    transition_matrices[ps] =
+      compute_transition_matrix(N_states_hidden,  N_rates, rates_from, rates_to, rate_values);
     transition_matrices_t[ps] =
-      transpose(compute_transition_matrix(N_states_hidden,  N_rates, rates_from, rates_to, rate_values));
+      transpose(transition_matrices[ps]);
   }
 
 
 
   for(s in 1:N_series) {
-    matrix[N_states_hidden, serie_max_time[s]] alpha;
+    matrix[N_states_hidden, serie_max_time[s]] alpha = rep_matrix(0, N_states_hidden, serie_max_time[s]);
     vector[serie_max_time[s]] alpha_log_norms;
-    alpha[, 1] = rep_vector(0, N_states_hidden);
     alpha[initial_states[s], 1] = observation_probs[initial_states[s], obs_states_rect[s, 1]];
 
     {
@@ -186,10 +219,23 @@ stan_llh.rate_hmm <- function( ... ) {
     for(t in 2:serie_max_time[s]) {
       real col_norm;
       int ps = predictor_sets_rect[s, t - 1];
-      vector[N_states_hidden] transition_probs = (transition_matrices_t[ps] * alpha[, t - 1]);
-      if(obs_states_rect[s,t] != 0) {
-        alpha[, t] = observation_probs[, obs_states_rect[s, t]] .* transition_probs;
+      int obs = obs_states_rect[s,t];
+      if(obs != 0) {
+        //Oberved something. Only update states that are possible
+        int N_possible = N_possible_states[obs];
+        if(!optimize_possible || N_possible == N_states_hidden) {
+          vector[N_states_hidden] transition_probs =
+            transition_matrices_t[ps] * alpha[, t - 1];
+          alpha[, t] = observation_probs[, obs] .* transition_probs;
+        } else {
+          for(p_state_id in 1:N_possible) {
+             int p_state = possible_states[obs, p_state_id];
+             alpha[p_state, t] = observation_probs[p_state, obs] * dot_product(alpha[, t-1], transition_matrices[ps, , p_state]);
+          }
+        }
       } else {
+        //No observation
+        vector[N_states_hidden] transition_probs = (transition_matrices_t[ps] * alpha[, t - 1]);
         alpha[, t] = transition_probs;
       }
       col_norm = max(alpha[, t]);
