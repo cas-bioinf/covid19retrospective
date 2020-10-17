@@ -11,6 +11,12 @@ data <- read_data_for_analysis()
 ```
 
 ```{r}
+data$patient_data %>% group_by(hospital_id) %>%
+  summarise(n_patients = n())
+```
+
+
+```{r}
 nrow(data$patient_data)
 data$breathing_data %>% group_by(patient_id) %>% summarise(n_days_data = n(), .groups = "drop") %>%
   ggplot(aes(x = n_days_data)) + geom_histogram(binwidth = 5)

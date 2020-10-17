@@ -155,10 +155,10 @@ data_for_fig_progression %>%
   ggplot(aes(x = day, y = patient_id, fill = breathing_s)) + 
   geom_tile(height = 0.7) + 
   geom_point(data = data_for_fig_progression %>% filter(is_outcome) %>% mutate(outcome = factor(breathing_s, ordered = FALSE)),
-             inherit.aes = FALSE, aes(x = day, y = patient_id, shape = outcome)) +
+             inherit.aes = FALSE, aes(x = day, y = patient_id, shape = outcome), size = 0.9) +
   scale_fill_viridis_d("", direction = -1) +
   scale_x_continuous("Days since hospitalization") +
-  scale_shape_manual("", values = c(1, 15) ) +
+  scale_shape_manual("", values = c(1, 15), guide = guide_legend(override.aes = list(size = 4))) +
   facet_wrap(~first_half, scales = "free_y") +
   theme(axis.text.y = element_blank(), strip.background = element_blank(), strip.text = element_blank(),
         legend.direction = "horizontal", legend.position = "bottom") +

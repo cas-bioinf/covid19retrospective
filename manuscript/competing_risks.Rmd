@@ -93,7 +93,9 @@ hypothesis_res_list[["competing_hcq_az_admitted"]]
 
 ```{r}
 f_competing_hcq_az_hospital <- update.formula(f_competing_hcq_az, . ~ . + hospital_id)
-fit_competing_hcq_az_hospital <- coxph(f_competing_hcq_az_hospital, data = data_surv, id = patient_id)
+data_surv_hospital <- data_surv %>% 
+  mutate(hospital_id = if_else(hospital_id %in% c("DJkhZ", "lRBHa", "nDINR"), "small", hospital_id))
+fit_competing_hcq_az_hospital <- coxph(f_competing_hcq_az_hospital, data = data_surv_hospital, id = patient_id)
 fit_competing_hcq_az_hospital
 
 hypothesis_res_list[["competing_hcq_az_hospital"]] <-
@@ -109,10 +111,6 @@ hypothesis_res_list[["competing_hcq_az_hospital"]] <-
   )
 hypothesis_res_list[["competing_hcq_az_hospital"]]
 
-```
-```{r}
-hypothesis_res_all <- do.call(rbind, hypothesis_res_list)
-write_csv(hypothesis_res_all, path = here::here("manuscript", "competing_risks_res.csv"))
 ```
 
 
@@ -133,10 +131,6 @@ hypothesis_res_list[["competing_hcq_az_comorbidities_sum"]]
 
 
 
-```{r}
-hypothesis_res_all <- do.call(rbind, hypothesis_res_list)
-write_csv(hypothesis_res_all, path = paste0(cache_dir, "/competing_risks_res.csv"))
-```
 
 
 # Peak IL-6, peak D-dimer
@@ -144,3 +138,11 @@ write_csv(hypothesis_res_all, path = paste0(cache_dir, "/competing_risks_res.csv
 # PCR positivity predicts
 
 # Lymphocyte count predicts?
+
+
+
+
+```{r}
+hypothesis_res_all <- do.call(rbind, hypothesis_res_list)
+write_csv(hypothesis_res_all, path = paste0(cache_dir, "/competing_risks_res.csv"))
+```

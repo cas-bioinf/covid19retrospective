@@ -197,6 +197,10 @@ unit_map <- c(
 breathing_levels <- c("AA","Oxygen", "NIPPV","MV","ECMO")
 disease_levels <- c("Discharged", breathing_levels, "Death")
 
+breathing_s_levels <- c("AA","Oxygen", "Ventilated")
+disease_s_levels <- c("Discharged", breathing_s_levels, "Death")
+
+
 unit_conversions <- list(
   list(markers = c(
     "cefotaxime","cefuroxime", "ampicillin_sulbactam", "amoxiclav",

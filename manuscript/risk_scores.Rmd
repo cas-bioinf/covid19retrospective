@@ -423,7 +423,7 @@ bello_chavolla_data <- at_admission %>%
            diabetes +
            5 * (diabetes & age < 40) +
            (-6) * (age < 40) +
-           obesity +
+           is_obese +
            3 * renal_disease +
            COPD,
          bc0 = bc_base + 7 * atb0,
@@ -494,7 +494,7 @@ compare_auc_to_orig(rbind(acp_auc_orig, chen_liu_auc_orig, shi_et_al_auc_reporte
 
 ```
 
-We see that the "age only" baseline actually outperforms all of the other scores - although there is some uncertainty prohibiting us to be very sure about it. This holds even if we only take the decade of age. And the second best performing score (Caramelo et al.) is actually heavily based on the decade of age. Table of the results is shown below as the small differences are not well visible in the plot.
+We see that the "age only" baseline performs similarly to the best performing score (Caramelo et al.) all of the other scores - there is some uncertainty prohibiting us to be very sure about which works better. This holds even if we only take the decade of age. Note that the score by (Caramelo et al.) is actually heavily based on the decade of age. Table of the results is shown below as the small differences are not well visible in the plot.
 
 ```{r}
 all_auc %>% mutate(score = score_caption[score]) %>%

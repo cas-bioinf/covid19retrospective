@@ -185,6 +185,10 @@ complete_data$patient_data %>% group_by(hospital_id) %>%
   summarise(n())
 ```
 
+```{r}
+complete_data$patient_data <- complete_data$patient_data  %>% mutate(first_wave = admission < lubridate::ymd("2020-09-01"))
+```
+
 
 ```{r}
 anonymized_data <- anonymize_for_analysis(complete_data)

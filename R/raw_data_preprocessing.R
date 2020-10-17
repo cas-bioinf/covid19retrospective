@@ -125,6 +125,7 @@ read_patient_data <- function(file, hospital_id, lang, file_version, remove_exam
 
     patient_data_raw_usable$Obesity[special_match] <- "Overweight"
     patient_data_raw_usable$BMI <- BMI_new
+    patient_data_raw_usable$Obesity[is.na(patient_data_raw_usable$Obesity)] <- "No"
   }
 
   patient_data_typed <- patient_data_raw_usable %>%

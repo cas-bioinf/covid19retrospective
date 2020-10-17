@@ -27,6 +27,7 @@ read_data_for_analysis <- function() {
                              discontinued_medication = col_logical(),
                              best_supportive_care_from = col_integer(),
                              last_record = col_integer(),
+                             first_wave = col_logical(),
                              outcome = col_factor()
                            )) %>%
     mutate(age_norm = (age - 65) / 20,
