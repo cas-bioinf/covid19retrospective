@@ -122,12 +122,31 @@ data$surv_data_last_day <- data$surv_data %>%
 
 ```{r}
 # all patients for which we have data for at least 7 days
-data$surv_data_7 <- data$surv_data_last_day %>%
-  filter(!(day < 7 & outcome3 == "Hospitalized"))
+# data$surv_data_7 <- data$surv_data %>%
+#   group_by(patient_id) %>%
+#   filter(!(max(day) < 7 & outcome3 == "Hospitalized")) %>%
+#   ungroup()
+#  
+# 
+# # all patients for which we have data for at least 7 days
+# data$surv_data_28 <- data$surv_data_last_day %>%
+#   filter(!(day < 28 & outcome3 == "Hospitalized"))
 
-# all patients for which we have data for at least 7 days
-data$surv_data_28 <- data$surv_data_last_day %>%
-  filter(!(day < 28 & outcome3 == "Hospitalized"))
+
+
+# Note: the code above can IMHO introduce biases if there is some systematic skew that makes patients not have a final outcome after day 7 if they are more/less likely to have good outcomes. Instead, I _think_ we need to have "state at day 7", i.e. patients that died/were discharged after day 7 are still treated as "Hospitalized" for the analysis. Additionally, other studies (e.g. RECOVERY) work this way. This is how I would code this:
+
+surv_data_at_day <- function(patient_data, day) {
+  res <- patient_data %>%
+    filter(!(last_record < day & outcome3 == "Hospitalized"))
+
+  #Non tidy to avoid hassle with factor levels  
+  res$outcome3[res$last_record > day] <- "Hospitalized"
+  res
+}
+
+data$surv_data_7 <- surv_data_at_day(data$surv_data, 7)
+data$surv_data_28 <- surv_data_at_day(data$surv_data, 28)
 ```
 
 ```{r}
@@ -164,7 +183,7 @@ fit_survival_base <- brm(
   formula = form_survival_base,
   data = data$patient_data,
   prior = prior_survival_base,
-  file = "models/fit_survival_base"
+  file = paste0(cache_dir, "/fit_survival_base")
 )
 fit_survival_base <- add_criterion(fit_survival_base, "loo")
 ```
@@ -203,7 +222,7 @@ fit_survival_base_7 <- brm(
   formula = form_survival_base,
   data = data$surv_data_7,
   prior = prior_survival_base,
-  file = "models/fit_survival_base_7"
+  file = paste0(cache_dir, "/fit_survival_base_7")
 )
 fit_survival_base_7 <- add_criterion(fit_survival_base_7, "loo")
 ```
@@ -242,7 +261,7 @@ fit_survival_base_28 <- brm(
   formula = form_survival_base,
   data = data$surv_data_28,
   prior = prior_survival_base,
-  file = "models/fit_survival_base_28"
+  file = paste0(cache_dir, "/fit_survival_base_28")
 )
 fit_survival_base_28 <- add_criterion(fit_survival_base_28, "loo")
 ```
@@ -300,7 +319,7 @@ fit_survival_time <- brm(
   data = data$surv_data_last_day,
   prior = prior_survival_time,
   inits = 0,
-  file = "models/fit_survival_time"
+  file = paste0(cache_dir, "/fit_survival_time")
 )
 fit_survival_time <- add_criterion(fit_survival_time, "loo")
 ```
@@ -355,7 +374,7 @@ fit_discharged_base <- brm(
   formula = form_discharged_base,
   data = data$patient_data,
   prior = prior_discharged_base,
-  file = "models/fit_discharged_base"
+  file = paste0(cache_dir, "/fit_discharged_base")
 )
 fit_discharged_base <- add_criterion(fit_discharged_base, "loo")
 ```
@@ -394,7 +413,7 @@ fit_discharged_base_7 <- brm(
   formula = form_discharged_base,
   data = data$surv_data_7,
   prior = prior_discharged_base,
-  file = "models/fit_discharged_base_7"
+  file = paste0(cache_dir, "/fit_discharged_base_7")
 )
 fit_discharged_base_7 <- add_criterion(fit_discharged_base_7, "loo")
 ```
@@ -432,7 +451,7 @@ fit_discharged_base_28 <- brm(
   formula = form_discharged_base,
   data = data$surv_data_28,
   prior = prior_discharged_base,
-  file = "models/fit_discharged_base_28"
+  file = paste0(cache_dir, "/fit_discharged_base_28")
 )
 fit_discharged_base_28 <- add_criterion(fit_discharged_base_28, "loo")
 ```
@@ -491,7 +510,7 @@ fit_discharged_time <- brm(
   prior = prior_discharged_time,
   inits = 0,
   control = list(adapt_delta = 0.95),
-  file = "models/fit_discharged_time"
+  file = paste0(cache_dir, "/fit_discharged_time")
 )
 fit_discharged_time <- add_criterion(fit_discharged_time, "loo")
 ```
@@ -542,7 +561,7 @@ fit_outcome_base <- brm(
   formula = form_outcome_base,
   data = data$patient_data,
   prior = prior_outcome_base,
-  file = "models/fit_outcome_base"
+  file = paste0(cache_dir, "/fit_outcome_base")
 )
 fit_outcome_base <- add_criterion(fit_outcome_base, "loo")
 ```
@@ -595,7 +614,7 @@ fit_outcome_base_7 <- brm(
   formula = form_outcome_base,
   data = data$surv_data_7,
   prior = prior_outcome_base,
-  file = "models/fit_outcome_base_7"
+  file = paste0(cache_dir, "/fit_outcome_base_7")
 )
 fit_outcome_base_7 <- add_criterion(fit_outcome_base_7, "loo")
 ```
@@ -649,7 +668,7 @@ fit_outcome_base_28 <- brm(
   formula = form_outcome_base,
   data = data$surv_data_28,
   prior = prior_outcome_base,
-  file = "models/fit_outcome_base_28"
+  file = paste0(cache_dir, "/fit_outcome_base_28")
 )
 fit_outcome_bas_28 <- add_criterion(fit_outcome_base_28, "loo")
 ```
@@ -715,7 +734,7 @@ fit_worst_breathing_base <- brm(
   formula = form_worst_breathing_base,
   data = data$patient_data,
   prior = prior_worst_breathing_base,
-  file = "models/fit_worst_breathing_base"
+  file = paste0(cache_dir, "/fit_worst_breathing_base")
 )
 fit_worst_breathing_base <- add_criterion(fit_worst_breathing_base, "loo")
 ```
