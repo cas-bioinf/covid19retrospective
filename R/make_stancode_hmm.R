@@ -125,7 +125,7 @@ rate_hmm_stanvars_data  <- function(standata) {
 
   brms::stanvar(x = standata$predictor_sets_rect, name = "predictor_sets_rect", scode = "  int<lower=0, upper=N_predictor_sets> predictor_sets_rect[N_series, N_time];", block = "data") +
   brms::stanvar(x = standata$rate_predictors, name = "rate_predictors", scode = "  int<lower=1, upper=N> rate_predictors[N_predictor_sets, N_rates];", block = "data") +
-  brms::stanvar(x = standata$optimize_possible, name = "optimize_possible", scode = "  int<lower=0, upper=1> optimize_possible;", block = "data")
+  brms::stanvar(x = standata$optimize_possible, name = "optimize_possible", scode = "  int<lower=0, upper=2> optimize_possible;", block = "data")
 }
 
 rate_hmm_tdata_code <- '
@@ -183,8 +183,6 @@ rate_hmm_parameters_code <- "
   simplex[N_other_observations] other_observations_probs[N_noisy_states];
 "
 
-##' @export stan_log_lik
-##' @method stan_log_lik rate_hmm
 stan_log_lik.rate_hmm <- function( ... ) {
 "
   matrix[N_states_hidden, N_states_observed] observation_probs = compute_observation_matrix(
@@ -211,6 +209,7 @@ stan_log_lik.rate_hmm <- function( ... ) {
     vector[serie_max_time[s]] alpha_log_norms;
     alpha[initial_states[s], 1] = observation_probs[initial_states[s], obs_states_rect[s, 1]];
 
+
     {
       real norm = max(alpha[, 1]);
       alpha[, 1] /= norm;
@@ -221,16 +220,31 @@ stan_log_lik.rate_hmm <- function( ... ) {
       int ps = predictor_sets_rect[s, t - 1];
       int obs = obs_states_rect[s,t];
       if(obs != 0) {
-        //Oberved something. Only update states that are possible
+        //Oberved something.
         int N_possible = N_possible_states[obs];
         if(!optimize_possible || N_possible == N_states_hidden) {
           vector[N_states_hidden] transition_probs =
             transition_matrices_t[ps] * alpha[, t - 1];
           alpha[, t] = observation_probs[, obs] .* transition_probs;
         } else {
-          for(p_state_id in 1:N_possible) {
-             int p_state = possible_states[obs, p_state_id];
-             alpha[p_state, t] = observation_probs[p_state, obs] * dot_product(alpha[, t-1], transition_matrices[ps, , p_state]);
+          //Optimization: only update states that are possible
+          int obs_prev = obs_states_rect[s,t - 1];
+          int N_possible_prev = obs_prev == 0 ? N_states_hidden : N_possible_states[obs_prev];
+          if(optimize_possible == 1 || N_possible_prev == N_states_hidden) {
+            for(p_state_id in 1:N_possible) {
+               int p_state = possible_states[obs, p_state_id];
+               alpha[p_state, t] = observation_probs[p_state, obs] * dot_product(alpha[, t-1], transition_matrices[ps, , p_state]);
+            }
+          } else {
+            for(p_state_id in 1:N_possible) {
+               int p_state = possible_states[obs, p_state_id];
+               vector[N_possible_prev] transition_probs;
+               for(p_state_id_prev in 1:N_possible_prev) {
+                 int p_state_prev = possible_states[obs_prev, p_state_id_prev];
+                 transition_probs[p_state_id_prev] = alpha[ p_state_prev, t - 1] * transition_matrices[ps, p_state_prev , p_state];
+               }
+               alpha[p_state, t] = observation_probs[p_state, obs] * sum(transition_probs);
+            }
           }
         }
       } else {

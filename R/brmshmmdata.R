@@ -1,8 +1,12 @@
+#' @param  optimize_possible Let's the algorithm optimize for models where some
+#' hidden states are impossible, given an observation. The optimization
+#' some overhead and so can be turned of. Takes values 0 - no such optimalization),
+#'  1 - avoid redundant rows in matrix to multiply and 2 - also avoid some multiplications.
 brmshmmdata <- function(formula,
                         serie_data, rate_data,
                         hidden_state_data, initial_states,
                         observed_state_data = NULL, prior = NULL,
-                        sensitivity_low_bound = 0.5, optimize_possible = TRUE) {
+                        sensitivity_low_bound = 0.5, optimize_possible = 2) {
 
   validate_brmshmmdata(
     structure(loo::nlist(
