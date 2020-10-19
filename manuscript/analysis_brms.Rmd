@@ -121,26 +121,14 @@ data$surv_data_last_day <- data$surv_data %>%
 ```
 
 ```{r}
-# all patients for which we have data for at least 7 days
-# data$surv_data_7 <- data$surv_data %>%
-#   group_by(patient_id) %>%
-#   filter(!(max(day) < 7 & outcome3 == "Hospitalized")) %>%
-#   ungroup()
-#  
-# 
-# # all patients for which we have data for at least 7 days
-# data$surv_data_28 <- data$surv_data_last_day %>%
-#   filter(!(day < 28 & outcome3 == "Hospitalized"))
-
-
-
-# Note: the code above can IMHO introduce biases if there is some systematic skew that makes patients not have a final outcome after day 7 if they are more/less likely to have good outcomes. Instead, I _think_ we need to have "state at day 7", i.e. patients that died/were discharged after day 7 are still treated as "Hospitalized" for the analysis. Additionally, other studies (e.g. RECOVERY) work this way. This is how I would code this:
-
+# we need to have "state at day 7", i.e. patients that died/were discharged 
+# after day 7 are still treated as "Hospitalized" for the analysis. Other 
+# studies (e.g. RECOVERY) work this way. Code provided by Martin.
 surv_data_at_day <- function(patient_data, day) {
   res <- patient_data %>%
     filter(!(last_record < day & outcome3 == "Hospitalized"))
 
-  #Non tidy to avoid hassle with factor levels  
+  # Non tidy to avoid hassle with factor levels  
   res$outcome3[res$last_record > day] <- "Hospitalized"
   res
 }
@@ -155,7 +143,6 @@ hypothesis_res_list <- list()
 
 ### Notes:
 
-- first and last day invasive: Martin will check
 - days_from_symptom_onset. Days from symptom onset until hospitalization. 
 Uncertain marker but contains some information. 
 Required for anti viral (< 7 days) hypothesis.
@@ -170,7 +157,7 @@ strong disease symptoms
 ```{r, results="hide"}
 form_survival_base <- bf(
   survival ~ sex + age_norm + 
-    smoking + BMI + ever_hcq + ever_az +
+    smoking + mo(obesity) + ever_hcq + ever_az + ever_favipiravir +
     (1 | hospital_id),
   family = bernoulli("logit")
 )
@@ -202,14 +189,21 @@ hypothesis_res_list[["hcq_az_survival_base"]] <- rbind(
     model = "brms_binary",
     estimand = "logit(survival)",
     hypothesis = hypotheses$hcq_reduces_death,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_binary",
     estimand = "logit(survival)",
     hypothesis = hypotheses$az_reduces_death,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_favipiravirTRUE,
+    model = "brms_binary",
+    estimand = "logit(survival)",
+    hypothesis = hypotheses$favipiravir_reduces_death,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
   )
 )
 ```
@@ -241,14 +235,21 @@ hypothesis_res_list[["hcq_az_survival_base_7"]] <- rbind(
     model = "brms_binary_7",
     estimand = "logit(survival)",
     hypothesis = hypotheses$hcq_reduces_death,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_binary_7",
     estimand = "logit(survival)",
     hypothesis = hypotheses$az_reduces_death,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_favipiravirTRUE,
+    model = "brms_binary_7",
+    estimand = "logit(survival)",
+    hypothesis = hypotheses$favipiravir_reduces_death,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
   )
 )
 ```
@@ -280,32 +281,31 @@ hypothesis_res_list[["hcq_az_survival_base_28"]] <- rbind(
     model = "brms_binary_28",
     estimand = "logit(survival)",
     hypothesis = hypotheses$hcq_reduces_death,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_binary_28",
     estimand = "logit(survival)",
     hypothesis = hypotheses$az_reduces_death,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_favipiravirTRUE,
+    model = "brms_binary_28",
+    estimand = "logit(survival)",
+    hypothesis = hypotheses$favipiravir_reduces_death,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
   )
 )
 ```
-
-### TODOs
-
-- model varying slopes?
-- model interactions?
-- use horseshoe prior
-- use projpred
-- add ever_keltara as soon as there is a lest one patient who took it.
 
 ## Analysis: Survival time
 
 ```{r, results="hide"}
 form_survival_time <- bf(
   day | cens(censored) ~ sex + age_norm + 
-    smoking + BMI + ever_hcq + ever_az + 
+    smoking + mo(obesity) + ever_hcq + ever_az + ever_favipiravir +
     (1 | hospital_id),
   family = brmsfamily("cox", "log")
 )
@@ -336,23 +336,24 @@ hypothesis_res_list[["hcq_az_survival_time"]] <- rbind(
     model = "brms_cox",
     estimand = "log(HR)",
     hypothesis = hypotheses$hcq_reduces_death,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_cox",
     estimand = "log(HR)",
     hypothesis = hypotheses$az_reduces_death,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_favipiravirTRUE,
+    model = "brms_cox",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$favipiravir_reduces_death,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
   )
 )
 ```
-
-### TODOs:
-
-- How does that relate to days of hospitalization? (Answer: could be analysed;
-could be an interesting end point when people are discharged)
-
 
 ## Analysis: Discharged
 
@@ -361,7 +362,7 @@ could be an interesting end point when people are discharged)
 ```{r, results="hide"}
 form_discharged_base <- bf(
   discharged ~ sex + age_norm + 
-    smoking + BMI + ever_hcq + ever_az +
+    smoking + mo(obesity) + ever_hcq + ever_az + ever_favipiravir +
     (1 | hospital_id),
   family = bernoulli("logit")
 )
@@ -393,14 +394,21 @@ hypothesis_res_list[["hcq_az_discharged_base"]] <- rbind(
     model = "brms_binary",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$hcq_increases_discharged,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_binary",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$az_increases_discharged,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_favipiravirTRUE,
+    model = "brms_binary",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$favipiravir_increases_discharged,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
   )
 )
 ```
@@ -432,14 +440,21 @@ hypothesis_res_list[["hcq_az_discharged_base_7"]] <- rbind(
     model = "brms_binary_7",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$hcq_increases_discharged,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_binary_7",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$az_increases_discharged,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_favipiravirTRUE,
+    model = "brms_binary_7",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$favipiravir_increases_discharged,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
   )
 )
 ```
@@ -470,32 +485,31 @@ hypothesis_res_list[["hcq_az_discharged_base_28"]] <- rbind(
     model = "brms_binary_28",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$hcq_increases_discharged,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_binary_28",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$az_increases_discharged,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_favipiravirTRUE,
+    model = "brms_binary_28",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$favipiravir_increases_discharged,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
   )
 )
 ```
-
-### TODOs
-
-- model varying slopes?
-- model interactions?
-- use horseshoe prior
-- use projpred
-- add ever_keltara as soon as there is a lest one patient who took it.
 
 ## Analysis: discharged time
 
 ```{r, results="hide"}
 form_discharged_time <- bf(
   day | cens(censored_discharged) ~ sex + age_norm + 
-    smoking + BMI + ever_hcq + ever_az + 
+    smoking + mo(obesity) + ever_hcq + ever_az + ever_favipiravir +
     (1 | hospital_id),
   family = brmsfamily("cox", "log")
 )
@@ -527,14 +541,21 @@ hypothesis_res_list[["hcq_az_discharged_time"]] <- rbind(
     model = "brms_cox",
     estimand = "log(HR)",
     hypothesis = hypotheses$hcq_increases_discharged,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_cox",
     estimand = "log(HR)",
     hypothesis = hypotheses$az_increases_discharged,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_ever_favipiraviTRUE,
+    model = "brms_cox",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$favipiravi_increases_discharged,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
   )
 )
 ```
@@ -546,7 +567,7 @@ hypothesis_res_list[["hcq_az_discharged_time"]] <- rbind(
 ```{r, results="hide"}
 form_outcome_base <- bf(
   outcome3 ~ sex + age_norm + 
-    smoking + BMI + ever_hcq + ever_az +
+    smoking + mo(obesity) + ever_hcq + ever_az + ever_favipiravir +
     (1 | hospital_id),
   family = categorical("logit")
 )
@@ -575,33 +596,49 @@ summary(fit_outcome_base)
 ```{r}
 draws <- tidy_draws(fit_outcome_base)
 hypothesis_res_list[["hcq_az_outcome_base"]] <- rbind(
+  # Death 
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDeath_ever_hcqTRUE,
     model = "brms_categorical",
     estimand = "logit(death)",
     hypothesis = hypotheses$hcq_reduces_death,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDeath_ever_azTRUE,
     model = "brms_categorical",
     estimand = "logit(death)",
     hypothesis = hypotheses$az_reduces_death,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
   ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDeath_ever_favipiravirTRUE,
+    model = "brms_categorical",
+    estimand = "logit(death)",
+    hypothesis = hypotheses$favipiravir_reduces_death,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
+  ),
+  # Discharged
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDischarged_ever_hcqTRUE,
     model = "brms_categorical",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$hcq_increases_discharged,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDischarged_ever_azTRUE,
     model = "brms_categorical",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$az_increases_discharged,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDischarged_ever_favipiravirTRUE,
+    model = "brms_categorical",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$favipiravir_increases_discharged,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
   )
 )
 ```
@@ -628,33 +665,49 @@ summary(fit_outcome_base_7)
 ```{r}
 draws <- tidy_draws(fit_outcome_base_7)
 hypothesis_res_list[["hcq_az_outcome_base_7"]] <- rbind(
+  # Death 
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDeath_ever_hcqTRUE,
     model = "brms_categorical_7",
     estimand = "logit(death)",
     hypothesis = hypotheses$hcq_reduces_death,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDeath_ever_azTRUE,
     model = "brms_categorical_7",
     estimand = "logit(death)",
     hypothesis = hypotheses$az_reduces_death,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
   ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDeath_ever_favipiravirTRUE,
+    model = "brms_categorical_7",
+    estimand = "logit(death)",
+    hypothesis = hypotheses$favipiravir_reduces_death,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
+  ),
+  # Discharged
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDischarged_ever_hcqTRUE,
     model = "brms_categorical_7",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$hcq_increases_discharged,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDischarged_ever_azTRUE,
     model = "brms_categorical_7",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$az_increases_discharged,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDischarged_ever_favipiravirTRUE,
+    model = "brms_categorical_7",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$favipiravir_increases_discharged,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
   )
 )
 ```
@@ -682,33 +735,49 @@ summary(fit_outcome_base_28)
 ```{r}
 draws <- tidy_draws(fit_outcome_base_28)
 hypothesis_res_list[["hcq_az_outcome_base_28"]] <- rbind(
+  # Death
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDeath_ever_hcqTRUE,
     model = "brms_categorical_28",
     estimand = "logit(death)",
     hypothesis = hypotheses$hcq_reduces_death,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDeath_ever_azTRUE,
     model = "brms_categorical_28",
     estimand = "logit(death)",
     hypothesis = hypotheses$az_reduces_death,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
   ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDeath_ever_favipiravirTRUE,
+    model = "brms_categorical_28",
+    estimand = "logit(death)",
+    hypothesis = hypotheses$favipiravir_reduces_death,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
+  ),
+  # Discharged
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDischarged_ever_hcqTRUE,
     model = "brms_categorical_28",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$hcq_increases_discharged,
-    adjusted = "az, sex, age_norm, smoking, BMI"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDischarged_ever_azTRUE,
     model = "brms_categorical_28",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$az_increases_discharged,
-    adjusted = "hcq, sex, age_norm, smoking, BMI"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+  ),
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_muDischarged_ever_favipiravirTRUE,
+    model = "brms_categorical_28",
+    estimand = "logit(discharged)",
+    hypothesis = hypotheses$favipiravir_increases_discharged,
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
   )
 )
 ```
@@ -721,7 +790,7 @@ hypothesis_res_list[["hcq_az_outcome_base_28"]] <- rbind(
 ```{r, results="hide"}
 form_worst_breathing_base <- bf(
   worst_breathing ~ sex + age_norm + 
-    smoking + BMI + ever_hcq + ever_az +
+    smoking + mo(obesity) + ever_hcq + ever_az + ever_favipiravir +
     (1 | hospital_id),
   family = sratio("logit")
 )
@@ -748,29 +817,29 @@ summary(fit_worst_breathing_base)
 ### Category-specific ordinal model
 
 ```{r, results="hide"}
-form_worst_breathing_cs <- bf(
-  worst_breathing ~ cs(sex + age_norm + 
-    smoking + BMI + ever_hcq + ever_az) +
-    (1 | hospital_id),
-  family = sratio("logit")
-)
-
-prior_worst_breathing_cs <- 
-  prior(normal(0, 5), class = "b") +
-  prior(normal(0, 5), class = "sd")
-
-fit_worst_breathing_cs <- brm(
-  formula = form_worst_breathing_cs,
-  data = data$patient_data,
-  prior = prior_worst_breathing_cs,
-  inits = 0,
-  file = "models/fit_worst_breathing_cs"
-)
-fit_worst_breathing_cs <- add_criterion(fit_worst_breathing_cs, "loo")
+# form_worst_breathing_cs <- bf(
+#   worst_breathing ~ cs(sex + age_norm + 
+#     smoking + mo(obesity) + ever_hcq + ever_az + ever_favipiravir) +
+#     (1 | hospital_id),
+#   family = sratio("logit")
+# )
+# 
+# prior_worst_breathing_cs <- 
+#   prior(normal(0, 5), class = "b") +
+#   prior(normal(0, 5), class = "sd")
+# 
+# fit_worst_breathing_cs <- brm(
+#   formula = form_worst_breathing_cs,
+#   data = data$patient_data,
+#   prior = prior_worst_breathing_cs,
+#   inits = 0,
+#   file = paste0(cache_dir, "/fit_worst_breathing_cs")
+# )
+# fit_worst_breathing_cs <- add_criterion(fit_worst_breathing_cs, "loo")
 ```
 
 ```{r}
-summary(fit_worst_breathing_cs)
+# summary(fit_worst_breathing_cs)
 # ce <- conditional_effects(fit_worst_breathing_cs, categorical = TRUE)
 # plot(ce, ask = FALSE)
 ```
@@ -778,17 +847,10 @@ summary(fit_worst_breathing_cs)
 ### Model Comparison
 
 ```{r}
-loo(fit_worst_breathing_base, fit_worst_breathing_cs)
+# loo(fit_worst_breathing_base, fit_worst_breathing_cs)
 ```
 
-### TODOs 
-
-- How to handle missing values in `worst_breathing`?
-- decide which predictors to include 
-- model interactions?
-- model varying slopes?
-- use horseshoe or similar sparsity priors?
-
+## Store Hypotheses
 
 ```{r}
 hypothesis_res_all <- do.call(rbind, hypothesis_res_list)
