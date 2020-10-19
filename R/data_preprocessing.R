@@ -98,7 +98,7 @@ read_data_for_analysis <- function() {
   data
 }
 
-#' @importFrom tidy replace_na
+#' @importFrom tidyr replace_na
 compute_derived_quantities_patients <- function(data) {
   derived_from_wide <- data$marker_data_wide %>%
     group_by(patient_id) %>%

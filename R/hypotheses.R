@@ -4,6 +4,10 @@ hypotheses <-
        hcq_increases_discharged = list(caption = "HCQ associated with time in hospital", group = "hcq"),
        az_reduces_death = list(caption = "Azithromycin associated with risk of death", group = "az"),
        az_increases_discharged = list(caption = "Azithromycin associated with time in hospital", group = "az"),
+       favipiravir_reduces_death = list(caption = "Favipiravir associated with risk of death", group = "favipiravir"),
+       favipiravir_increases_discharged = list(caption = "Favipiravir associated with time in hospital", group = "favipiravir"),
+       convalescent_plasma_reduces_death = list(caption = "Conv. plasma associated with risk of death", group = "convalescent_plasma"),
+       convalescent_plasma_increases_discharged = list(caption = "Conv. plasma associated with time in hospital", group = "convalescent_plasma"),
        d_dimer_increases_death = list(caption = "High D-dimer associated with risk of death", group = "markers"),
        IL_6_increases_death = list(caption = "High IL-6 associated with risk of death", group = "markers")
   ) %>% purrr::imap(
