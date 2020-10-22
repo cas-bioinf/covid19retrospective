@@ -180,3 +180,25 @@ pp_check_transitions_direction <- function(fit, predicted_rect, states_from = NU
 
   bayesplot::ppc_stat_grouped(y, t(yrep), group = c("< 0", "0", "> 0"), binwidth = binwidth)
 }
+
+do_common_pp_checks <- function(fit) {
+  epred_rect <- posterior_epred_rect(fit)
+  predicted_rect <- posterior_epred_to_predicted(fit, epred_rect)
+  predicted <- posterior_rect_to_long(fit, predicted_rect)
+
+  predicted_df <- posterior_long_to_df(fit$data, predicted)
+
+  all_ids <- fit$data$serie_data %>% select(hospital_id, .serie) %>%
+    distinct() %>% arrange(hospital_id) %>% pull(.serie)
+  step_size <- 6
+  for(step in 1:ceiling(length(all_ids) / step_size)) {
+    series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+
+    posterior_state_plot(predicted_df, all_ids[series_id], fit$data) %>% print()
+  }
+
+  pp_check_transitions_direction(fit, predicted_rect) %>% print()
+  pp_check_transitions_direction(fit, predicted_rect, states_from = 2:4)  %>% print()
+
+
+}
