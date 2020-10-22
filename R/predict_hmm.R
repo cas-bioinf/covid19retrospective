@@ -1,3 +1,5 @@
+#'
+#' @return Array with dimensions time, serie, sample
 posterior_epred_rect <- function(fit, nsamples = NULL, newdata = NULL) {
   validate_brmshmmfit(fit)
 

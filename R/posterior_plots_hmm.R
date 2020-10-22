@@ -66,6 +66,32 @@ pp_check_last_state <- function(fit, predicted_rect) {
   bayesplot::ppc_bars(last_states_observed, t(last_states))
 }
 
+
+pp_check_state_at <- function(fit, predicted_rect, day, newdata = NULL) {
+  last_state_time <- function(x) {
+    max(which(!is.na(x) & x > 0))
+  }
+
+  if(is.null(newdata)) {
+    pred_rawdata <- fit$data
+  } else {
+    pred_rawdata <- newdata
+  }
+
+  data_hmm <- make_data_hmm(pred_rawdata)
+
+  last_state_times <- data_hmm$standata$obs_states_rect %>% apply(MARGIN = 1, last_state_time)
+
+  use_rows <- last_state_times >= day
+
+  states_at_day_observed <- data_hmm$standata$obs_states_rect[use_rows, day]
+
+  states_at <- predicted_rect[day, use_rows, ]
+
+  bayesplot::ppc_bars(states_at_day_observed, t(states_at))
+}
+
+
 pp_check_transitions <- function(fit, predicted_rect, states_from = NULL, states_to = NULL,
                                  binwidth = NULL, scale = "prob", ...) {
   N_states_observed <- fit$data_processed$standata$N_states_observed
