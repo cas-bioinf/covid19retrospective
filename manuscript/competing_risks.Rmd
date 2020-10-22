@@ -144,5 +144,5 @@ hypothesis_res_list[["competing_hcq_az_comorbidities_sum"]]
 
 ```{r}
 hypothesis_res_all <- do.call(rbind, hypothesis_res_list)
-write_csv(hypothesis_res_all, path = paste0(cache_dir, "/competing_risks_res.csv"))
+write_csv(hypothesis_res_all, path = here("manuscript", "/competing_risks_res.csv"))
 ```

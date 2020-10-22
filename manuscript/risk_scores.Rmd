@@ -426,8 +426,8 @@ bello_chavolla_data <- at_admission %>%
            is_obese +
            3 * renal_disease +
            COPD,
-         bc0 = bc_base + 7 * atb0,
-         bc1 = bc_base + 7 * atb1
+         bc0 = bc_base + 7 * (atb0 & admitted_for_covid),
+         bc1 = bc_base + 7 * (atb1 & admitted_for_covid)
   )
            
 
@@ -442,7 +442,7 @@ bello_chavolla_data <- at_admission %>%
 ```
 
 
-```{r, fig.cap = "The AUC and it's 95% credible intervals for the Bello-Chavolla et al. score. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison. We use 3 variants of the score - `base` means not inferring pneumonia at all, `day0` means that pneumonia is inferred from antibiotics at hospitalization, `day1` - inferring pneumonia from antibiotics within 1 day of hospitalization "}
+```{r, fig.cap = "The AUC and it's 95% credible intervals for the Bello-Chavolla et al. score. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison. We use 3 variants of the score - `base` means not inferring pneumonia at all, `day0` means that pneumonia is inferred from being admitted for covid and antibiotics at hospitalization, `day1` - inferring pneumonia from antibiotics within 1 day of hospitalization "}
 bc_auc <- rbind(
   my_auc_summary(alive_30 ~ bc_base, bello_chavolla_data, note = "base"),
   my_auc_summary(alive_12 ~ bc_base, bello_chavolla_data, note = "base"),

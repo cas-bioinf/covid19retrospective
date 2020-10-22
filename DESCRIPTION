@@ -26,7 +26,8 @@ Imports:
     MCMCpack,
     janitor,
     stringi,
-    formula.tools
+    formula.tools,
+    splines2
 Remotes: 
     stan-dev/cmdstanr
 Roxygen: list(markdown = TRUE)
