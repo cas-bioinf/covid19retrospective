@@ -48,7 +48,9 @@ serie_data <- wide %>%
   ungroup() %>%
   #Force explicit dummy coding for the models
   mutate(across(tidyselect::starts_with("took_"), as.integer),
-         best_supportive_care = as.integer(best_supportive_care))
+         best_supportive_care = as.integer(best_supportive_care),
+         is_male = as.integer(sex == "M")
+         )
   #mutate(best_supportive_care = as.integer(best_supportive_care))   
 
 serie_data_28 <- wide %>%
@@ -108,7 +110,7 @@ trt_group_m1_hidden_state_data <- simple_hidden_state_data
 
 trt_group_m1_observed_state_data <- base_observed_state_data
 
-trt_group_m1_rate_data <- rbind(
+simple_rate_data <- rbind(
   tibble(.from = c("Oxygen", "Ventilated"), .to = "Death", rate_group = "death"),
   tibble(.from = "AA", .to = "Discharged", rate_group = "improve_one"),
   tibble(.from = breathing_s_levels[2 : length(breathing_s_levels)], .to = breathing_s_levels[1 : (length(breathing_s_levels) - 1)], rate_group = "improve_one"),
@@ -121,9 +123,10 @@ trt_group_m1_rate_data <- rbind(
   recode_group("death") %>%
   recode_group("improve_one") %>%
   recode_group("worsen_one") %>%
-  mutate(rate_group = fct_relevel(rate_group, "improve_one"))
+  mutate(rate_group = fct_relevel(rate_group, "improve_one"),
+         )
 
-trt_group_m1_initial_states <- serie_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed)
+simple_initial_states <- serie_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed)
 
 trt_group_m1_prior = #brms::set_prior("normal(-2, 5)", "Intercept") +
   brms::set_prior("normal(-2, 5)", "b") +
@@ -132,12 +135,25 @@ trt_group_m1_prior = #brms::set_prior("normal(-2, 5)", "Intercept") +
 trt_group_m1_formula <- ~ 0 + .rate_id +  (0 + best_supportive_care + took_hcq + took_az + took_favipiravir + took_convalescent_plasma || rate_group)
 
 trt_group_m1 <- brmshmmdata(trt_group_m1_formula, serie_data, 
-                  trt_group_m1_rate_data, simple_hidden_state_data, simple_initial_states, prior = trt_group_m1_prior,
+                  simple_rate_data, simple_hidden_state_data, simple_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = base_observed_state_data)
 
-trt_group_m1_fit <- brmhmm(trt_group_m1, cache_file = paste0(cache_dir,"/trt_group_m1.rds"), control = default_control, init = 0.1)
+trt_group_m1_fit <- brmhmm(trt_group_m1, cache_file = paste0(cache_dir,"/trt_group_m1.rds"), control = default_control, init = 0.1, iter = 1500)
 
 summary(trt_group_m1_fit$brmsfit)
+```
+
+```{r, fig.width=12, fig.height=12}
+#bayesplot::mcmc_pairs(xx$fit, regex_pars = c("b_.rate_id"))
+# bayesplot::mcmc_pairs(trt_group_m1_fit$brmsfit, regex_pars = "worsen_one", np = nuts_params(trt_group_m2_fit$brmsfit))
+
+```
+
+
+```{r, fig.width=12, fig.height=12}
+# bayesplot::mcmc_pairs(trt_group_m2_fit$brmsfit, pars = c("b_.rate_idAA_Discharged", "b_.rate_idOxygen_AA"), regex_pars = "improve.*(age|male)")
+# 
+#bayesplot::mcmc_pairs(trt_group_m2_fit$brmsfit, regex_pars = c("b_.rate_id"))
 ```
 
 
@@ -206,15 +222,26 @@ if(do_pp_checks) {
 
 
 ```{r trt_group_m2}
-trt_group_m2_formula <- update.formula(trt_group_m1_formula,  ~ . +  (age_norm + sex || rate_group))
+trt_group_m2_formula <- update.formula(trt_group_m1_formula,  ~ . +  (0 + age_norm + is_male || rate_group))
 trt_group_m2 <- brmshmmdata(trt_group_m2_formula, serie_data, 
-                  trt_group_m1_rate_data, trt_group_m1_hidden_state_data, trt_group_m1_initial_states, prior = trt_group_m1_prior,
+                  simple_rate_data, trt_group_m1_hidden_state_data, simple_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = trt_group_m1_observed_state_data)
 
-trt_group_m2_fit <- brmhmm(trt_group_m2, cache_file = paste0(cache_dir,"/trt_group_m2.rds"), init = 0.1)
+trt_group_m2_fit <- brmhmm(trt_group_m2, cache_file = paste0(cache_dir,"/trt_group_m2.rds"), init = 0.1, control = default_control, iter = 1200)
 
+#parnames(trt_group_m2_fit$brmsfit)
 summary(trt_group_m2_fit$brmsfit)
 ```
+```{r, fig.width=12, fig.height=12}
+# 
+#  
+# bayesplot::mcmc_pairs(trt_group_m2_fit$brmsfit, regex_pars = "improve_one", np = nuts_params(trt_group_m2_fit$brmsfit))
+# 
+# 
+# bayesplot::mcmc_parcoord(trt_group_m2_fit$brmsfit, regex_pars = "death", np = nuts_params(trt_group_m2_fit$brmsfit))
+# bayesplot::mcmc_parcoord(trt_group_m2_fit$brmsfit, regex_pars = "worsen_one", np = nuts_params(trt_group_m2_fit$brmsfit))
+```
+
 
 ```{r}
 # draws <- tidybayes::tidy_draws(trt_group_m2_fit$brmsfit)
@@ -248,11 +275,12 @@ if(do_pp_checks) {
 
 ```{r trt_group_m3}
 trt_group_m3_formula <- update.formula(trt_group_m2_formula,  ~  . + (0 + .rate_id | hospital_id))
+
 trt_group_m3 <- brmshmmdata(trt_group_m3_formula, serie_data, 
-                  trt_group_m1_rate_data, trt_group_m1_hidden_state_data, trt_group_m1_initial_states, prior = trt_group_m1_prior,
+                  simple_rate_data, trt_group_m1_hidden_state_data, simple_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = trt_group_m1_observed_state_data)
 
-trt_group_m3_fit <- brmhmm(trt_group_m3, cache_file = paste0(cache_dir,"/trt_group_m3.rds"), init = 0.1)
+trt_group_m3_fit <- brmhmm(trt_group_m3, cache_file = paste0(cache_dir,"/trt_group_m3.rds"), init = 0.1, control = default_control, iter = 1200)
 
 summary(trt_group_m3_fit$brmsfit)
 ```
@@ -290,11 +318,14 @@ if(do_pp_checks) {
 
 
 ```{r trt_group_m4}
-trt_group_m4_formula <-  update.formula(trt_group_m3_formula ~ . + (comorbidities_sum || rate_group)) trt_group_m4 <- brmshmmdata(trt_group_m4_formula, serie_data, 
-                  trt_group_m1_rate_data, trt_group_m1_hidden_state_data, trt_group_m1_initial_states, prior = trt_group_m1_prior,
+trt_group_m4_formula <-  update.formula(trt_group_m3_formula,  ~ . + (comorbidities_sum || rate_group)) 
+
+trt_group_m4 <- brmshmmdata(trt_group_m4_formula, serie_data, 
+                  simple_rate_data, trt_group_m1_hidden_state_data, simple_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = trt_group_m1_observed_state_data)
 
-trt_group_m4_fit <- brmhmm(trt_group_m4, cache_file = paste0(cache_dir,"/trt_group_m4.rds"), init = 0.1)
+
+trt_group_m4_fit <- brmhmm(trt_group_m4, cache_file = paste0(cache_dir,"/trt_group_m4.rds"), init = 0.1, control = default_control, iter = 1200)
 
 summary(trt_group_m4_fit$brmsfit)
 ```
@@ -337,9 +368,9 @@ trt_rate_m1_hidden_state_data <- simple_hidden_state_data
 
 trt_rate_m1_observed_state_data <- base_observed_state_data
 
-trt_rate_m1_rate_data <- trt_group_m1_rate_data
+trt_rate_m1_rate_data <- simple_rate_data
 
-trt_rate_m1_initial_states <- trt_group_m1_initial_states
+trt_rate_m1_initial_states <- simple_initial_states
 
 trt_rate_m1_prior = trt_group_m1_prior
 
@@ -420,12 +451,12 @@ if(do_pp_checks) {
 
 
 ```{r trt_rate_m2}
-trt_rate_m2_formula <- update.formula(trt_rate_m1_formula,  ~ . +  (age_norm + sex || .rate_id))
+trt_rate_m2_formula <- update.formula(trt_rate_m1_formula,  ~ . +  (0 + age_norm + is_male || rate_group))
 trt_rate_m2 <- brmshmmdata(trt_rate_m2_formula, serie_data, 
                   trt_rate_m1_rate_data, trt_rate_m1_hidden_state_data, trt_rate_m1_initial_states, prior = trt_rate_m1_prior,
                   observed_state_data = trt_rate_m1_observed_state_data)
 
-trt_rate_m2_fit <- brmhmm(trt_rate_m2, cache_file = paste0(cache_dir,"/trt_rate_m2.rds"), init = 0.1)
+trt_rate_m2_fit <- brmhmm(trt_rate_m2, cache_file = paste0(cache_dir,"/trt_rate_m2.rds"), init = 0.1, control = default_control)
 
 summary(trt_rate_m2_fit$brmsfit)
 ```
@@ -466,7 +497,7 @@ trt_rate_m3 <- brmshmmdata(trt_rate_m3_formula, serie_data,
                   trt_rate_m1_rate_data, trt_rate_m1_hidden_state_data, trt_rate_m1_initial_states, prior = trt_rate_m1_prior,
                   observed_state_data = trt_rate_m1_observed_state_data)
 
-trt_rate_m3_fit <- brmhmm(trt_rate_m3, cache_file = paste0(cache_dir,"/trt_rate_m3.rds"), init = 0.1)
+trt_rate_m3_fit <- brmhmm(trt_rate_m3, cache_file = paste0(cache_dir,"/trt_rate_m3.rds"), init = 0.1, control = default_control, iter = 1500)
 
 summary(trt_rate_m3_fit$brmsfit)
 ```
@@ -504,12 +535,13 @@ if(do_pp_checks) {
 
 
 ```{r trt_rate_m4}
-trt_rate_m4_formula <-  update.formula(trt_rate_m3_formula ~ . + (comorbidities_sum || .rate_id)) 
+trt_rate_m4_formula <-  update.formula(trt_rate_m3_formula, ~ . + (comorbidities_sum || .rate_id))
+
 trt_rate_m4 <- brmshmmdata(trt_rate_m4_formula, serie_data, 
                   trt_rate_m1_rate_data, trt_rate_m1_hidden_state_data, trt_rate_m1_initial_states, prior = trt_rate_m1_prior,
                   observed_state_data = trt_rate_m1_observed_state_data)
 
-trt_rate_m4_fit <- brmhmm(trt_rate_m4, cache_file = paste0(cache_dir,"/trt_rate_m4.rds"), init = 0.1)
+trt_rate_m4_fit <- brmhmm(trt_rate_m4, cache_file = paste0(cache_dir,"/trt_rate_m4.rds"), init = 0.1, control = default_control, iter = 1500)
 
 summary(trt_rate_m4_fit$brmsfit)
 ```
@@ -563,10 +595,10 @@ d_dimer_m1_formula <-  ~ 0 + .rate_id +  (0 + best_supportive_care || rate_group
 
 
 d_dimer_m1 <- brmshmmdata(d_dimer_m1_formula, d_dimer_serie_data, 
-                  trt_group_m1_rate_data, trt_group_m1_hidden_state_data, d_dimer_initial_states, prior = trt_group_m1_prior,
+                  simple_rate_data, trt_group_m1_hidden_state_data, d_dimer_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = trt_group_m1_observed_state_data)
 
-d_dimer_m1_fit <- brmhmm(trt_m6, cache_file = paste0(cache_dir,"/d_dimer_m1.rds"), init = 0.1)
+d_dimer_m1_fit <- brmhmm(d_dimer_m1, cache_file = paste0(cache_dir,"/d_dimer_m1.rds"), init = 0.1, control = default_control, iter = 1500)
 
 summary(d_dimer_m1_fit$brmsfit)
 ```
@@ -594,14 +626,14 @@ if(do_pp_checks) {
 ## D-dimer + age + sex + comorbidities
 
 ```{r}
-d_dimer_m2_formula <-  update.formula(d_dimer_m1_formula, ~ . + (age_norm + sex + comorbidities_sum || rate_group))
+d_dimer_m2_formula <-  update.formula(d_dimer_m1_formula, ~ . + (0 + age_norm + is_male || rate_group))
 
 
 d_dimer_m2 <- brmshmmdata(d_dimer_m2_formula, d_dimer_serie_data, 
-                  trt_group_m1_rate_data, trt_group_m1_hidden_state_data, d_dimer_initial_states, prior = trt_group_m1_prior,
+                  simple_rate_data, trt_group_m1_hidden_state_data, d_dimer_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = trt_group_m1_observed_state_data)
 
-d_dimer_m2_fit <- brmhmm(trt_m6, cache_file = paste0(cache_dir,"/d_dimer_m2.rds"), init = 0.1)
+d_dimer_m2_fit <- brmhmm(d_dimer_m2, cache_file = paste0(cache_dir,"/d_dimer_m2.rds"), init = 0.1, control = default_control, iter = 1500)
 
 summary(d_dimer_m2_fit$brmsfit)
 
@@ -626,10 +658,10 @@ IL_6_initial_states <- IL_6_serie_data %>% filter(.time == 1) %>% arrange(.serie
 IL_6_m1_formula <- ~ 0 + .rate_id +  (0 + best_supportive_care || rate_group)  + (0 + .rate_id | hospital_id) + (log_peak_IL_6 || rate_group) 
 
 IL_6_m1 <- brmshmmdata(IL_6_initial_states, IL_6_serie_data, 
-                  trt_group_m1_rate_data, trt_group_m1_hidden_state_data, IL_6_initial_states, prior = trt_group_m1_prior,
+                  simple_rate_data, trt_group_m1_hidden_state_data, IL_6_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = trt_group_m1_observed_state_data)
 
-IL_6_m1_fit <- brmhmm(IL_6_m1, cache_file = paste0(cache_dir,"/IL_6_m1.rds"), init = 0.1)
+IL_6_m1_fit <- brmhmm(IL_6_m1, cache_file = paste0(cache_dir,"/IL_6_m1.rds"), init = 0.1, control = default_control, iter = 1500)
 
 summary(IL_6_m1_fit$brmsfit)
 ```
@@ -660,17 +692,68 @@ if(do_pp_checks) {
 ## IL_6 + age + sex + comorbidities
 
 ```{r}
-IL_6_m2_formula <-  update.formula(IL_6_m1_formula, ~ . + (age_norm + sex + comorbidities_sum || rate_group))
+IL_6_m2_formula <-  update.formula(IL_6_m1_formula, ~ . + (0 + age_norm + is_male || rate_group))
 
 IL_6_m2 <- brmshmmdata(IL_6_initial_states, IL_6_serie_data, 
-                  trt_group_m1_rate_data, trt_group_m1_hidden_state_data, IL_6_initial_states, prior = trt_group_m1_prior,
+                  simple_rate_data, trt_group_m1_hidden_state_data, IL_6_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = trt_group_m1_observed_state_data)
 
-IL_6_m2_fit <- brmhmm(IL_6_m2, cache_file = paste0(cache_dir,"/IL_6_m2.rds"), init = 0.1)
+IL_6_m2_fit <- brmhmm(IL_6_m2, cache_file = paste0(cache_dir,"/IL_6_m2.rds"), init = 0.1, control = default_control, iter = 1500)
 
 summary(IL_6_m2_fit$brmsfit)
 ```
 
+# Complex: Treatments - effects on rate groups
+
+## Only treatments
+
+```{r c_trt_m1}
+complex_rate_data <- rbind(
+  tibble(.from = paste0(c("Oxygen", "Ventilated"), "_worsening"), .to = "Death", rate_group = "death"),
+  tibble(.from = "AA_improving", 
+         .to = "Discharged", 
+         rate_group = "improve_one"),
+  tibble(.from = paste0(breathing_s_levels[2 : length(breathing_s_levels)], "_improving"), 
+         .to = paste0(breathing_s_levels[1 : (length(breathing_s_levels) - 1)] , "_improving"), 
+         rate_group = "improve_one"),
+  tibble(.from = paste0(breathing_s_levels[1 : (length(breathing_s_levels) - 1)], "_worsening"),
+         .to = paste0(breathing_s_levels[2 : length(breathing_s_levels)], "_worsening"),
+         rate_group = "worsen_one"),
+  tibble(.from = paste0(breathing_s_levels, "_worsening"),
+         .to = paste0(breathing_s_levels, "_improving"),
+         rate_group = "to_improving"),
+  tibble(.from = paste0(breathing_s_levels, "_improving"),
+         .to = paste0(breathing_s_levels, "_worsening"),
+         rate_group = "to_worsening")
+) %>%
+  mutate(.rate_id = factor(paste0(.from, "_", .to), levels = paste0(.from, "_", .to)),
+  ) %>%
+  mutate(rate_group = fct_relevel(rate_group, "improve_one"))
+
+complex_hidden_state_data <- rbind(
+  tibble(base = breathing_s_levels) %>% mutate(corresponding_obs = base) %>% 
+    crossing(tibble(state_group = c("_improving", "_worsening"))) %>% 
+    mutate(id = factor(paste0(base, state_group))) %>%
+    select(-base, -state_group),
+  tibble(id = c("Death","Discharged")) %>% mutate(corresponding_obs = id)
+)
+
+
+complex_initial_states <- serie_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed) %>% paste0(., "_worsening")
+
+c_trt_m1 <- brmshmmdata(trt_group_m1_formula, serie_data, 
+                  complex_rate_data, complex_hidden_state_data, complex_initial_states, prior = trt_group_m1_prior,
+                  observed_state_data = base_observed_state_data)
+
+c_trt_m1_fit <- brmhmm(c_trt_m1, cache_file = paste0(cache_dir,"/c_trt_m1.rds"), control = default_control, init = 0.1, iter = 1500)
+
+summary(c_trt_m1_fit$brmsfit)
+
+
+```
+```{r}
+do_common_pp_checks(c_trt_m1_fit)
+```
 
 
 # Environment
