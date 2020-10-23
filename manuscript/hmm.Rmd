@@ -38,9 +38,8 @@ registerS3method("stan_log_lik", class = "rate_hmm", method = stan_log_lik.rate_
 ```
 
 ```{r}
-serie_data <- wide %>%
-  inner_join(data$patient_data, by = c("hospital_id", "patient_id")) %>% 
-  mutate(.time = day, .serie = patient_id, .observed = breathing_s) %>%
+transform_serie_data <- function(raw_serie_data) {
+  raw_serie_data  %>%
   mutate(.time = .time +1) %>% 
   filter(.time >= 1) %>%
   group_by(.serie) %>%
@@ -51,18 +50,20 @@ serie_data <- wide %>%
          best_supportive_care = as.integer(best_supportive_care),
          is_male = as.integer(sex == "M")
          )
-  #mutate(best_supportive_care = as.integer(best_supportive_care))   
+}
+
+serie_data <- wide %>%
+  inner_join(data$patient_data, by = c("hospital_id", "patient_id")) %>% 
+  mutate(.time = day, .serie = patient_id, .observed = breathing_s) %>%
+  transform_serie_data()
+
 
 serie_data_28 <- wide %>%
-  inner_join(crossing(data$patient_data, day = 0:28), by = c("hospital_id", "patient_id", "day")) %>%
+  right_join(crossing(data$patient_data, day = 0:28), by = c("hospital_id", "patient_id", "day")) %>%
   mutate(.time = day, .serie = patient_id, .observed = breathing_s) %>%
-  mutate(.time = .time +1) %>% 
-  filter(.time >= 1) %>%
-  group_by(.serie) %>%
-  filter(sum(!is.na(.observed)) > 1) %>%
-  ungroup()
+  transform_serie_data()
 
-# Extend terminal states for serie_data_28
+# Extend terminal states and took_XX data for serie_data_28
 serie_data_28 <- serie_data_28 %>%
   group_by(.serie) %>%
   mutate(last_day = max(day[!is.na(.observed)]),
@@ -70,6 +71,7 @@ serie_data_28 <- serie_data_28 %>%
          .observed = if_else(last_state %in% c("Discharged", "Death") & is.na(.observed) & day > last_day,
                              last_state,
                              .observed)) %>%
+  mutate(across(tidyselect::starts_with("took_"), ~ if_else(is.na(.x), as.integer(any(.x != 0, na.rm = TRUE)), .x))) %>%
   ungroup()
 
 base_observed_state_data <- tibble(id = factor(disease_s_levels, levels = disease_s_levels), is_noisy = FALSE)
@@ -80,6 +82,7 @@ simple_initial_states <- serie_data %>% filter(.time == 1) %>% arrange(.serie) %
 
 default_control <- list(adapt_delta = 0.9)
 ```
+
 
 ```{r}
 #data$patient_data %>% filter(!is.na(best_supportive_care_from)) %>% select(outcome)
@@ -156,22 +159,20 @@ summary(trt_group_m1_fit$brmsfit)
 #bayesplot::mcmc_pairs(trt_group_m2_fit$brmsfit, regex_pars = c("b_.rate_id"))
 ```
 
+```{r}
+# fit <- trt_group_m1_fit
+# data_28 <- trt_group_m1
+# data_28$serie_data <- serie_data_28
+# epred_rect <- posterior_epred_rect(fit)#, newdata = data_28)
+# predicted_rect <- posterior_epred_to_predicted(fit, epred_rect)
+# # predicted <- posterior_rect_to_long(fit, predicted_rect)
+# 
+# pp_check_state_at(fit, predicted_rect, 28, newdata = data_28)
+```
+
 
 ```{r}
-
-# counterfactual_max_days <- 90
-# counterfactual_base <-  crossing(day = 0:counterfactual_max_days, patient_id = unique(serie_data$patient_id)) %>%
-#   inner_join(data$patient_data, by = c("patient_id")) %>% 
-#   left_join(wide, by = c("hospital_id", "patient_id", "day")) %>%
-#   mutate(.time = day, .serie = patient_id, .observed = breathing) %>%
-#   mutate(.time = .time +1) %>% 
-#   filter(.time >= 1) %>%
-#   group_by(.serie) %>%
-#   mutate(best_supportive_care = !is.na(best_supportive_care_from) & day >= best_supportive_care_from) %>%
-#   ungroup()
-# 
-# 
-# counterfactual_took_hcq <- counterfactual_base %>% mutate(took_hcq = TRUE)
+# counterfactual_took_hcq <- serie_data_28 %>% mutate(took_hcq = TRUE)
 # counterfactual_no_hcq <- counterfactual_base %>% mutate(took_hcq = FALSE)
 # 
 # 
@@ -212,6 +213,11 @@ summary(trt_group_m1_fit$brmsfit)
 
 
 ```{r}
+# fit <- trt_group_m1_fit
+# epred_rect <- posterior_epred_rect(fit)
+# predicted_rect <- posterior_epred_to_predicted(fit, epred_rect)
+# predicted <- posterior_rect_to_long(fit, predicted_rect)
+
 if(do_pp_checks) {
   do_common_pp_checks(trt_group_m1_fit)
 }
@@ -451,7 +457,7 @@ if(do_pp_checks) {
 
 
 ```{r trt_rate_m2}
-trt_rate_m2_formula <- update.formula(trt_rate_m1_formula,  ~ . +  (0 + age_norm + is_male || rate_group))
+trt_rate_m2_formula <- update.formula(trt_rate_m1_formula,  ~ . +  (0 + age_norm + is_male || .rate_id))
 trt_rate_m2 <- brmshmmdata(trt_rate_m2_formula, serie_data, 
                   trt_rate_m1_rate_data, trt_rate_m1_hidden_state_data, trt_rate_m1_initial_states, prior = trt_rate_m1_prior,
                   observed_state_data = trt_rate_m1_observed_state_data)
@@ -752,7 +758,92 @@ summary(c_trt_m1_fit$brmsfit)
 
 ```
 ```{r}
-do_common_pp_checks(c_trt_m1_fit)
+if(do_pp_checks) {
+  do_common_pp_checks(c_trt_m1_fit)
+}
+```
+
+## Treatments + age + sex
+
+
+```{r c_trt_m2}
+c_trt_m2 <- brmshmmdata(trt_group_m2_formula, serie_data, 
+                  complex_rate_data, complex_hidden_state_data, complex_initial_states, prior = trt_group_m1_prior,
+                  observed_state_data = base_observed_state_data)
+
+
+c_trt_m2_fit <- brmhmm(c_trt_m2, cache_file = paste0(cache_dir,"/c_trt_m2.rds"), init = 0.1, control = default_control, iter = 1200)
+
+#parnames(c_trt_m2_fit$brmsfit)
+summary(c_trt_m2_fit$brmsfit)
+```
+
+
+```{r}
+if(do_pp_checks) {
+  do_common_pp_checks(c_trt_m2_fit)
+}
+```
+
+
+## Treatments + age + sex + hospital
+
+```{r c_trt_m3}
+c_trt_m3 <- brmshmmdata(trt_group_m3_formula, serie_data, 
+                  complex_rate_data, complex_hidden_state_data, complex_initial_states, prior = trt_group_m1_prior,
+                  observed_state_data = base_observed_state_data)
+
+c_trt_m3_fit <- brmhmm(c_trt_m3, cache_file = paste0(cache_dir,"/c_trt_m3.rds"), init = 0.1, control = default_control, iter = 1200)
+
+summary(c_trt_m3_fit$brmsfit)
+```
+
+```{r}
+if(do_pp_checks) {
+  do_common_pp_checks(c_trt_m3_fit)
+}
+```
+
+## Treatment + age + sex + hospital + comorbidities
+
+
+```{r c_trt_m4}
+c_trt_m4 <- brmshmmdata(trt_group_m4_formula, serie_data, 
+                  complex_rate_data, complex_hidden_state_data, complex_initial_states, prior = trt_group_m1_prior,
+                  observed_state_data = base_observed_state_data)
+
+
+c_trt_m4_fit <- brmhmm(c_trt_m4, cache_file = paste0(cache_dir,"/c_trt_m4.rds"), init = 0.1, control = default_control, iter = 1200)
+
+summary(c_trt_m4_fit$brmsfit)
+```
+
+```{r}
+# draws <- tidybayes::tidy_draws(c_trt_m4_fit$brmsfit)
+# hmm_hypothesis_res_list[["c_trt_m4_death"]] <- 
+#   bayesian_hypothesis_res_from_draws(
+#     draws = draws$b_took_hcqTRUE,
+#     model = "HMM",
+#     estimand = "log(HR)",
+#     hypothesis = hypotheses$hcq_reduces_death,
+#     adjusted = "age, sex, supportive, hospital, comorbidities_sum"
+#   )
+# 
+# hmm_hypothesis_res_list[["c_trt_m4_discharged"]] <- 
+#   bayesian_hypothesis_res_from_draws(
+#     draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
+#     model = "HMM",
+#     estimand = "log(HR)",
+#     hypothesis = hypotheses$hcq_increases_discharged,
+#     adjusted = "age, sex, supportive, hospital, comorbidities_sum"
+#   )
+```
+
+
+```{r}
+if(do_pp_checks) {
+  do_common_pp_checks(c_trt_m4_fit)
+}
 ```
 
 

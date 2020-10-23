@@ -5,8 +5,8 @@ output:
   html_document:
     theme: default
 encoding: UTF-8
-editor_options: 
-  chunk_output_type: console
+#editor_options: 
+#  chunk_output_type: console
 ---
 
 <style>
@@ -561,10 +561,10 @@ hypothesis_res_list[["hcq_az_discharged_time"]] <- rbind(
     adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
   ),
   bayesian_hypothesis_res_from_draws(
-    draws = draws$b_ever_favipiraviTRUE,
+    draws = draws$b_ever_favipiravirTRUE,
     model = "brms_cox",
     estimand = "log(HR)",
-    hypothesis = hypotheses$favipiravi_increases_discharged,
+    hypothesis = hypotheses$favipiravir_increases_discharged,
     adjusted = "hcq, az, sex, age_norm, smoking, obesity"
   )
 )
