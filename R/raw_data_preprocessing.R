@@ -752,6 +752,7 @@ merge_patients <- function(complete_data, patients_to_merge) {
         filter(!(should_change & day == row$shift)) %>%
         select(-should_change)
 
+        stop("TODO 8PGr47dGTx needs to change outcome and last_recrod when merging")
     } else {
       stop(paste0("Unknown resolution: ", row$resolution))
     }

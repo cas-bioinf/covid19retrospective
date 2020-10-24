@@ -38,7 +38,10 @@ read_data_for_analysis <- function() {
                                BMI <= 25 ~ "No",
                                BMI <= 30 ~ "Overweight",
                                TRUE ~ "Obese")
-                            ,levels = c("No", "Overweight", "Obese"), ordered = TRUE)
+                            ,levels = c("No", "Overweight", "Obese"), ordered = TRUE),
+           #TODO 8PGr47dGTx - quick fix for bug in preprocessing, incorrectly merged after transfer
+           last_record = if_else(patient_id == "8PGr47dGTx", last_record + 12L, last_record),
+           outcome = if_else(patient_id == "8PGr47dGTx", factor("Discharged", levels = levels(outcome)), outcome)
            )
 
   collapse_breathing <- function(x) {
