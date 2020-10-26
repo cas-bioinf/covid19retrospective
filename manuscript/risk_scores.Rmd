@@ -487,9 +487,15 @@ plot_my_auc(alive_30 ~ age, at_admission)
 
 ```{r, fig.cap = "The AUC and it's 95% credible intervals for all of the scores considered so far. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison."}
 
+
 all_auc <- rbind(acp_auc, chen_liu_auc, shi_et_al_auc, caramelo_auc, bc_auc, age_auc)
-compare_auc_to_orig(rbind(acp_auc_orig, chen_liu_auc_orig, shi_et_al_auc_reported_admission,
-                         shi_et_al_auc_reported_all, bc_auc_orig),
+all_auc_orig <- rbind(acp_auc_orig, chen_liu_auc_orig, shi_et_al_auc_reported_admission,
+                         shi_et_al_auc_reported_all, bc_auc_orig)
+
+write_csv(all_auc, here::here("manuscript", "all_auc.csv"), na = "")
+write_csv(all_auc_orig, here::here("manuscript", "all_auc_orig.csv"), na = "")
+
+compare_auc_to_orig(all_auc_orig,
                     all_auc, show_outcome = FALSE)
 
 ```

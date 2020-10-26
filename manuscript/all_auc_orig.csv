@@ -1,0 +1,6 @@
+auc,auc_low,auc_high,outcome,score,note,subgroup
+0.8692893401015228,0.831277921753126,0.9073007584499196,alive_12,ACP_grade,"",""
+0.881,,,alive,chen_liu,incl,""
+0.795029020782625,0.7402565249760032,0.8498015165892469,severe_admission,shi,"", (admission)
+0.7019607843137254,0.5574234230317551,0.8464981455956958,severe_hospitalized,shi,"",""
+0.83,,,alive_30,bc0,"",""
