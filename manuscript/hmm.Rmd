@@ -663,7 +663,7 @@ IL_6_initial_states <- IL_6_serie_data %>% filter(.time == 1) %>% arrange(.serie
 
 IL_6_m1_formula <- ~ 0 + .rate_id +  (0 + best_supportive_care || rate_group)  + (0 + .rate_id | hospital_id) + (log_peak_IL_6 || rate_group) 
 
-IL_6_m1 <- brmshmmdata(IL_6_initial_states, IL_6_serie_data, 
+IL_6_m1 <- brmshmmdata(IL_6_m1_formula, IL_6_serie_data, 
                   simple_rate_data, trt_group_m1_hidden_state_data, IL_6_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = trt_group_m1_observed_state_data)
 
@@ -700,7 +700,7 @@ if(do_pp_checks) {
 ```{r}
 IL_6_m2_formula <-  update.formula(IL_6_m1_formula, ~ . + (0 + age_norm + is_male || rate_group))
 
-IL_6_m2 <- brmshmmdata(IL_6_initial_states, IL_6_serie_data, 
+IL_6_m2 <- brmshmmdata(IL_6_m2_formula, IL_6_serie_data, 
                   simple_rate_data, trt_group_m1_hidden_state_data, IL_6_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = trt_group_m1_observed_state_data)
 
