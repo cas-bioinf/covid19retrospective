@@ -312,19 +312,30 @@ all_hypo <- rbind(res_bayesian %>% select(-widest_CI_excl_reference),
 
 ## Association between treatments and outcomes
 
-```{r}
+
+
+
+Here, we focus on Hydroxychloroquine and Azithromycin as it is the only treatment with larger sample size. We also investigate Favipiravir and convalescent plasma as those therapies are less well reported in the literature. Hydroxychloroquine was dosed almost exclusively in a 5-day regime starting with a loading dose of 800mg on the first day and followed by 400mg. Majority of patients complemented Hydroxychloroquine with Azithromycin while Azithromycin was rarely used alone (see Table \@ref(tab:summarytable)). Azithromycin was most frequently dosed 250 or 500mg/day, but doses ranging from 100mg/day to 1500 mg/day were observed.  Favipiravir was used only at one site with a loading dose of 3600mg on the first day, followed by at most 9 days with a 1600mg dose all but one of the patients receiving Favipiravir also received Hydroxychloroquine. Patients treated with convalescent plasma received 1-3 units of plasma over 1-2 days. Except for convalescent plasma, treatment was initiated mostly within two days of admission (see Figure&nbsp;\@ref(fig:initiation)).
+
+```{r initiation, fig.cap="Histogram of timing of first treatment relative to admission into one of the study sites. Two patients initiated treatment before admission, which is shown as the negative numbers.", fig.height=2}
 #data$marker_data %>% filter(marker == "favipiravir") %>% group_by(patient_id) %>% summarise(days = n(), .groups = "drop") %>% summarise(min_days = min(days), max_days = max(days))
 #data$marker_data %>% filter(marker == "az") %>% group_by(patient_id) %>% summarise(days = sum(!is.na(value) & value > 0), .groups = "drop") %>% filter(days > 0) %>% ggplot(aes(x = days)) + geom_histogram(binwidth = 1)
 #data$marker_data%>% filter(marker == "az") %>% group_by(value) %>% summarise(n())
+
+marker_map <- c("az" = "Azithromycin", "hcq" = "Hydroxychloroquine", "favipiravir" = "Favipiravir", "convalescent_plasma" = "Conv. plasma")
+
+data$marker_data %>% 
+  filter(marker %in% c("az", "hcq", "favipiravir", "convalescent_plasma"), !is.na(value), value > 0) %>%
+  mutate(marker = marker_map[marker]) %>%
+  group_by(marker, patient_id) %>% 
+  summarise(first_day = min(day), .groups = "drop") %>% 
+  ggplot(aes(x = first_day)) + geom_histogram(binwidth = 1) + facet_wrap(~marker, scales = "free", nrow = 1) + scale_x_continuous("First day of treatment relative to admission")
 ```
 
-
-Here, we focus on Hydroxychloroquine and Azithromycin as it is the only treatment with larger sample size. We also investigate Favipiravir and convalescent plasma as those therapies are less well reported in the literature. Hydroxychloroquine was dosed almost exclusively in a 5-day regime starting with a loading dose of 800mg on the first day and followed by 400mg. Majority of patients complemented Hydroxychloroquine with Azithromycin while Azithromycin was rarely used alone (see Table \@ref(tab:summarytable)). Azithromycin was most frequently dosed 250 or 500mg/day, but doses ranging from 100mg/day to 1500 mg/day were observed.  Favipiravir was used only at one site with a loading dose of 3600mg on the first day, followed by at most 9 days with a 1600mg dose. Patients treated with convalescent plasma received 1-3 units of plasma over 1-2 days.
-
-The results of the multiverse analysis for association between drugs used and outcomes is shown in Figure&nbsp;\@ref(fig:multiverseresultsdrugs). 
+The results need to be interpreted very carefully as the treatme  The results of the multiverse analysis for association between drugs used and outcomes is shown in Figure&nbsp;\@ref(fig:multiverseresultsdrugs). 
 
 
-```{r multiverseresultsdrugs, fig.height=7, fig.width=8.5, fig.cap="Estimates of model coefficients (log hazard ratios) for association between treatments and main outcomes. Each row represents a model - HMM = Bayesian hidden-markov model, coxph = Frequentist competing risks model. Additionally the factors the model adjusted for are listed - supportive = best supportive care initiated, comorbidities_sum = total number of comorbidities, admitted = admitted for Covid-19, az = took Azithromycin, hcq = took Hydroxychloroquine. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval."}
+```{r multiverseresultsdrugs, fig.height=9, fig.width=8.5, fig.cap="Estimates of model coefficients (log hazard ratios) for association between treatments and main outcomes. Each row represents a model - HMM = Bayesian hidden-markov model, coxph = Frequentist competing risks model. Additionally the factors the model adjusted for are listed - supportive = best supportive care initiated, comorbidities_sum = total number of comorbidities, admitted = admitted for Covid-19, az = took Azithromycin, hcq = took Hydroxychloroquine. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval."}
 
 
 #In the current dataset, we see a possibly strong negative association between using Hydroxychloroquine and risk of death across all models, although for several models we cannot rule out that the association is of negligible strength. Across all models, the data offer no definitive conclusions on the association between taking Hydroxychloroquine and length of hospital stay (represented as risk for being discharged). After adjusting for Hydroxychloroquine usage, we also cannot make any strong claims on the association of using Azithromycin with either outcome. In all cases, the results seem to not be strongly affected by model choice.
@@ -348,11 +359,12 @@ plot_multiverse <- function(hypo_res) {
 multiverse_hcq <- plot_multiverse(all_hypo %>% filter(group == "hcq"))
 multiverse_az <- plot_multiverse(all_hypo %>% filter(group == "az"))
 
-(multiverse_hcq / multiverse_az) + plot_layout(heights = c(2.2,1))
+
+(multiverse_hcq / multiverse_az) + plot_layout(heights = c(2.5,1.5))
 
 ```
 
-```{r}
+```{r, fig.height=4}
 plot_multiverse(all_hypo %>% filter(group == "favipiravir"))
 ```
 
@@ -397,6 +409,8 @@ compare_auc_to_orig(all_auc_orig,
 # Conclusions
 
 Will be written once we have the full dataset.
+
+An important lesson from our analysis is that the assesment of treatment efficacy from observational data is heavily sensitive to modelling assumptions while it is usually almost impossible to determine which of the models is more likely to reflect reality (if any). We believe that using multiverse analysis is an appropriate way to explore data in such contexts as it lets us be transparent about this sensitivity.
 
 Where our resutls contradict randomized trials, the most likely explanation is systematic bias in our dataset.
 
