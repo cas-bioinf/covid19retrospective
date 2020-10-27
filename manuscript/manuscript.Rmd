@@ -4,16 +4,15 @@ output:
   #rticles::arxiv_article
   #pdf_document
   # bookdown::pdf_document2:
-  #     toc: false
+   #    toc: false
   bookdown::word_document2: 
     toc: false
     keep_md: true
     reference_docx: "output_template.docx"
-abstract: "We collected a multi-centric retrospective dataset of patients who were admitted to N hospitals in Czech Republic and tested positive for SARS-CoV-2. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. Patients in the dataset were treated with Hydroxychloroquine (N = 108), Azithromycin (N = 72), Favipiravir (N = 9), convalescent plasma (N = 7), Dexamethasone (N = 4) and Remdesivir (N = 3), often in combination. To assess association between treatments, markers and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom. Additionally we performed external validation of several proposed prognostic models for Covid-19 severity."
+abstract: "We collected a multi-centric retrospective dataset of patients who were admitted to N hospitals in Czech Republic and tested positive for SARS-CoV-2. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. Patients in the dataset were treated with Hydroxychloroquine (N = 108), Azithromycin (N = 72), Favipiravir (N = 9), convalescent plasma (N = 7), Dexamethasone (N = 4) and Remdesivir (N = 3), often in combination. To ~~assess~~ *__explore__* association between treatments, markers and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom. Additionally we performed external validation of several proposed prognostic models for Covid-19 severity."
 bibliography: Covid19.json
 date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
 author: "`r { source(here::here('manuscript', 'authors.R')); get_authors_string() }`"
----
 
 
 ```{r setup, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
@@ -22,6 +21,7 @@ knitr::opts_chunk$set(echo = FALSE, fig.width = 8)
 devtools::load_all()
 library(tidyverse)
 library(patchwork)
+library(tsiMisc)
 theme_set(cowplot::theme_cowplot())
 data <- read_data_for_analysis()
 wide <- data$marker_data_wide
@@ -62,6 +62,16 @@ A convenience sample of patients from `r n_hospitals` sites was collected. For e
 
 ## Statistical analysis
 
+It shall be noted that the character of the convenience sample did not allow to properly assess 
+the association between treatments, markers and patient outcomes,
+because the treatments had not been assigned to patients at random (as in a randomized clinical trial), 
+but were only observed retrospectively.
+Therefore, we could not exclude the possibility of accidental association of treatments to patients' baseline characteristics, 
+which could, in turn, demonstrate in spurious association between treatments and outcomes, 
+because both of these can be driven by the patients' characteristics. 
+Eventhough we attempted to account for possible associations of treatments to patients' baseline characteristics, 
+we still could not rule them out, and the results of our analyses should be considered as exploratory.
+
 Since many details of analysis may influence the conclusions made, we performed multiverse analysis [@http://zotero.org/users/5567156/items/DXWM259V] and report results for all the hypothesis tested across multiple different models using both frequentist and Bayesian paradigms. For each model class we worked with several possible sets of adjustments and - where applicable - with multiple estimands of the outcome as different tasks require different estimands [@http://zotero.org/users/5567156/items/MH797GNC]. All analyses were performed in the R language [@http://zotero.org/users/5567156/items/67XKBC2W], visualisations and data cleaning was run with the `tidyverse` package [@http://zotero.org/users/5567156/items/8EWY8TKM]. 
 
 First class of models are frequentist multistate models under the proportional hazards assumption as implemented in the `coxph` function from the `survival` package [@http://zotero.org/users/5567156/items/I9UVTUJF]. We primarily use a model with competing risks for death and discharge from hospital (see Figure&nbsp;\@ref(fig:modelstates)a).
@@ -98,7 +108,8 @@ Complete code for all analyses is available at https://github.com/cas-bioinf/cov
 # Results
 
 
-In total, we were able to gather data for `r n_patients` patients, see Table \@ref(tab:summarytable) for the overall characteristics of the patient sample and several subgroups we used in the analysis.
+In total, we were able to gather data for `r n_patients` patients, see Table \@ref(tab:summarytable) for the overall characteristics of the patient sample and several subgroups we used in the analysis. 
+Table \@ref(tab:treatment_comb_table} gives overview of combinations of treatments used in individual patients.
 
 
 ```{r summarytable, echo=FALSE}
@@ -146,6 +157,30 @@ data_table_1 %>% group_by(group) %>%
   knitr::kable(caption = "Patient characteristics. Note that the 'Measured D-dimer' and 'Measured IL-6' are neither exclusive nor exhaustive.", booktabs = TRUE)
 ```
 
+```{r treatment_comb_table, echo=FALSE}
+pd<-data$patient_data
+x<-sort(table(paste0(
+  as.numeric(pd$ever_hcq),
+  as.numeric(pd$ever_az),
+  as.numeric(pd$ever_convalescent_plasma),
+  as.numeric(pd$ever_favipiravir),
+  as.numeric(pd$ever_remdesivir),
+  as.numeric(pd$ever_dexamethasone),
+  as.numeric(pd$ever_antibiotics))),dec=TRUE)
+x2<-c()
+nms<-c('HCQ','AZ','Plasma','Favipiravir','Remdesivir','Dexamethasone','ATB')
+for (i in 1:length(x)) {
+  x3<-c()
+  for (i2 in 1:nchar(names(x)[i])) {
+    x3<-c(x3,ifelse(substring(names(x)[i],i2,i2)=='1',nms[i2],''))
+  }
+  x2<-rbind(x2,cbind(n=x[i],rbind(x3)))
+}
+rownames(x2)<-c()
+colnames(x2)<-c('N',nms)
+x2<-x2[,c(1,2,3,8,4:7)]
+knitr::kable(x2,caption = "Treatment combinations in individual patients.", booktabs = TRUE)
+```
 
 In Figure&nbsp;\@ref(fig:progression) we show the overall disease progression for all patients and in Figure &nbsp;\@ref(fig:selectedmarkers) we show the time-course of a subset of the markers we have measured. The data show some interesting patterns: patients with low Interleukin-6 or D-dimer values are overrepresented among patients with better outcomes, most patients were hospitalized with high CRP and for many the CRP levels stayed elevated over the whole hospitalization. We also see that the marker levels were not substantially stratified by study site. Those should however be interpreted with care due to systematic missingness of the data - in particular, patients that fared worse were probably more likely to have the markers measured.
 
@@ -301,7 +336,8 @@ frequentist_cols <- cols(
 )
 
 res_frequentist <- 
-  rbind(read_csv(here::here("manuscript", "competing_risks_res.csv"), col_types = frequentist_cols))
+  rbind(read_csv(here::here("manuscript", "competing_risks_res.csv"), col_types = frequentist_cols),
+        read_csv(here::here("manuscript", "single_outcome_coxph_res.csv"), col_types = frequentist_cols))
 
 all_hypo <- rbind(res_bayesian %>% select(-widest_CI_excl_reference), 
       res_frequentist %>% select(-p_value)) %>%
@@ -309,6 +345,102 @@ all_hypo <- rbind(res_bayesian %>% select(-widest_CI_excl_reference),
 
 
 ```
+
+## Association between patients' characteristics and treatments
+
+As noted above, the nature of the convenience sample did not enforce random assignment of treatments to patients. To illustrate this phenomenon, we give an example of the association of treatment with Hydroxychloroquine on patients' baseline characteristics. 
+
+```{r hcq_assoc, message=FALSE, fig.cap="The choice of treatment with Hydroxychloroquine seemed to be asociated with the status of patients upon hospitalization. Comorbidities were asociated with both worse outcome (black) and lower chance of treatment with Hydroxychloroquine (red). HCQ: hydroxychloroquine, IHD: ischemic heart disease, HD: hypertension drugs, HF: heart failure history, COPD: chronic obstructive pulmonary disease, LungD: other lung disease, Dia: diabetes, RenalD: renal disease, LiverD: liver disease, HighCr: creatinin above 115 for males or above 97 for females, HighInr: Prothrombin time (Quick test) as International Normalized Ratio above 1.2, LowAlb: albumin in serum/plasma below 36 g/l."}
+
+tmp<-data$patient_data[,c('age','sex','days_from_symptom_onset','admitted_for_covid','ischemic_heart_disease','has_hypertension_drugs','heart_failure',
+  'COPD','asthma','other_lung_disease','diabetes','renal_disease','liver_disease','smoking','BMI','obesity','last_record','high_creatinin','high_pt_inr','low_albumin',
+  'heart_problems','outcome','ever_hcq','ever_az','worst_breathing','had_invasive'),]
+tmp$outcome[tmp$outcome=='Transferred']<-'Hospitalized'
+tmp$outcome<-dropLevels(tmp$outcome)
+tmp2<-tmp[tmp$outcome%in%c('Death','Discharged'),]
+tmp2$outcome<-dropLevels(tmp2$outcome)
+tmp2$outcome<-tmp2$outcome=='Death'
+
+m.ihd<-glm(outcome~ischemic_heart_disease,tmp2,family='binomial')
+m.hd<-glm(outcome~has_hypertension_drugs,tmp2,family='binomial')
+m.hf<-glm(outcome~heart_failure,tmp2,family='binomial')
+m.copd<-glm(outcome~COPD,tmp2,family='binomial')
+m.asthma<-glm(outcome~asthma,tmp2,family='binomial')
+m.old<-glm(outcome~other_lung_disease,tmp2,family='binomial')
+m.dia<-glm(outcome~diabetes,tmp2,family='binomial')
+m.rd<-glm(outcome~renal_disease,tmp2,family='binomial')
+m.ld<-glm(outcome~liver_disease,tmp2,family='binomial')
+m.s<-glm(outcome~smoking,tmp2,family='binomial')
+m.ob<-glm(outcome~obesity,tmp2,family='binomial')
+m.hc<-glm(outcome~high_creatinin,tmp2,family='binomial')
+m.hi<-glm(outcome~high_pt_inr,tmp2,family='binomial')
+m.la<-glm(outcome~low_albumin,tmp2,family='binomial')
+
+m2.ihd<-glm(ever_hcq~ischemic_heart_disease,tmp2,family='binomial')
+m2.hd<-glm(ever_hcq~has_hypertension_drugs,tmp2,family='binomial')
+m2.hf<-glm(ever_hcq~heart_failure,tmp2,family='binomial')
+m2.copd<-glm(ever_hcq~COPD,tmp2,family='binomial')
+m2.asthma<-glm(ever_hcq~asthma,tmp2,family='binomial')
+m2.old<-glm(ever_hcq~other_lung_disease,tmp2,family='binomial')
+m2.dia<-glm(ever_hcq~diabetes,tmp2,family='binomial')
+m2.rd<-glm(ever_hcq~renal_disease,tmp2,family='binomial')
+m2.ld<-glm(ever_hcq~liver_disease,tmp2,family='binomial')
+m2.s<-glm(ever_hcq~smoking,tmp2,family='binomial')
+m2.ob<-glm(outcome~obesity,tmp2,family='binomial')
+m2.hc<-glm(ever_hcq~high_creatinin,tmp2,family='binomial')
+m2.hi<-glm(ever_hcq~high_pt_inr,tmp2,family='binomial')
+m2.la<-glm(ever_hcq~low_albumin,tmp2,family='binomial')
+
+models<-list(m.ihd,m.hd,m.hf,m.copd,m.asthma,m.old,m.dia,m.rd,m.ld,m.s,m.ob,m.hc,m.hi,m.la)
+modelNames<-c('IHD','HD','HF','COPD','Asthma','LungD','Dia','RenalD','LiverD','Smoking','Obesity','HighCr','HighInr','LowAlb')
+ys<-c(0)
+for (m in models) {
+  ys<-c(min(min(ys),confint(m)[2,1]),max(max(ys),confint(m)[2,2]))
+}
+models2<-list(m2.ihd,m2.hd,m2.hf,m2.copd,m2.asthma,m2.old,m2.dia,m2.rd,m2.ld,m2.s,m2.ob,m2.hc,m2.hi,m2.la)
+modelNames2<-modelNames
+ys2<-c(0)
+for (m in models2) {
+  ys2<-c(min(min(ys2),confint(m)[2,1]),max(max(ys2),confint(m)[2,2]))
+}
+
+plot(ys,c(1,length(modelNames)),ty='n',yaxt='n',xlab='Log odds ratio',ylab='')
+abline(v=0,col='blue')
+col.hcq<-bfc()["Vermillion"]
+for (i in seq(along=models)) {
+  ii<-length(models)-i+1
+  m<-models[[i]]
+  m2<-models2[[i]]
+  lines(confint(m)[2,],rep(ii,2))
+  points(coef(m)[2],ii,pch=19)
+  lines(-confint(m2)[2,],rep(ii,2)-.3,col=col.hcq)
+  points(-coef(m2)[2],ii-.3,col=col.hcq,pch=19)
+}
+axis(2,length(modelNames):1,modelNames,las=2)
+legend('right',c('Death','No HCQ'),lty=1,col=c('black',col.hcq))
+```
+
+Figure&nbsp;\@ref(fig:hcq_assoc) shows that patients with worse baseline characteristics, which lead to worse outcome, 
+were less likely to receive Hydroxychloroquine treatment. 
+This clearly creates a bias towards a positive effect of Hydroxychloroquine on the outcome, 
+which, however, could be false. 
+
+```{r}
+# condition on the sum of comorbidities
+pdd<-within(pd,cnd<-ischemic_heart_disease+has_hypertension_drugs+heart_failure+COPD+    other_lung_disease+    renal_disease+  high_creatinin)
+m.hcq_treatment2<-glm(ever_hcq~cnd,pdd,family='binomial')
+m.hcq_treatment0<-glm(ever_hcq~1,pdd,subset=!is.na(cnd),family='binomial')
+```
+
+Taken quantitatively, the comorbidities known upon hospitalization were informative with respect to future Hydroxychloroquine treatment:
+the score representing the cummulative presence of ischemic heart disease, hypertension drugs, former heart failure, COPD, 
+other lung diseases, renal disease, or high creatinin 
+was asscociated with a lower chance of taking Hydroxychloroquine over the course of the hospitalization 
+(the chance was only `r round(100*exp(coef(m.hcq_treatment2)[2]),1)`%, 95% confidence interval 
+(`r round(100*exp(confint(m.hcq_treatment2)[2,]),1)`)%,
+Chi-square test in the logistic regression model, 
+$\chi^2$=`r round(abs(anova(m.hcq_treatment2,m.hcq_treatment0,test='Chisq'))[2,4],2)`, df=1, 
+P=`r round(anova(m.hcq_treatment2,m.hcq_treatment0,test='Chisq')[2,5],3)`).
 
 ## Association between treatments and outcomes
 

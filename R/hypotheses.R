@@ -37,6 +37,23 @@ frequentist_hypothesis_res_from_coxph <- function(
   )
 }
 
+# single outcome
+frequentist_hypothesis_res_from_coxph1 <- function(
+  hypothesis, adjusted, point_estimate, test_stat, df, p_value, ci_low, ci_high, model_check = "OK") {
+
+  data.frame(hypothesis = hypothesis$name,
+             model = "coxph",
+             adjusted = adjusted,
+             estimand = "log(HR)",
+             point_estimate = point_estimate,
+             p_value = p_value,
+             ci_low = ci_low,
+             ci_high = ci_high,
+             model_check = model_check,
+             data_version = get_data_version()
+  )
+}
+
 
 bayesian_hypothesis_res_from_jm <- function(
   hypothesis, jm_fit, coefficient_name, adjusted, model_check = "OK") {

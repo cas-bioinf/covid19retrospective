@@ -1,0 +1,102 @@
+---
+title: "Survival - frequentist, single outcome"
+output: html_notebook
+---
+
+
+```{r}
+devtools::load_all()
+library(tidyverse)
+library(survival)
+
+theme_set(cowplot::theme_cowplot())
+data <- read_data_for_analysis()
+
+# add hcq_first
+pd<-data$patient_data
+pd$hcq_first<-NA
+for (i in unique(pd$patient_id)) {
+  tmp<-data$marker_data$day[data$marker_data$patient_id==i&data$marker_data$marker=='hcq']
+  if (sum(!is.na(tmp))>0) {
+    pd$hcq_first[pd$patient_id==i]<-min(tmp)
+  }
+}
+
+# prepare surv data
+d<-c()
+# I know, the code is busy, but intuitive
+for (i in unique(pd$patient_id)) {
+  cnd<-pd$patient_id==i
+  if (pd$last_record[cnd]==0) next
+  hcq_first<-pd$hcq_first[cnd]
+  if (!is.na(hcq_first)) {
+    if (hcq_first>0) {
+      if (pd$last_record[cnd]>hcq_first) {
+        if (hcq_first>1) {
+          d<-rbind(d,data.frame(t0=0,t1=hcq_first-1,outcome=0,patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],hcq=0))
+        }
+        d<-rbind(d,data.frame(t0=hcq_first-1,t1=pd$last_record[cnd],outcome=pd$outcome[cnd],patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],hcq=1))
+      } else {
+        d<-rbind(d,data.frame(t0=0,t1=pd$last_record[cnd],outcome=pd$outcome[cnd],patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],hcq=0))
+      }
+    } else { # hcq_first=0
+      d<-rbind(d,data.frame(t0=0,t1=pd$last_record[cnd],outcome=pd$outcome[cnd],patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],hcq=1))
+    }
+  } else {
+    d<-rbind(d,data.frame(t0=0,t1=pd$last_record[cnd],outcome=pd$outcome[cnd],patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],hcq=0))
+  }
+}
+d<-within(d,comorb_sum<-ischemic_heart_disease+has_hypertension_drugs+heart_failure+COPD+    other_lung_disease+    renal_disease)
+
+
+
+
+hypothesis_res_list <- list()
+
+cache_dir <- here::here("local_temp_data")
+if(!dir.exists(cache_dir)) {
+  dir.create(cache_dir)
+}
+
+```
+
+# Risk of death, increased discharge
+
+```{r}
+
+m1<-with(d,coxph(S<-Surv(t0,t1,outcome=='Death')~hcq+age+sex+strata(hospital_id)+comorb_sum))
+m0<-with(d,coxph(S<-Surv(t0,t1,outcome=='Death')~    age+sex+strata(hospital_id)+comorb_sum))
+
+mt1<-with(d,coxph(S<-Surv(t0,t1,outcome=='Discharged')~hcq+age+sex+strata(hospital_id)+comorb_sum))
+mt0<-with(d,coxph(S<-Surv(t0,t1,outcome=='Discharged')~    age+sex+strata(hospital_id)+comorb_sum))
+
+hypothesis_res_list[["competing_hcq_comorbidities_sum"]] <-
+  rbind(
+  frequentist_hypothesis_res_from_coxph1(hypotheses$hcq_reduces_death, 
+                                         point_estimate = coef(m1)[1],
+                                         adjusted = "age, sex, comorbidities (sum)", 
+                                         test_stat = anova(m1,m0,test='Chisq')[2,2],
+                                         df = anova(m1,m0,test='Chisq')[2,3],
+                                         p = anova(m1,m0,test='Chisq')[2,4],
+                                         ci_low = confint(m1)[1,1],
+                                         ci_high = confint(m1)[1,2]),
+  frequentist_hypothesis_res_from_coxph1(hypotheses$hcq_increases_discharged, 
+                                         point_estimate = coef(mt1)[1],
+                                         adjusted = "age, sex, comorbidities (sum)", 
+                                         test_stat = anova(mt1,mt0,test='Chisq')[2,2],
+                                         df = anova(mt1,mt0,test='Chisq')[2,3],
+                                         p = anova(mt1,mt0,test='Chisq')[2,4],
+                                         ci_low = confint(mt1)[1,1],
+                                         ci_high = confint(mt1)[1,2])
+  )
+hypothesis_res_list[["competing_hcq_comorbidities_sum"]]
+
+```
+
+
+
+
+```{r}
+hypothesis_res_all <- do.call(rbind, hypothesis_res_list)
+write_csv(hypothesis_res_all, path = here::here("manuscript", "/single_outcome_coxph_res.csv"))
+```
