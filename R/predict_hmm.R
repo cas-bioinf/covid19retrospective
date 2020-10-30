@@ -20,24 +20,42 @@ posterior_epred_rect <- function(fit, nsamples = NULL, newdata = NULL) {
     nsamples <- dim(epred_mu)[1]
   }
 
-  N_states_hidden <- data_hmm$standata$N_states_hidden
-
   result_rect <- array(NA_integer_, c(max(pred_rawdata$serie_data$.time), max(as.integer(pred_rawdata$serie_data$.serie)), nsamples))
-  for(s in unique(as.integer(pred_rawdata$serie_data$.serie))) {
 
-    result_rect[1, s, ] <- as.integer(pred_rawdata$initial_states[s])
+  max_times <- pred_rawdata$serie_data %>% group_by(.serie) %>% summarise(max_time = max(.time)) %>%
+    arrange(.serie) %>% pull(max_time)
 
-    max_time <- pred_rawdata$serie_data %>% filter(as.integer(.serie) == s) %>% pull(.time) %>% max()
+  posterior_epred_rect_simulate(
+    nsamples = nsampes,
+    initial_states = pred_rawdata$initial_states[s],
+    max_times = max_times,
+    transition_matrices = transition_matrices,
+    predictor_sets_rect = data_hmm$standata$predictor_sets_rect)
+}
+
+#' @return Array with dimensions time, serie, sample
+posterior_epred_rect_simulate <- function(nsamples, max_times, initial_states, transition_matrices, predictor_sets_rect) {
+
+  if(length(max_times) != length(initial_states)) {
+    stop("Incompatible lengths")
+  }
+  N_series <- length(initial_states)
+  result_rect <- array(NA_integer_, c(max(max_times), N_series, nsamples))
+  for(s in 1:N_series) {
+
+    result_rect[1, s, ] <- as.integer(initial_states[s])
+
 
     for(i in 1:nsamples) {
-      state <- pred_rawdata$initial_states[s]
-      for(t in 2:max_time) {
-        ps <- data_hmm$standata$predictor_sets_rect[s, t]
+      state <- initial_states[s]
+      for(t in 2:max_times[s]) {
+        ps <- predictor_sets_rect[s, t]
         if(ps == 0) {
           stop(paste0("Element with no predictor at serie ",s,", time ", t))
         }
         #cat(state, ":", ps, ",", i, ":", transition_matrices[state, , ps, i], "\n")
-        state <- sample.int(N_states_hidden, size = 1, prob = transition_matrices[state, , ps, i])
+        transition_probs <- transition_matrices[state, , ps, i]
+        state <- sample.int(length(transition_probs), size = 1, prob = transition_probs)
         if(is.na(state)) {
           stop("NA state")
         }
@@ -47,6 +65,32 @@ posterior_epred_rect <- function(fit, nsamples = NULL, newdata = NULL) {
   }
 
   result_rect
+
+}
+
+posterior_epred_state_prob <- function(nsamples, max_times, initial_states, transition_matrices, predictor_sets_rect) {
+  if(length(max_times) != length(initial_states)) {
+    stop("Incompatible lengths")
+  }
+  n_series <- length(initial_states)
+  n_time = max(max_times)
+  n_states <- dim(transition_matrices)[1]
+  n_predictor_sets <- dim(transition_matrices)[3]
+  if(nsamples != dim(transition_matrices)[4]) {
+    stop("nsamples doesn't match")
+  }
+
+  res_internal <- posterior_epred_state_prob_internal(n_samples = nsamples,
+                                      max_times = max_times,
+                                      initial_states = initial_states,
+                                      n_states = n_states,
+                                      n_time = n_time,
+                                      n_predictor_sets = n_predictor_sets,
+                                      transition_matrices = transition_matrices,
+                                      predictor_sets_rect = predictor_sets_rect)
+
+  dim(res_internal) <- c(n_states, n_time, nsamples, n_series);
+  res_internal
 }
 
 posterior_rect_to_long <- function(fit, posterior_rect, newdata = NULL) {
@@ -170,6 +214,8 @@ posterior_long_to_df <- function(data, prediction) {
 
 }
 
+#'
+#' @return An array of dimensions `N_states_hidden` x `N_states_hidden` x `N_predictor_sets` x `N_samples`
 compute_all_transition_matrices <- function(data_hmm, epred_mu) {
   nsamples <- dim(epred_mu)[1]
   epred_mu_exp <- exp(epred_mu)
