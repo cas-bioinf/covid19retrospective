@@ -1,6 +1,7 @@
 #'
 #' @return Array with dimensions time, serie, sample
-posterior_epred_rect <- function(fit, nsamples = NULL, newdata = NULL, method = posterior_epred_rect_simulate) {
+posterior_epred_rect <- function(fit, nsamples = NULL, newdata = NULL, method = posterior_epred_rect_simulate,
+                                 cl = NULL, cores = parallel::detectCores()) {
   validate_brmshmmfit(fit)
 
   brms:::contains_samples(fit$brmsfit)
@@ -17,7 +18,7 @@ posterior_epred_rect <- function(fit, nsamples = NULL, newdata = NULL, method = 
   if(any(is.na(epred_mu))) {
     stop("NAs in epred_mu")
   }
-  transition_matrices <- compute_all_transition_matrices(data_hmm, epred_mu)
+  transition_matrices <- compute_all_transition_matrices(data_hmm, epred_mu, cl = cl, cores = cores)
 
   if(is.null(nsamples)) {
     nsamples <- dim(epred_mu)[1]
@@ -218,14 +219,15 @@ posterior_long_to_df <- function(data, prediction) {
 
 #'
 #' @return An array of dimensions `N_states_hidden` x `N_states_hidden` x `N_predictor_sets` x `N_samples`
-compute_all_transition_matrices <- function(data_hmm, epred_mu) {
+compute_all_transition_matrices <- function(data_hmm, epred_mu, cl = NULL, cores = parallel::detectCores()) {
   start_time = proc.time()
   nsamples <- dim(epred_mu)[1]
   epred_mu_exp <- exp(epred_mu)
   standata <- data_hmm$standata
-  res <- array(NA_real_, c(standata$N_states_hidden, standata$N_states_hidden, standata$N_predictor_sets, nsamples))
-  for(i in 1:nsamples) {
-    for(ps in 1:standata$N_predictor_sets) {
+
+  compute_transition_matrices_ps <- function(ps, epred_mu_exp, standata) {
+    res <- array(NA_real_, c(standata$N_states_hidden, standata$N_states_hidden, nsamples))
+    for(i in 1:nsamples) {
       rate_matrix <- matrix(0, standata$N_states_hidden, standata$N_states_hidden)
 
       rate_values <- epred_mu_exp[i, standata$rate_predictors[ps,]]
@@ -235,9 +237,36 @@ compute_all_transition_matrices <- function(data_hmm, epred_mu) {
           rate_matrix[standata$rates_from[r],standata$rates_from[r]] - rate_values[r]
       }
 
-      res[,, ps, i] <-  expm::expm(rate_matrix)
+      res[,, i] <-  expm::expm(rate_matrix)
     }
+    res
   }
+
+  res <- array(NA_real_, c(standata$N_states_hidden, standata$N_states_hidden, standata$N_predictor_sets, nsamples))
+  if(cores == 1) {
+    for(ps in 1:standata$N_predictor_sets) {
+      res[,,ps,] <- compute_transition_matrices_ps(ps, epred_mu_exp, standata)
+    }
+  } else {
+    #TODO tryCatch + stopCluster
+    if(is.null(cl)) {
+      cl <- parallel::makePSOCKcluster(min(cores, standata$N_predictor_sets))
+      do_stop_cluster <- TRUE
+    } else {
+      do_stop_cluster <- FALSE
+    }
+    res_list <- parallel::parLapply(cl, 1:standata$N_predictor_sets, fun = compute_transition_matrices_ps,
+                                      epred_mu_exp = epred_mu_exp, standata = standata)
+
+    if(do_stop_cluster) {
+      parallel::stopCluster(cl)
+    }
+    for(ps in 1:standata$N_predictor_sets) {
+      res[,,ps,] <- res_list[[ps]]
+    }
+
+  }
+
   time_taken <- proc.time() - start_time
   message(paste0("Transition matrices computed in ", time_taken["elapsed"], "s."))
   res

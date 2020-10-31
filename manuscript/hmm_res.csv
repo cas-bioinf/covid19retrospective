@@ -1,15 +1,41 @@
 hypothesis,model,adjusted,estimand,widest_CI_excl_reference,point_estimate,ci_low,ci_high,model_check,data_version
-hcq_reduces_death,HMM,supportive,log(HR),0.996,-1.8244439100586278,-3.4089907478637524,-0.5123462263875953,OK,0a4c409324baf148f74ea5a7869cb315
-hcq_increases_discharged,HMM,supportive,log(HR),0.7935,0.230243299542866,-0.12268604960315697,0.5906728339678983,OK,0a4c409324baf148f74ea5a7869cb315
-hcq_reduces_death,HMM,"age, sex, supportive",log(HR),0.992,-1.8018443751751925,-3.4531641704503584,-0.4246627658248961,OK,0a4c409324baf148f74ea5a7869cb315
-hcq_increases_discharged,HMM,"age, sex, supportive",log(HR),0.5435,0.13979831857225242,-0.23251582833399015,0.521870280665889,OK,0a4c409324baf148f74ea5a7869cb315
-hcq_reduces_death,HMM,"age, sex, supportive, hospital",log(HR),0.9895,-1.6916354192909833,-3.458115705033243,-0.30584591834292735,OK,0a4c409324baf148f74ea5a7869cb315
-hcq_increases_discharged,HMM,"age, sex, supportive, hospital",log(HR),0.5885,0.15921926776542986,-0.22123438560770947,0.5313594230222605,OK,0a4c409324baf148f74ea5a7869cb315
-hcq_reduces_death,HMM,"age, sex, supportive, hospital, az",log(HR),0.9910000000000001,-2.028200428558908,-3.787003277304257,-0.4961847363164206,OK,0a4c409324baf148f74ea5a7869cb315
-hcq_increases_discharged,HMM,"age, sex, supportive, hospital, az",log(HR),0.249,0.07530345880514351,-0.4060362904792058,0.5639055729000709,OK,0a4c409324baf148f74ea5a7869cb315
-az_reduces_death,HMM,"age, sex, supportive, hospital, hcq",log(HR),0.8775,1.3247151556413044,-0.34341477989978864,2.9764396385865224,OK,0a4c409324baf148f74ea5a7869cb315
-az_increases_discharged,HMM,"age, sex, supportive, hospital, hcq",log(HR),0.40149999999999997,0.14002652301428264,-0.3578845698700496,0.647067739523209,OK,0a4c409324baf148f74ea5a7869cb315
-hcq_reduces_death,HMM,"age, sex, supportive, hospital, comorbidities_sum",log(HR),0.9615,-1.5775156482114667,-3.35700375115622,-0.09705133524089421,OK,0a4c409324baf148f74ea5a7869cb315
-hcq_increases_discharged,HMM,"age, sex, supportive, hospital, comorbidities_sum",log(HR),0.5489999999999999,0.15011373387688728,-0.23604901257068056,0.5300179343408403,OK,0a4c409324baf148f74ea5a7869cb315
-d_dimer_increases_death,HMM,"age, sex, hospital",log(HR),0.956,-0.2879460655165872,-0.6814200167930802,-0.0084166202916663,OK,0a4c409324baf148f74ea5a7869cb315
-IL_6_increases_death,HMM,"age, sex, hospital",log(HR),0.9095,-1.7917207837905476,-5.190193014091611,0.13665170314608663,OK,0a4c409324baf148f74ea5a7869cb315
+hcq_reduces_death,HMMsimple_group,"all treatments, supportive",log(OR),0.9993333333333334,-1.0546709075976322,-1.709068810855953,-0.40107132575056187,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,HMMsimple_group,"all treatments, supportive",log(OR),0.3913333333333333,-0.12339784280912028,-0.6630890957428552,0.3558736672375175,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,HMMsimple_group,"all treatments, supportive",log(OR),0.3653333333333333,-0.32718564491574736,-2.31011300560006,0.5062854001405267,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,HMMsimple_group,"all treatments, supportive, age, sex",log(OR),0.9983333333333333,-0.9241011153173618,-1.576822137403982,-0.3028004347433869,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,HMMsimple_group,"all treatments, supportive, age, sex",log(OR),0.015833333333333366,-0.0042019142607098514,-0.43020758683492716,0.40343962423687074,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,HMMsimple_group,"all treatments, supportive, age, sex",log(OR),0.3558333333333332,-0.2991303791199309,-2.1612410876955375,0.5262443471849212,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,HMMsimple_group,"all treatments, supportive, age, sex, hospital",log(OR),0.9966666666666666,-0.7070030869249696,-1.3801007017323241,-0.16291079676579998,OK,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,HMMsimple_group,"all treatments, supportive, age, sex, hospital",log(OR),0.24083333333333334,0.07415317164222332,-0.27616320790387733,0.5183844456336979,OK,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,HMMsimple_group,"all treatments, supportive, age, sex, hospital",log(OR),0.6966666666666668,-0.4933820701212884,-2.3992595967760195,0.2039127884220693,OK,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,HMMsimple_group,"all treatments, supportive, age, sex, hospital, comorbidities",log(OR),0.9850000000000001,-0.6628793837198584,-1.3048540198183658,-0.12126403157730828,OK,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,HMMsimple_group,"all treatments, supportive, age, sex, hospital, comorbidities",log(OR),0.2416666666666667,0.0629015119845508,-0.27781633804424316,0.49720186662540816,OK,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,HMMsimple_group,"all treatments, supportive, age, sex, hospital, comorbidities",log(OR),0.6708333333333334,-0.488154011092115,-2.272757485054942,0.2587994017521762,OK,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,HMMsimple_rate,"all treatments, supportive",log(OR),0.9450000000000001,-0.5558565923174734,-1.2171283614217088,0.001819421908575715,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,HMMsimple_rate,"all treatments, supportive",log(OR),0.6054999999999999,-0.17251806269995912,-0.6777417997281859,0.16856692101974735,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,HMMsimple_rate,"all treatments, supportive",log(OR),0.24750000000000005,-0.14742053508251193,-1.1768012438596507,0.5071654884730384,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,HMMsimple_rate,"all treatments, supportive, age, sex",log(OR),0.984,-0.5777985513954019,-1.1852859456894085,-0.055168841110472426,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,HMMsimple_rate,"all treatments, supportive, age, sex",log(OR),0.276,-0.05725551705418682,-0.426184322042229,0.23094037713472598,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,HMMsimple_rate,"all treatments, supportive, age, sex",log(OR),0.18999999999999995,-0.127375457446555,-1.2271531132917266,0.5102429801889983,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,HMMsimple_rate,"all treatments, supportive, age, sex, hospital",log(OR),0.978,-0.49631561160738774,-1.0643718712170365,-0.03927375604367896,OK,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,HMMsimple_rate,"all treatments, supportive, age, sex, hospital",log(OR),0.038000000000000034,0.0012102678489268226,-0.2647516379854793,0.28394065830518855,OK,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,HMMsimple_rate,"all treatments, supportive, age, sex, hospital",log(OR),0.42999999999999994,-0.18715658357161213,-0.9960600154766429,0.28279325539943345,OK,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,HMMsimple_rate,"all treatments, supportive, age, sex, hospital, comorbidities",log(OR),0.96,-0.46102386555459296,-1.0545742453167224,-0.00662363889747732,OK,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,HMMsimple_rate,"all treatments, supportive, age, sex, hospital, comorbidities",log(OR),0.0040000000000000036,0.0014645496916962904,-0.2780390786154413,0.28979520749569065,OK,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,HMMsimple_rate,"all treatments, supportive, age, sex, hospital, comorbidities",log(OR),0.43133333333333335,-0.2002851179905916,-1.101446656060735,0.27842543731034947,OK,9f64434d7d5780d6e5d28902bbd66efc
+d_dimer_increases_death,HMM,"supportive, hospital",log(HR),0.8766666666666667,-0.157478271134,-0.4346534,0.02636271,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+IL_6_increases_death,HMM,"supportive, hospital",log(HR),0.9233333333333333,-0.8074575914454334,-3.30657275,0.021600240000000034,OK,9f64434d7d5780d6e5d28902bbd66efc
+d_dimer_increases_death,HMM,"supportive, age, sex, hospital",log(HR),0.8853333333333333,-0.1568985102649,-0.42593059999999994,0.023503995000000038,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+IL_6_increases_death,HMM,"supportive, age, sex, hospital",log(HR),0.9086666666666667,-0.742314531633,-3.0125129999999998,0.0322166400000001,OK,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,HMMcomplex_group,"all treatments, supportive",log(OR),0.966,-0.6988936367368278,-1.3923203278908516,-0.025068480104338833,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,HMMcomplex_group,"all treatments, supportive",log(OR),0.6659999999999999,-0.21249420983177417,-0.7397527624092964,0.20609791042752523,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,HMMcomplex_group,"all treatments, supportive",log(OR),0.7413333333333334,-1.5358723631298383,-5.892542562548375,0.6417898379073452,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,HMMcomplex_group,"all treatments, supportive, age, sex",log(OR),0.9858333333333333,-0.6745437403098129,-1.2726694638117935,-0.12692806571899093,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,HMMcomplex_group,"all treatments, supportive, age, sex",log(OR),0.24916666666666676,-0.06242818455000231,-0.49345107613920147,0.3432355677047321,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,HMMcomplex_group,"all treatments, supportive, age, sex",log(OR),0.6766666666666667,-1.3710567979258477,-5.921905581930884,0.6931870052385674,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,HMMcomplex_group,"all treatments, supportive, age, sex, hospital",log(OR),0.8816666666666666,-0.36444873898972047,-0.9444101483553694,0.03585454828435265,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,HMMcomplex_group,"all treatments, supportive, age, sex, hospital",log(OR),0.09750000000000003,0.026667233643957865,-0.31281801767678374,0.393972998760583,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,HMMcomplex_group,"all treatments, supportive, age, sex, hospital",log(OR),0.6083333333333334,-0.5632240438000898,-2.7845671992602554,0.3736690953395216,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,HMMcomplex_group,"all treatments, supportive, age, sex, hospital, comorbidities",log(OR),0.8083333333333333,-0.3016383429858913,-0.9042629948020211,0.0646131631103738,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,HMMcomplex_group,"all treatments, supportive, age, sex, hospital, comorbidities",log(OR),0.08833333333333337,0.03246519588960323,-0.2822563502348229,0.434052988392363,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,HMMcomplex_group,"all treatments, supportive, age, sex, hospital, comorbidities",log(OR),0.6241666666666668,-0.6102559799351368,-3.1573894053692966,0.3466796762168498,Suspicious,9f64434d7d5780d6e5d28902bbd66efc

@@ -4,16 +4,16 @@ output:
   #rticles::arxiv_article
   #pdf_document
   # bookdown::pdf_document2:
-   #    toc: false
+  #    toc: false
   bookdown::word_document2: 
     toc: false
     keep_md: true
     reference_docx: "output_template.docx"
-abstract: "We collected a multi-centric retrospective dataset of patients who were admitted to N hospitals in Czech Republic and tested positive for SARS-CoV-2. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. Patients in the dataset were treated with Hydroxychloroquine (N = 108), Azithromycin (N = 72), Favipiravir (N = 9), convalescent plasma (N = 7), Dexamethasone (N = 4) and Remdesivir (N = 3), often in combination. To ~~assess~~ *__explore__* association between treatments, markers and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom. Additionally we performed external validation of several proposed prognostic models for Covid-19 severity."
+abstract: "We collected a multi-centric retrospective dataset of patients who were admitted to N hospitals in Czech Republic and tested positive for SARS-CoV-2. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. Patients in the dataset were treated with Hydroxychloroquine (N = 108), Azithromycin (N = 72), Favipiravir (N = 9), convalescent plasma (N = 7), Dexamethasone (N = 4) and Remdesivir (N = 3), often in combination. To explore association between treatments, markers and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom. Additionally we performed external validation of several proposed prognostic models for Covid-19 severity."
 bibliography: Covid19.json
 date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
 author: "`r { source(here::here('manuscript', 'authors.R')); get_authors_string() }`"
-
+---
 
 ```{r setup, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
 knitr::opts_chunk$set(echo = FALSE, fig.width = 8)
@@ -21,7 +21,7 @@ knitr::opts_chunk$set(echo = FALSE, fig.width = 8)
 devtools::load_all()
 library(tidyverse)
 library(patchwork)
-library(tsiMisc)
+library(tsiMisc) # devtools::install_github("tsieger/tsiMisc")
 theme_set(cowplot::theme_cowplot())
 data <- read_data_for_analysis()
 wide <- data$marker_data_wide
