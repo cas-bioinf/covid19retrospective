@@ -31,7 +31,7 @@ if(!dir.exists(cache_dir)) {
 }
 
 do_pp_checks <- FALSE
-hmm_hypothesis_res_list <- list()
+hhmm_hypothesis_res_list <- list()
 
 #Temporary hack
 registerS3method("stan_log_lik", class = "rate_hmm", method = stan_log_lik.rate_hmm, envir = asNamespace("brms"))
@@ -53,13 +53,21 @@ transform_serie_data <- function(raw_serie_data) {
 }
 
 serie_data <- wide %>%
-  inner_join(data$patient_data, by = c("hospital_id", "patient_id")) %>% 
+  inner_join(data$patient_data, by = c("hospital_id", "patient_id"), suffix = c("_admission", "")) %>% 
   mutate(.time = day, .serie = patient_id, .observed = breathing_s) %>%
   transform_serie_data()
 
 
 serie_data_28 <- wide %>%
-  right_join(crossing(data$patient_data, day = 0:28), by = c("hospital_id", "patient_id", "day")) %>%
+  right_join(crossing(data$patient_data, day = 0:28), by = c("hospital_id", "patient_id", "day"),  suffix = c("_admission", "")) %>%
+  # group_by(patient_id) %>%
+  # mutate(
+  #   across(
+  #     c(starts_with("took_"), all_of("best_supportive_care")),
+  #     ~ if_else(is.na(.x) & day > max(day[!is.na(.x)]), .x[which.max(day[!is.na(.x)])], .x)
+  #     ),
+  # ) %>%
+  # ungroup() %>%
   mutate(.time = day, .serie = patient_id, .observed = breathing_s) %>%
   transform_serie_data()
 
@@ -71,8 +79,24 @@ serie_data_28 <- serie_data_28 %>%
          .observed = if_else(last_state %in% c("Discharged", "Death") & is.na(.observed) & day > last_day,
                              last_state,
                              .observed)) %>%
-  mutate(across(tidyselect::starts_with("took_"), ~ if_else(is.na(.x), as.integer(any(.x != 0, na.rm = TRUE)), .x))) %>%
+  mutate(across(c(tidyselect::starts_with("took_"), all_of("best_supportive_care")), ~ if_else(is.na(.x), as.integer(any(.x != 0, na.rm = TRUE)), .x))) %>%
   ungroup()
+
+
+# Check succesful extension
+mismatches <- serie_data_28 %>% inner_join(serie_data, by = c("patient_id", "day")) %>%
+  select(-starts_with("."), -last_day,  -last_state) %>%
+  mutate(across(everything(), as.character)) %>%
+  pivot_longer(!any_of(c("patient_id", "day")), names_to = c("col", "source"), names_sep = "\\.") %>%
+  group_by(patient_id, day, col) %>%
+  summarise(n_vals = length(unique(value)), .groups = "drop") %>%
+  filter(n_vals > 1)
+
+if(nrow(mismatches) > 0) {
+  print(mismatches)
+  stop("Mismatches in serie_data_28")
+}
+
 
 base_observed_state_data <- tibble(id = factor(disease_s_levels, levels = disease_s_levels), is_noisy = FALSE)
 
@@ -172,52 +196,65 @@ summary(trt_group_m1_fit$brmsfit)
 
 
 ```{r}
-# counterfactual_took_hcq <- serie_data_28 %>% mutate(took_hcq = TRUE)
-# counterfactual_no_hcq <- counterfactual_base %>% mutate(took_hcq = FALSE)
-# 
-# 
-# 
-# trt_group_m1_counterfactual_took_hcq <- trt_group_m1
-# trt_group_m1_counterfactual_took_hcq$serie_data = counterfactual_took_hcq
-# 
-# trt_group_m1_counterfactual_took_hcq_epred_rect <- posterior_epred_rect(trt_group_m1_fit, newdata = trt_group_m1_counterfactual_took_hcq)
-# 
-# trt_group_m1_counterfactual_no_hcq <- trt_group_m1
-# trt_group_m1_counterfactual_no_hcq$serie_data = counterfactual_no_hcq
-# 
-# trt_group_m1_counterfactual_no_hcq_epred_rect <- posterior_epred_rect(trt_group_m1_fit, newdata = trt_group_m1_counterfactual_no_hcq)
+compute_counterfactual_mortality_log_OR <- function(hmm_fit, numerator_serie_data, denominator_serie_data, day = 28) {
+  if(nrow(numerator_serie_data) != nrow(denominator_serie_data)) {
+    stop("Groups to compare must have equal number of rows")
+  }
+  
+  numerator_data <- hmm_fit$data
+  numerator_data$serie_data = numerator_serie_data
+  
+  numerator_state_probs <- posterior_epred_rect(hmm_fit, newdata = numerator_data, method = posterior_epred_state_prob)
+  
+  denominator_data <- hmm_fit$data
+  denominator_data$serie_data = denominator_serie_data
+  
+  denominator_state_probs <- posterior_epred_rect(hmm_fit, newdata = denominator_data, method = posterior_epred_state_prob)  
+  
+  mortality_state <- which(hmm_fit$data$hidden_state_data$id == "Death")
+  samples_probs_numerator <- 
+    rowMeans(numerator_state_probs[mortality_state, day + 1, ,])
+  samples_probs_denominator <- 
+    rowMeans(denominator_state_probs[mortality_state, day + 1, ,])
+  
+  log_odds_numerator <- log(samples_probs_numerator) - log1p(-samples_probs_numerator)
+  log_odds_denominator <- log(samples_probs_denominator) - log1p(-samples_probs_denominator)
+  
+  log_odds_numerator - log_odds_denominator
+}
 
+evaluate_treatment_hypothesis <- function(fit, hypothesis, treatment_column, model_subgroup, adjusted, model_check) {
+  counterfactual_took <- serie_data_28 %>% mutate({{ treatment_column }} := 1)
+  counterfactual_no <- serie_data_28 %>% mutate({{treatment_column }} := 0)
+
+  log_OR_samples <- compute_counterfactual_mortality_log_OR(fit, counterfactual_took, counterfactual_no, day = 28)
+  
+  bayesian_hypothesis_res_from_draws(
+    draws = log_OR_samples,
+    model = paste0("HMM", model_subgroup),
+    estimand = "log(OR)",
+    hypothesis = hypothesis,
+    adjusted = adjusted,
+    model_check = model_check
+  )
+}
+
+evaluate_all_treatment_hypotheses <- function(fit, model_subgroup, adjusted, model_check) {
+  rbind(
+    evaluate_treatment_hypothesis(fit, hypotheses$hcq_reduces_death, took_hcq, model_subgroup = model_subgroup, adjusted = adjusted, model_check = model_check),
+    evaluate_treatment_hypothesis(fit, hypotheses$az_reduces_death, took_az, model_subgroup = model_subgroup, adjusted = adjusted, model_check = model_check),
+    evaluate_treatment_hypothesis(fit, hypotheses$favipiravir_reduces_death, took_favipiravir, model_subgroup = model_subgroup, adjusted = adjusted, model_check = model_check)
+  )
+}
 
 ```
 
 ```{r}
-# draws <- tidybayes::tidy_draws(trt_group_m1_fit$brmsfit)
-# hmm_hypothesis_res_list[["trt_group_m1_death"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_reduces_death,
-#     adjusted = "supportive"
-#   )
-# 
-# hmm_hypothesis_res_list[["trt_group_m1_discharged"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_increases_discharged,
-#     adjusted = "supportive"
-#   )
+hmm_hypothesis_res_list[["trt_group_m1"]] <- evaluate_all_treatment_hypotheses(trt_group_m1_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive", model_check = "Suspicious")
 ```
 
 
 ```{r}
-# fit <- trt_group_m1_fit
-# epred_rect <- posterior_epred_rect(fit)
-# predicted_rect <- posterior_epred_to_predicted(fit, epred_rect)
-# predicted <- posterior_rect_to_long(fit, predicted_rect)
-
 if(do_pp_checks) {
   do_common_pp_checks(trt_group_m1_fit)
 }
@@ -250,24 +287,7 @@ summary(trt_group_m2_fit$brmsfit)
 
 
 ```{r}
-# draws <- tidybayes::tidy_draws(trt_group_m2_fit$brmsfit)
-# hmm_hypothesis_res_list[["trt_group_m2_death"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_reduces_death,
-#     adjusted = "age, sex, supportive"
-#   )
-# 
-# hmm_hypothesis_res_list[["trt_group_m2_discharged"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_increases_discharged,
-#     adjusted = "age, sex, supportive"
-#   )
+hhmm_hypothesis_res_list[["trt_group_m2"]] <- evaluate_all_treatment_hypotheses(trt_group_m2_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex", model_check = "Suspicious")
 ```
 
 ```{r}
@@ -292,24 +312,7 @@ summary(trt_group_m3_fit$brmsfit)
 ```
 
 ```{r}
-# draws <- tidybayes::tidy_draws(trt_group_m3_fit$brmsfit)
-# hmm_hypothesis_res_list[["trt_group_m3_death"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_reduces_death,
-#     adjusted = "age, sex, supportive, hospital"
-#   )
-# 
-# hmm_hypothesis_res_list[["trt_group_m3_discharged"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_increases_discharged,
-#     adjusted = "age, sex, supportive, hospital"
-#   )
+hhmm_hypothesis_res_list[["trt_group_m3"]] <-  evaluate_all_treatment_hypotheses(trt_group_m3_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK")
 ```
 
 
@@ -337,24 +340,7 @@ summary(trt_group_m4_fit$brmsfit)
 ```
 
 ```{r}
-# draws <- tidybayes::tidy_draws(trt_group_m4_fit$brmsfit)
-# hmm_hypothesis_res_list[["trt_group_m4_death"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_reduces_death,
-#     adjusted = "age, sex, supportive, hospital, comorbidities_sum"
-#   )
-# 
-# hmm_hypothesis_res_list[["trt_group_m4_discharged"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_increases_discharged,
-#     adjusted = "age, sex, supportive, hospital, comorbidities_sum"
-#   )
+hhmm_hypothesis_res_list[["trt_group_m4"]] <-  evaluate_all_treatment_hypotheses(trt_group_m4_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "OK")
 ```
 
 
@@ -393,56 +379,7 @@ summary(trt_rate_m1_fit$brmsfit)
 
 
 ```{r}
-
-# counterfactual_max_days <- 90
-# counterfactual_base <-  crossing(day = 0:counterfactual_max_days, patient_id = unique(serie_data$patient_id)) %>%
-#   inner_join(data$patient_data, by = c("patient_id")) %>% 
-#   left_join(wide, by = c("hospital_id", "patient_id", "day")) %>%
-#   mutate(.time = day, .serie = patient_id, .observed = breathing) %>%
-#   mutate(.time = .time +1) %>% 
-#   filter(.time >= 1) %>%
-#   group_by(.serie) %>%
-#   mutate(best_supportive_care = !is.na(best_supportive_care_from) & day >= best_supportive_care_from) %>%
-#   ungroup()
-# 
-# 
-# counterfactual_took_hcq <- counterfactual_base %>% mutate(took_hcq = TRUE)
-# counterfactual_no_hcq <- counterfactual_base %>% mutate(took_hcq = FALSE)
-# 
-# 
-# 
-# trt_rate_m1_counterfactual_took_hcq <- trt_rate_m1
-# trt_rate_m1_counterfactual_took_hcq$serie_data = counterfactual_took_hcq
-# 
-# trt_rate_m1_counterfactual_took_hcq_epred_rect <- posterior_epred_rect(trt_rate_m1_fit, newdata = trt_rate_m1_counterfactual_took_hcq)
-# 
-# trt_rate_m1_counterfactual_no_hcq <- trt_rate_m1
-# trt_rate_m1_counterfactual_no_hcq$serie_data = counterfactual_no_hcq
-# 
-# trt_rate_m1_counterfactual_no_hcq_epred_rect <- posterior_epred_rect(trt_rate_m1_fit, newdata = trt_rate_m1_counterfactual_no_hcq)
-
-
-```
-
-```{r}
-# draws <- tidybayes::tidy_draws(trt_rate_m1_fit$brmsfit)
-# hmm_hypothesis_res_list[["trt_rate_m1_death"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_reduces_death,
-#     adjusted = "supportive"
-#   )
-# 
-# hmm_hypothesis_res_list[["trt_rate_m1_discharged"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_increases_discharged,
-#     adjusted = "supportive"
-#   )
+hhmm_hypothesis_res_list[["trt_rate_m1"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m1_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive", model_check = "Suspicious")
 ```
 
 
@@ -468,24 +405,7 @@ summary(trt_rate_m2_fit$brmsfit)
 ```
 
 ```{r}
-# draws <- tidybayes::tidy_draws(trt_rate_m2_fit$brmsfit)
-# hmm_hypothesis_res_list[["trt_rate_m2_death"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_reduces_death,
-#     adjusted = "age, sex, supportive"
-#   )
-# 
-# hmm_hypothesis_res_list[["trt_rate_m2_discharged"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_increases_discharged,
-#     adjusted = "age, sex, supportive"
-#   )
+hhmm_hypothesis_res_list[["trt_rate_m2"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m2_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex", model_check = "Suspicious")
 ```
 
 ```{r}
@@ -509,24 +429,7 @@ summary(trt_rate_m3_fit$brmsfit)
 ```
 
 ```{r}
-# draws <- tidybayes::tidy_draws(trt_rate_m3_fit$brmsfit)
-# hmm_hypothesis_res_list[["trt_rate_m3_death"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_reduces_death,
-#     adjusted = "age, sex, supportive, hospital"
-#   )
-# 
-# hmm_hypothesis_res_list[["trt_rate_m3_discharged"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_increases_discharged,
-#     adjusted = "age, sex, supportive, hospital"
-#   )
+hhmm_hypothesis_res_list[["trt_rate_m3"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m3_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK")
 ```
 
 
@@ -553,24 +456,7 @@ summary(trt_rate_m4_fit$brmsfit)
 ```
 
 ```{r}
-# draws <- tidybayes::tidy_draws(trt_rate_m4_fit$brmsfit)
-# hmm_hypothesis_res_list[["trt_rate_m4_death"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_reduces_death,
-#     adjusted = "age, sex, supportive, hospital, comorbidities_sum"
-#   )
-# 
-# hmm_hypothesis_res_list[["trt_rate_m4_discharged"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_increases_discharged,
-#     adjusted = "age, sex, supportive, hospital, comorbidities_sum"
-#   )
+hhmm_hypothesis_res_list[["trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(trt_rate_m4_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "OK")
 ```
 
 
@@ -610,16 +496,15 @@ summary(d_dimer_m1_fit$brmsfit)
 ```
 
 ```{r}
-# draws <- tidybayes::tidy_draws(trt_m6_fit$brmsfit)
-# hmm_hypothesis_res_list[["trt_m6_d_dimer_death"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_log_peak_d_dimer,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$d_dimer_increases_death,
-#     adjusted = "age, sex, hospital"
-#   )
-# 
+draws <- tidybayes::tidy_draws(d_dimer_m1_fit$brmsfit)
+hhmm_hypothesis_res_list[["d_dimer_m1_death"]] <-
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_log_peak_d_dimer,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$d_dimer_increases_death,
+    adjusted = "supportive, age, sex, hospital"
+  )
 
 ```
 
@@ -643,6 +528,10 @@ d_dimer_m2_fit <- brmhmm(d_dimer_m2, cache_file = paste0(cache_dir,"/d_dimer_m2.
 
 summary(d_dimer_m2_fit$brmsfit)
 
+```
+
+```{r}
+stop("Calculate hypo")
 ```
 
 
@@ -674,15 +563,17 @@ summary(IL_6_m1_fit$brmsfit)
 
 
 ```{r}
-# draws <- tidybayes::tidy_draws(trt_m7_fit$brmsfit)
-# hmm_hypothesis_res_list[["trt_m7_IL_6_death"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_log_peak_IL_6,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$IL_6_increases_death,
-#     adjusted = "age, sex, hospital"
-#   )
+stop("Calculate hypo")
+
+draws <- tidybayes::tidy_draws(trt_m7_fit$brmsfit)
+hhmm_hypothesis_res_list[["trt_m7_IL_6_death"]] <-
+  bayesian_hypothesis_res_from_draws(
+    draws = draws$b_log_peak_IL_6,
+    model = "HMM",
+    estimand = "log(HR)",
+    hypothesis = hypotheses$IL_6_increases_death,
+    adjusted = "age, sex, hospital"
+  )
 
 
 ```
@@ -708,6 +599,12 @@ IL_6_m2_fit <- brmhmm(IL_6_m2, cache_file = paste0(cache_dir,"/IL_6_m2.rds"), in
 
 summary(IL_6_m2_fit$brmsfit)
 ```
+
+```{r}
+stop("Calculate hypo")
+
+```
+
 
 # Complex: Treatments - effects on rate groups
 
@@ -757,6 +654,12 @@ summary(c_trt_m1_fit$brmsfit)
 
 
 ```
+
+```{r}
+hhmm_hypothesis_res_list[["c_trt_rate_m1"]] <- evaluate_all_treatment_hypotheses(c_trt_m1_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive", model_check = "Suspicious")
+```
+
+
 ```{r}
 if(do_pp_checks) {
   do_common_pp_checks(c_trt_m1_fit)
@@ -780,6 +683,12 @@ summary(c_trt_m2_fit$brmsfit)
 
 
 ```{r}
+hhmm_hypothesis_res_list[["c_trt_rate_m2"]] <- evaluate_all_treatment_hypotheses(c_trt_m2_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex", model_check = "Suspicious")
+
+```
+
+
+```{r}
 if(do_pp_checks) {
   do_common_pp_checks(c_trt_m2_fit)
 }
@@ -797,6 +706,12 @@ c_trt_m3_fit <- brmhmm(c_trt_m3, cache_file = paste0(cache_dir,"/c_trt_m3.rds"),
 
 summary(c_trt_m3_fit$brmsfit)
 ```
+
+```{r}
+hhmm_hypothesis_res_list[["c_trt_rate_m3"]] <- evaluate_all_treatment_hypotheses(c_trt_m3_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "Suspicious")
+
+```
+
 
 ```{r}
 if(do_pp_checks) {
@@ -819,24 +734,8 @@ summary(c_trt_m4_fit$brmsfit)
 ```
 
 ```{r}
-# draws <- tidybayes::tidy_draws(c_trt_m4_fit$brmsfit)
-# hmm_hypothesis_res_list[["c_trt_m4_death"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_reduces_death,
-#     adjusted = "age, sex, supportive, hospital, comorbidities_sum"
-#   )
-# 
-# hmm_hypothesis_res_list[["c_trt_m4_discharged"]] <- 
-#   bayesian_hypothesis_res_from_draws(
-#     draws = draws$b_took_hcqTRUE + draws$`b_rate_groupimprove_one:took_hcqTRUE`,
-#     model = "HMM",
-#     estimand = "log(HR)",
-#     hypothesis = hypotheses$hcq_increases_discharged,
-#     adjusted = "age, sex, supportive, hospital, comorbidities_sum"
-#   )
+hhmm_hypothesis_res_list[["c_trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(c_trt_m4_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "Suspicious")
+
 ```
 
 
@@ -851,7 +750,7 @@ if(do_pp_checks) {
 
 
 ```{r}
-hmm_hypothesis_res_all <- do.call(rbind, hmm_hypothesis_res_list)
+hmm_hypothesis_res_all <- do.call(rbind, hhmm_hypothesis_res_list)
 write_csv(hmm_hypothesis_res_all, path = here::here("manuscript", "hmm_res.csv"))
 ```
 

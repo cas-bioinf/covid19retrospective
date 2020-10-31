@@ -1,6 +1,6 @@
 #'
 #' @return Array with dimensions time, serie, sample
-posterior_epred_rect <- function(fit, nsamples = NULL, newdata = NULL) {
+posterior_epred_rect <- function(fit, nsamples = NULL, newdata = NULL, method = posterior_epred_rect_simulate) {
   validate_brmshmmfit(fit)
 
   brms:::contains_samples(fit$brmsfit)
@@ -14,20 +14,21 @@ posterior_epred_rect <- function(fit, nsamples = NULL, newdata = NULL) {
   data_hmm <- make_data_hmm(pred_rawdata)
 
   epred_mu <- brms::posterior_epred(fit$brmsfit, newdata = data_hmm$brmsdata, nsamples = nsamples)
+  if(any(is.na(epred_mu))) {
+    stop("NAs in epred_mu")
+  }
   transition_matrices <- compute_all_transition_matrices(data_hmm, epred_mu)
 
   if(is.null(nsamples)) {
     nsamples <- dim(epred_mu)[1]
   }
 
-  result_rect <- array(NA_integer_, c(max(pred_rawdata$serie_data$.time), max(as.integer(pred_rawdata$serie_data$.serie)), nsamples))
-
   max_times <- pred_rawdata$serie_data %>% group_by(.serie) %>% summarise(max_time = max(.time)) %>%
     arrange(.serie) %>% pull(max_time)
 
-  posterior_epred_rect_simulate(
-    nsamples = nsampes,
-    initial_states = pred_rawdata$initial_states[s],
+  method(
+    nsamples = nsamples,
+    initial_states = pred_rawdata$initial_states,
     max_times = max_times,
     transition_matrices = transition_matrices,
     predictor_sets_rect = data_hmm$standata$predictor_sets_rect)
@@ -68,6 +69,7 @@ posterior_epred_rect_simulate <- function(nsamples, max_times, initial_states, t
 
 }
 
+#' @return array with dimensions n_states, n_time, n_samples, n_series
 posterior_epred_state_prob <- function(nsamples, max_times, initial_states, transition_matrices, predictor_sets_rect) {
   if(length(max_times) != length(initial_states)) {
     stop("Incompatible lengths")
