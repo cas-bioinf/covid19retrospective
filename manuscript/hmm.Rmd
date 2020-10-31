@@ -31,7 +31,7 @@ if(!dir.exists(cache_dir)) {
 }
 
 do_pp_checks <- FALSE
-hhmm_hypothesis_res_list <- list()
+hmm_hypothesis_res_list <- list()
 
 #Temporary hack
 registerS3method("stan_log_lik", class = "rate_hmm", method = stan_log_lik.rate_hmm, envir = asNamespace("brms"))
@@ -196,61 +196,15 @@ summary(trt_group_m1_fit$brmsfit)
 
 
 ```{r}
-compute_counterfactual_mortality_log_OR <- function(hmm_fit, numerator_serie_data, denominator_serie_data, day = 28) {
-  if(nrow(numerator_serie_data) != nrow(denominator_serie_data)) {
-    stop("Groups to compare must have equal number of rows")
-  }
-  
-  numerator_data <- hmm_fit$data
-  numerator_data$serie_data = numerator_serie_data
-  
-  numerator_state_probs <- posterior_epred_rect(hmm_fit, newdata = numerator_data, method = posterior_epred_state_prob)
-  
-  denominator_data <- hmm_fit$data
-  denominator_data$serie_data = denominator_serie_data
-  
-  denominator_state_probs <- posterior_epred_rect(hmm_fit, newdata = denominator_data, method = posterior_epred_state_prob)  
-  
-  mortality_state <- which(hmm_fit$data$hidden_state_data$id == "Death")
-  samples_probs_numerator <- 
-    rowMeans(numerator_state_probs[mortality_state, day + 1, ,])
-  samples_probs_denominator <- 
-    rowMeans(denominator_state_probs[mortality_state, day + 1, ,])
-  
-  log_odds_numerator <- log(samples_probs_numerator) - log1p(-samples_probs_numerator)
-  log_odds_denominator <- log(samples_probs_denominator) - log1p(-samples_probs_denominator)
-  
-  log_odds_numerator - log_odds_denominator
-}
-
-evaluate_treatment_hypothesis <- function(fit, hypothesis, treatment_column, model_subgroup, adjusted, model_check) {
-  counterfactual_took <- serie_data_28 %>% mutate({{ treatment_column }} := 1)
-  counterfactual_no <- serie_data_28 %>% mutate({{treatment_column }} := 0)
-
-  log_OR_samples <- compute_counterfactual_mortality_log_OR(fit, counterfactual_took, counterfactual_no, day = 28)
-  
-  bayesian_hypothesis_res_from_draws(
-    draws = log_OR_samples,
-    model = paste0("HMM", model_subgroup),
-    estimand = "log(OR)",
-    hypothesis = hypothesis,
-    adjusted = adjusted,
-    model_check = model_check
-  )
-}
-
-evaluate_all_treatment_hypotheses <- function(fit, model_subgroup, adjusted, model_check) {
-  rbind(
-    evaluate_treatment_hypothesis(fit, hypotheses$hcq_reduces_death, took_hcq, model_subgroup = model_subgroup, adjusted = adjusted, model_check = model_check),
-    evaluate_treatment_hypothesis(fit, hypotheses$az_reduces_death, took_az, model_subgroup = model_subgroup, adjusted = adjusted, model_check = model_check),
-    evaluate_treatment_hypothesis(fit, hypotheses$favipiravir_reduces_death, took_favipiravir, model_subgroup = model_subgroup, adjusted = adjusted, model_check = model_check)
-  )
-}
 
 ```
 
 ```{r}
 hmm_hypothesis_res_list[["trt_group_m1"]] <- evaluate_all_treatment_hypotheses(trt_group_m1_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive", model_check = "Suspicious")
+```
+
+```{r}
+read_csv("hmm_res.csv")
 ```
 
 
@@ -287,7 +241,7 @@ summary(trt_group_m2_fit$brmsfit)
 
 
 ```{r}
-hhmm_hypothesis_res_list[["trt_group_m2"]] <- evaluate_all_treatment_hypotheses(trt_group_m2_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex", model_check = "Suspicious")
+hmm_hypothesis_res_list[["trt_group_m2"]] <- evaluate_all_treatment_hypotheses(trt_group_m2_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex", model_check = "Suspicious")
 ```
 
 ```{r}
@@ -312,7 +266,7 @@ summary(trt_group_m3_fit$brmsfit)
 ```
 
 ```{r}
-hhmm_hypothesis_res_list[["trt_group_m3"]] <-  evaluate_all_treatment_hypotheses(trt_group_m3_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK")
+hmm_hypothesis_res_list[["trt_group_m3"]] <-  evaluate_all_treatment_hypotheses(trt_group_m3_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK")
 ```
 
 
@@ -340,7 +294,7 @@ summary(trt_group_m4_fit$brmsfit)
 ```
 
 ```{r}
-hhmm_hypothesis_res_list[["trt_group_m4"]] <-  evaluate_all_treatment_hypotheses(trt_group_m4_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "OK")
+hmm_hypothesis_res_list[["trt_group_m4"]] <-  evaluate_all_treatment_hypotheses(trt_group_m4_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "OK")
 ```
 
 
@@ -379,7 +333,7 @@ summary(trt_rate_m1_fit$brmsfit)
 
 
 ```{r}
-hhmm_hypothesis_res_list[["trt_rate_m1"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m1_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive", model_check = "Suspicious")
+hmm_hypothesis_res_list[["trt_rate_m1"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m1_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive", model_check = "Suspicious")
 ```
 
 
@@ -405,7 +359,7 @@ summary(trt_rate_m2_fit$brmsfit)
 ```
 
 ```{r}
-hhmm_hypothesis_res_list[["trt_rate_m2"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m2_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex", model_check = "Suspicious")
+hmm_hypothesis_res_list[["trt_rate_m2"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m2_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex", model_check = "Suspicious")
 ```
 
 ```{r}
@@ -429,7 +383,7 @@ summary(trt_rate_m3_fit$brmsfit)
 ```
 
 ```{r}
-hhmm_hypothesis_res_list[["trt_rate_m3"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m3_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK")
+hmm_hypothesis_res_list[["trt_rate_m3"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m3_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK")
 ```
 
 
@@ -456,7 +410,7 @@ summary(trt_rate_m4_fit$brmsfit)
 ```
 
 ```{r}
-hhmm_hypothesis_res_list[["trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(trt_rate_m4_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "OK")
+hmm_hypothesis_res_list[["trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(trt_rate_m4_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "OK")
 ```
 
 
@@ -497,7 +451,7 @@ summary(d_dimer_m1_fit$brmsfit)
 
 ```{r}
 draws <- tidybayes::tidy_draws(d_dimer_m1_fit$brmsfit)
-hhmm_hypothesis_res_list[["d_dimer_m1_death"]] <-
+hmm_hypothesis_res_list[["d_dimer_m1_death"]] <-
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_log_peak_d_dimer,
     model = "HMM",
@@ -566,7 +520,7 @@ summary(IL_6_m1_fit$brmsfit)
 stop("Calculate hypo")
 
 draws <- tidybayes::tidy_draws(trt_m7_fit$brmsfit)
-hhmm_hypothesis_res_list[["trt_m7_IL_6_death"]] <-
+hmm_hypothesis_res_list[["trt_m7_IL_6_death"]] <-
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_log_peak_IL_6,
     model = "HMM",
@@ -656,7 +610,7 @@ summary(c_trt_m1_fit$brmsfit)
 ```
 
 ```{r}
-hhmm_hypothesis_res_list[["c_trt_rate_m1"]] <- evaluate_all_treatment_hypotheses(c_trt_m1_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive", model_check = "Suspicious")
+hmm_hypothesis_res_list[["c_trt_rate_m1"]] <- evaluate_all_treatment_hypotheses(c_trt_m1_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive", model_check = "Suspicious")
 ```
 
 
@@ -683,7 +637,7 @@ summary(c_trt_m2_fit$brmsfit)
 
 
 ```{r}
-hhmm_hypothesis_res_list[["c_trt_rate_m2"]] <- evaluate_all_treatment_hypotheses(c_trt_m2_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex", model_check = "Suspicious")
+hmm_hypothesis_res_list[["c_trt_rate_m2"]] <- evaluate_all_treatment_hypotheses(c_trt_m2_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex", model_check = "Suspicious")
 
 ```
 
@@ -708,7 +662,7 @@ summary(c_trt_m3_fit$brmsfit)
 ```
 
 ```{r}
-hhmm_hypothesis_res_list[["c_trt_rate_m3"]] <- evaluate_all_treatment_hypotheses(c_trt_m3_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "Suspicious")
+hmm_hypothesis_res_list[["c_trt_rate_m3"]] <- evaluate_all_treatment_hypotheses(c_trt_m3_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "Suspicious")
 
 ```
 
@@ -734,7 +688,7 @@ summary(c_trt_m4_fit$brmsfit)
 ```
 
 ```{r}
-hhmm_hypothesis_res_list[["c_trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(c_trt_m4_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "Suspicious")
+hmm_hypothesis_res_list[["c_trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(c_trt_m4_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "Suspicious")
 
 ```
 
@@ -750,7 +704,7 @@ if(do_pp_checks) {
 
 
 ```{r}
-hmm_hypothesis_res_all <- do.call(rbind, hhmm_hypothesis_res_list)
+hmm_hypothesis_res_all <- do.call(rbind, hmm_hypothesis_res_list)
 write_csv(hmm_hypothesis_res_all, path = here::here("manuscript", "hmm_res.csv"))
 ```
 

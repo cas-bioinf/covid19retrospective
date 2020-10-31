@@ -219,6 +219,7 @@ posterior_long_to_df <- function(data, prediction) {
 #'
 #' @return An array of dimensions `N_states_hidden` x `N_states_hidden` x `N_predictor_sets` x `N_samples`
 compute_all_transition_matrices <- function(data_hmm, epred_mu) {
+  start_time = proc.time()
   nsamples <- dim(epred_mu)[1]
   epred_mu_exp <- exp(epred_mu)
   standata <- data_hmm$standata
@@ -237,5 +238,7 @@ compute_all_transition_matrices <- function(data_hmm, epred_mu) {
       res[,, ps, i] <-  expm::expm(rate_matrix)
     }
   }
+  time_taken <- proc.time() - start_time
+  message(paste0("Transition matrices computed in ", time_taken["elapsed"], "s."))
   res
 }
