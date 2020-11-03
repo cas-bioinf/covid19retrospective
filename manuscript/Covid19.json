@@ -7208,5 +7208,80 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/IA4FQCF3",
+		"type": "article-journal",
+		"abstract": "COVID-19, caused by SARS-CoV-2 virus, emerged as a pandemic disease posing a severe threat to global health. To date, sporadic studies have demonstrated that innate immune mechanisms, specifically neutrophilia, NETosis, and neutrophil-associated cytokine responses, are involved in COVID-19 pathogenesis; however, our understanding of the exact nature of this aspect of host&ndash;pathogen interaction is limited. Here, we present a detailed dissection of the features and functional profiles of neutrophils, dendritic cells, and monocytes in COVID-19. We portray the crucial role of neutrophils as drivers of hyperinflammation associated with COVID-19 disease via the shift towards their immature forms, enhanced degranulation, cytokine production, and augmented interferon responses. We demonstrate the impaired functionality of COVID-19 dendritic cells and monocytes, particularly their low expression of maturation markers, increased PD-L1 levels, and their inability to upregulate phenotype upon stimulation. In summary, our work highlights important data that prompt further research, as therapeutic targeting of neutrophils and their associated products may hold the potential to reduce the severity of COVID-19.",
+		"container-title": "Cells",
+		"DOI": "10.3390/cells9102206",
+		"issue": "10",
+		"language": "en",
+		"note": "number: 10\npublisher: Multidisciplinary Digital Publishing Institute",
+		"page": "2206",
+		"source": "www.mdpi.com",
+		"title": "Disharmonic Inflammatory Signatures in COVID-19: Augmented Neutrophils’ but Impaired Monocytes’ and Dendritic Cells’ Responsiveness",
+		"title-short": "Disharmonic Inflammatory Signatures in COVID-19",
+		"URL": "https://www.mdpi.com/2073-4409/9/10/2206",
+		"volume": "9",
+		"author": [
+			{
+				"family": "Parackova",
+				"given": "Zuzana"
+			},
+			{
+				"family": "Zentsova",
+				"given": "Irena"
+			},
+			{
+				"family": "Bloomfield",
+				"given": "Marketa"
+			},
+			{
+				"family": "Vrabcova",
+				"given": "Petra"
+			},
+			{
+				"family": "Smetanova",
+				"given": "Jitka"
+			},
+			{
+				"family": "Klocperk",
+				"given": "Adam"
+			},
+			{
+				"family": "Mesežnikov",
+				"given": "Grigorij"
+			},
+			{
+				"family": "Casas Mendez",
+				"given": "Luis Fernando"
+			},
+			{
+				"family": "Vymazal",
+				"given": "Tomas"
+			},
+			{
+				"family": "Sediva",
+				"given": "Anna"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					11,
+					3
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					10
+				]
+			]
+		}
 	}
 ]

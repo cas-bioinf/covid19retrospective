@@ -1,15 +1,15 @@
 hypotheses <-
   list(
-       hcq_reduces_death = list(caption = "HCQ associated with risk of death", group = "hcq"),
-       hcq_increases_discharged = list(caption = "HCQ associated with time in hospital", group = "hcq"),
-       az_reduces_death = list(caption = "Azithromycin associated with risk of death", group = "az"),
-       az_increases_discharged = list(caption = "Azithromycin associated with time in hospital", group = "az"),
-       favipiravir_reduces_death = list(caption = "Favipiravir associated with risk of death", group = "favipiravir"),
-       favipiravir_increases_discharged = list(caption = "Favipiravir associated with time in hospital", group = "favipiravir"),
-       convalescent_plasma_reduces_death = list(caption = "Conv. plasma associated with risk of death", group = "convalescent_plasma"),
-       convalescent_plasma_increases_discharged = list(caption = "Conv. plasma associated with time in hospital", group = "convalescent_plasma"),
-       d_dimer_increases_death = list(caption = "High D-dimer associated with risk of death", group = "markers"),
-       IL_6_increases_death = list(caption = "High IL-6 associated with risk of death", group = "markers")
+       hcq_reduces_death = list(caption = "HCQ associated with risk of death", group = "hcq", type = "death"),
+       hcq_increases_discharged = list(caption = "HCQ associated with time in hospital", group = "hcq", type = "hospital"),
+       az_reduces_death = list(caption = "Azithromycin associated with risk of death", group = "az", type = "death"),
+       az_increases_discharged = list(caption = "Azithromycin associated with time in hospital", group = "az", type = "hospital"),
+       favipiravir_reduces_death = list(caption = "Favipiravir associated with risk of death", group = "favipiravir", type = "death"),
+       favipiravir_increases_discharged = list(caption = "Favipiravir associated with time in hospital", group = "favipiravir", type = "hospital"),
+       convalescent_plasma_reduces_death = list(caption = "Conv. plasma associated with risk of death", group = "convalescent_plasma", type = "death"),
+       convalescent_plasma_increases_discharged = list(caption = "Conv. plasma associated with time in hospital", group = "convalescent_plasma", type = "hospital"),
+       d_dimer_increases_death = list(caption = "High D-dimer associated with risk of death", group = "markers", type = "death"),
+       IL_6_increases_death = list(caption = "High IL-6 associated with risk of death", group = "markers", type = "death")
   ) %>% purrr::imap(
          function(def, name) {
            def$name <- name
@@ -42,7 +42,7 @@ frequentist_hypothesis_res_from_coxph1 <- function(
   hypothesis, adjusted, point_estimate, test_stat, df, p_value, ci_low, ci_high, model_check = "OK") {
 
   data.frame(hypothesis = hypothesis$name,
-             model = "coxph",
+             model = "coxph1",
              adjusted = adjusted,
              estimand = "log(HR)",
              point_estimate = point_estimate,
