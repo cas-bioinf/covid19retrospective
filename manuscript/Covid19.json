@@ -6,7 +6,7 @@
 		"DOI": "10.1056/NEJMc2010419",
 		"ISSN": "0028-4793",
 		"issue": "0",
-		"note": "publisher: Massachusetts Medical Society\n_eprint: https://doi.org/10.1056/NEJMc2010419",
+		"note": "publisher: Massachusetts Medical Society\n_eprint: https://doi.org/10.1056/NEJMc2010419\nEdTechHub.ItemAlsoKnownAs: 10.1056/NEJMc2010419 5567156:AJTHQG5F",
 		"page": "null",
 		"source": "Taylor and Francis+NEJM",
 		"title": "Clinical Characteristics of Covid-19 in New York City",
@@ -124,7 +124,7 @@
 		"container-title": "medRxiv",
 		"DOI": "10.1101/2020.04.15.20067157",
 		"language": "en",
-		"note": "publisher: Cold Spring Harbor Laboratory Press",
+		"note": "publisher: Cold Spring Harbor Laboratory Press\nEdTechHub.ItemAlsoKnownAs: 10.1101/2020.04.15.20067157 5567156:FJXV5LWV",
 		"page": "2020.04.15.20067157",
 		"source": "www.medrxiv.org",
 		"title": "Epidemiology, clinical course, and outcomes of critically ill adults with COVID-19 in New York City: a prospective cohort study",
@@ -221,7 +221,7 @@
 		"issue": "0",
 		"journalAbbreviation": "The Lancet",
 		"language": "English",
-		"note": "publisher: Elsevier",
+		"note": "publisher: Elsevier\nEdTechHub.ItemAlsoKnownAs: 10.1016/S0140-6736(20)31022-9 5567156:7WY3LWM2",
 		"source": "www.thelancet.com",
 		"title": "Remdesivir in adults with severe COVID-19: a randomised, double-blind, placebo-controlled, multicentre trial",
 		"title-short": "Remdesivir in adults with severe COVID-19",
@@ -433,25 +433,11 @@
 		}
 	},
 	{
-		"id": "http://zotero.org/users/5567156/items/QEA4REGF",
-		"type": "webpage",
-		"title": "A Bayesian Approach to Multistate Hidden Markov Models: Application to Dementia Progression: Journal of the American Statistical Association: Vol 115, No 529",
-		"URL": "https://amstat.tandfonline.com/doi/abs/10.1080/01621459.2019.1594831?journalCode=uasa20#.XqqJ8plS-Uk",
-		"accessed": {
-			"date-parts": [
-				[
-					"2020",
-					4,
-					30
-				]
-			]
-		}
-	},
-	{
 		"id": "http://zotero.org/users/5567156/items/JRAYS5BC",
 		"type": "article-journal",
 		"abstract": "Augmenting the global efforts towards HIV control and prevention, spatial modelling helps identify areas with poor viral suppression to inform programme planning. This study aims to describe the spatial viral suppression and viral rebound trajectories among ART patients. This is the first application of the fully Bayesian geoadditive semiparametric multistate Markov models to account for unobserved geographical heterogeneity. Time-varying log-baseline effects of the transition intensities and non-linear effects of continuous covariates were estimated as smoothed functions of time using penalised splines. Non-parametric effects of fixed covariates and frailty effects to account for individual variability were also considered. Viral load was the preferred marker for better prediction of HIV/AIDS disease progression; therefore, a three staged model was proposed bases on two viral load transient states defined by undetectable viral cutoff limits and death as the third absorbing state. Model application was based on the routinely collected individual-level data of ART patients from the Zimbabwe national ART programme. Amongst 18,150 participants, both the log-baseline transition rates of attaining undetectable viral suppression and attaining a viral rebound increased with increase in ART duration. Viral rebound transition was significantly prevalent among patients living on the long-distance truck route region (Matabeleland North province) which borders with Botswana and Zambia. Interventions which address health literacy and misconceptions over ART benefits and the gravity of attaining and sustaining viral suppression are a priority in the fight of HIV to increase patients’ life expectancy and lower HIV transmission.",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 5567156:JRAYS5BC",
 		"page": "17",
 		"source": "Zotero",
 		"title": "Spatial Heterogeneity of Viral Suppression and Viral Rebound Patterns among ART Patients in Zimbabwe from 2004 to 2017: A Bayesian Mixed Effects Multistate Model",
@@ -477,6 +463,7 @@
 	{
 		"id": "http://zotero.org/users/5567156/items/GSJGZJ8M",
 		"type": "webpage",
+		"note": "EdTechHub.ItemAlsoKnownAs: 5567156:GSJGZJ8M",
 		"title": "Multi-state models for colon cancer recurrence and death with a cured fraction",
 		"URL": "https://www.ncbi.nlm.nih.gov/pmc/articles/PMC3999912/",
 		"accessed": {
@@ -493,7 +480,7 @@
 		"id": "http://zotero.org/users/5567156/items/PQMY4QPE",
 		"type": "speech",
 		"abstract": "Experimental treatments for COVID-19 are increasingly being attempted. The ability to learn about their effects from this usage would be a helpful and more immediate complement to randomized trials, without requiring that we deny access to anybody. This presentation describes a method for doing so, both to maximize what we learn from ongoing treatment cases and to avoid misleading inferences that are otherwise likely to emerge.",
-		"note": "source: ResearchGate",
+		"note": "source: ResearchGate\nEdTechHub.ItemAlsoKnownAs: 5567156:PQMY4QPE",
 		"title": "Learning the effects of COVID-19 treatments given outside of randomized trials",
 		"author": [
 			{
@@ -521,7 +508,7 @@
 		"abstract": "State-switching models such as hidden Markov models or Markov-switching regression models are routinely applied to analyse sequences of observations that are driven by underlying non-observable states. Coupled state-switching models extend these approaches to address the case of multiple observation sequences whose underlying state variables interact. In this paper, we provide an overview of the modelling techniques related to coupling in state-switching models, thereby forming a rich and flexible statistical framework particularly useful for modelling correlated time series. Simulation experiments demonstrate the relevance of being able to account for an asynchronous evolution as well as interactions between the underlying latent processes. The models are further illustrated using two case studies related to a) interactions between a dolphin mother and her calf as inferred from movement data; and b) electronic health record data collected on 696 patients within an intensive care unit.",
 		"container-title": "arXiv:2004.14700 [stat]",
 		"language": "en",
-		"note": "arXiv: 2004.14700",
+		"note": "arXiv: 2004.14700\nEdTechHub.ItemAlsoKnownAs: 5567156:JH6SZGE9",
 		"source": "arXiv.org",
 		"title": "A primer on coupled state-switching models for multiple interacting time series",
 		"URL": "http://arxiv.org/abs/2004.14700",
@@ -576,7 +563,7 @@
 		"ISSN": "0027-8424, 1091-6490",
 		"journalAbbreviation": "PNAS",
 		"language": "en",
-		"note": "publisher: National Academy of Sciences\nsection: Biological Sciences\nPMID: 32350134",
+		"note": "publisher: National Academy of Sciences\nsection: Biological Sciences\nPMID: 32350134\nEdTechHub.ItemAlsoKnownAs: 10.1073/pnas.2005615117 5567156:8MNYLGX6",
 		"source": "www.pnas.org",
 		"title": "Effective treatment of severe COVID-19 patients with tocilizumab",
 		"URL": "https://www.pnas.org/content/early/2020/04/27/2005615117",
@@ -656,6 +643,7 @@
 	{
 		"id": "http://zotero.org/users/5567156/items/4XVV5PDK",
 		"type": "webpage",
+		"note": "EdTechHub.ItemAlsoKnownAs: 5567156:4XVV5PDK",
 		"title": "Outcomes of hydroxychloroquine usage in United States veterans hospitalized with Covid-19 | medRxiv",
 		"URL": "https://www.medrxiv.org/content/10.1101/2020.04.16.20065920v2",
 		"accessed": {
@@ -675,7 +663,7 @@
 		"container-title": "medRxiv",
 		"DOI": "10.1101/2020.04.09.20058941",
 		"language": "en",
-		"note": "publisher: Cold Spring Harbor Laboratory Press",
+		"note": "publisher: Cold Spring Harbor Laboratory Press\nEdTechHub.ItemAlsoKnownAs: 10.1101/2020.04.09.20058941 5567156:DDEFRSEG",
 		"page": "2020.04.09.20058941",
 		"source": "www.medrxiv.org",
 		"title": "Associations of clinical characteristics and antiviral drugs with viral RNA clearance in patients with COVID-19 in Guangzhou, China: a retrospective cohort study",
@@ -753,6 +741,7 @@
 	{
 		"id": "http://zotero.org/users/5567156/items/GLY6TXFV",
 		"type": "webpage",
+		"note": "EdTechHub.ItemAlsoKnownAs: 5567156:GLY6TXFV",
 		"title": "Benefits and Risks of Chloroquine and Hydroxychloroquine in The Treatment of Viral Diseases: A Meta-Analysis of Placebo Randomized Controlled Trials | medRxiv",
 		"URL": "https://www.medrxiv.org/content/10.1101/2020.04.13.20064295v1",
 		"accessed": {
@@ -768,6 +757,7 @@
 	{
 		"id": "http://zotero.org/users/5567156/items/7GJRU8VR",
 		"type": "webpage",
+		"note": "EdTechHub.ItemAlsoKnownAs: 5567156:7GJRU8VR",
 		"title": "Epidemiology, clinical course, and outcomes of critically ill adults with COVID-19 in New York City: a prospective cohort study | medRxiv",
 		"URL": "https://www.medrxiv.org/content/10.1101/2020.04.15.20067157v1",
 		"accessed": {
@@ -783,6 +773,7 @@
 	{
 		"id": "http://zotero.org/users/5567156/items/LYBSHKSS",
 		"type": "webpage",
+		"note": "EdTechHub.ItemAlsoKnownAs: 5567156:LYBSHKSS",
 		"title": "An experimental trial of recombinant human interferon alpha nasal drops to prevent coronavirus disease 2019 in medical staff in an epidemic area | medRxiv",
 		"URL": "https://www.medrxiv.org/content/10.1101/2020.04.11.20061473v2",
 		"accessed": {
@@ -798,6 +789,7 @@
 	{
 		"id": "http://zotero.org/users/5567156/items/XZZHB2LH",
 		"type": "webpage",
+		"note": "EdTechHub.ItemAlsoKnownAs: 5567156:XZZHB2LH",
 		"title": "The effect of Arbidol Hydrochloride on reducing mortality of Covid-19 patients: a retrospective study of real world date from three hospitals in Wuhan | medRxiv",
 		"URL": "https://www.medrxiv.org/content/10.1101/2020.04.11.20056523v1",
 		"accessed": {
@@ -818,7 +810,7 @@
 		"DOI": "10.1101/2020.04.14.20064659",
 		"ISSN": "10.1101/2020.04.14.20064659",
 		"language": "en",
-		"note": "publisher: Cold Spring Harbor Laboratory Press",
+		"note": "publisher: Cold Spring Harbor Laboratory Press\nEdTechHub.ItemAlsoKnownAs: 10.1101/2020.04.14.20064659 5567156:RYZVGC5Y",
 		"page": "2020.04.14.20064659",
 		"source": "www.medrxiv.org",
 		"title": "Lymphocytopaenia is associated with severe SARS-CoV-2 disease: A Systematic Review and Meta-Analysis of Clinical Data",
@@ -902,7 +894,7 @@
 		"ISSN": "1756-1833",
 		"journalAbbreviation": "BMJ",
 		"language": "en",
-		"note": "publisher: British Medical Journal Publishing Group\nsection: Research\nPMID: 32409486",
+		"note": "publisher: British Medical Journal Publishing Group\nsection: Research\nPMID: 32409486\nEdTechHub.ItemAlsoKnownAs: 10.1136/bmj.m1844 5567156:EKF832RK",
 		"source": "www.bmj.com",
 		"title": "Clinical efficacy of hydroxychloroquine in patients with covid-19 pneumonia who require oxygen: observational comparative study using routine care data",
 		"title-short": "Clinical efficacy of hydroxychloroquine in patients with covid-19 pneumonia who require oxygen",
@@ -1075,7 +1067,7 @@
 		"ISSN": "1756-1833",
 		"journalAbbreviation": "BMJ",
 		"language": "en",
-		"note": "publisher: British Medical Journal Publishing Group\nsection: Research\nPMID: 32409561",
+		"note": "publisher: British Medical Journal Publishing Group\nsection: Research\nPMID: 32409561\nEdTechHub.ItemAlsoKnownAs: 10.1136/bmj.m1849 5567156:ZJCSVZ6B",
 		"source": "www.bmj.com",
 		"title": "Hydroxychloroquine in patients with mainly mild to moderate coronavirus disease 2019: open label, randomised controlled trial",
 		"title-short": "Hydroxychloroquine in patients with mainly mild to moderate coronavirus disease 2019",
@@ -1207,6 +1199,7 @@
 		"issue": "1",
 		"journalAbbreviation": "Ann. Intensive Care",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1186/s13613-020-00678-4 5567156:NTCKNGTJ",
 		"page": "63",
 		"source": "DOI.org (Crossref)",
 		"title": "Lack of viral clearance by the combination of hydroxychloroquine and azithromycin or lopinavir and ritonavir in SARS-CoV-2-related acute respiratory distress syndrome",
@@ -1271,7 +1264,7 @@
 		"DOI": "10.1056/NEJMoa2016638",
 		"ISSN": "0028-4793",
 		"issue": "0",
-		"note": "publisher: Massachusetts Medical Society\n_eprint: https://doi.org/10.1056/NEJMoa2016638",
+		"note": "publisher: Massachusetts Medical Society\n_eprint: https://doi.org/10.1056/NEJMoa2016638\nEdTechHub.ItemAlsoKnownAs: 10.1056/NEJMoa2016638 5567156:7C23YCV5",
 		"page": "null",
 		"source": "Taylor and Francis+NEJM",
 		"title": "A Randomized Trial of Hydroxychloroquine as Postexposure Prophylaxis for Covid-19",
@@ -1404,6 +1397,7 @@
 		"issue": "8",
 		"journalAbbreviation": "J Clin Endocrinol Metab",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1210/clinem/dgaa346 5567156:INZVABQI",
 		"page": "2752-2761",
 		"source": "academic.oup.com",
 		"title": "Predicting Mortality Due to SARS-CoV-2: A Mechanistic Score Relating Obesity and Diabetes to COVID-19 Outcomes in Mexico",
@@ -1474,6 +1468,7 @@
 		"container-title": "medRxiv",
 		"DOI": "10.1101/2020.02.24.20027268",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1101/2020.02.24.20027268 5567156:3A2RN4ZS",
 		"page": "2020.02.24.20027268",
 		"source": "www.medrxiv.org",
 		"title": "Estimation of risk factors for COVID-19 mortality - preliminary results",
@@ -1518,6 +1513,7 @@
 		"container-title": "medRxiv",
 		"DOI": "10.1101/2020.04.13.20064329",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1101/2020.04.13.20064329 5567156:4DDUVEKS",
 		"page": "2020.04.13.20064329",
 		"source": "www.medrxiv.org",
 		"title": "Early prediction of mortality risk among severe COVID-19 patients using machine learning",
@@ -1559,6 +1555,7 @@
 		"ISSN": "1364-8535",
 		"issue": "1",
 		"journalAbbreviation": "Critical Care",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1186/s13054-020-2833-7 5567156:X4GWJIP5",
 		"page": "108",
 		"source": "BioMed Central",
 		"title": "Host susceptibility to severe COVID-19 and establishment of a host risk score: findings of 487 cases outside Wuhan",
@@ -1617,6 +1614,7 @@
 		"container-title": "medRxiv",
 		"DOI": "10.1101/2020.02.20.20025510",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1101/2020.02.20.20025510 5567156:EN4GICJ6",
 		"page": "2020.02.20.20025510",
 		"source": "www.medrxiv.org",
 		"title": "ACP risk grade: a simple mortality index for patients with confirmed or suspected severe acute respiratory syndrome coronavirus 2 disease (COVID-19) during the early stage of outbreak in Wuhan, China",
@@ -1740,6 +1738,7 @@
 		"issue": "529",
 		"journalAbbreviation": "Journal of the American Statistical Association",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1080/01621459.2019.1594831 5567156:F9K2L5Q8",
 		"page": "16-31",
 		"source": "DOI.org (Crossref)",
 		"title": "A Bayesian Approach to Multistate Hidden Markov Models: Application to Dementia Progression",
@@ -1792,7 +1791,7 @@
 		"type": "article-journal",
 		"abstract": "The joint modeling of longitudinal and time-to-event data has received much attention in the biostatistical literature in recent years. In this notebook (and talk), we describe the implementation of a shared parameter joint model for longitudinal and time-to-event data in Stan. The methods described in the notebook are a simplified version of those underpinning the stan_jm modeling function that has recently been contributed to the rstanarm R package.",
 		"DOI": "10.5281/ZENODO.1284334",
-		"note": "publisher: Zenodo",
+		"note": "publisher: Zenodo\nEdTechHub.ItemAlsoKnownAs: 10.5281/ZENODO.1284334 5567156:KHJGLQS5",
 		"source": "DOI.org (Datacite)",
 		"title": "Joint Longitudinal And Time-To-Event Models Via Stan",
 		"URL": "https://zenodo.org/record/1284334",
@@ -1844,6 +1843,7 @@
 		"collection-title": "Statistics for biology and health",
 		"event-place": "New York",
 		"ISBN": "978-0-387-98784-2",
+		"note": "EdTechHub.ItemAlsoKnownAs: 5567156:I9UVTUJF",
 		"number-of-pages": "350",
 		"publisher": "Springer",
 		"publisher-place": "New York",
@@ -1877,6 +1877,7 @@
 		"issue": "1",
 		"journalAbbreviation": "The R Journal",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.32614/RJ-2018-017 5567156:7ER3ZSER",
 		"page": "395",
 		"source": "DOI.org (Crossref)",
 		"title": "Advanced Bayesian Multilevel Modeling with the R Package brms",
@@ -1908,6 +1909,7 @@
 	{
 		"id": "http://zotero.org/users/5567156/items/67XKBC2W",
 		"type": "book",
+		"note": "EdTechHub.ItemAlsoKnownAs: 5567156:67XKBC2W",
 		"title": "R: A Language and Environment for Statistical Computing",
 		"URL": "https://www.R-project.org/",
 		"version": "4.0",
@@ -1933,6 +1935,7 @@
 		"ISSN": "2475-9066",
 		"issue": "43",
 		"journalAbbreviation": "JOSS",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.21105/joss.01686 5567156:8EWY8TKM",
 		"page": "1686",
 		"source": "DOI.org (Crossref)",
 		"title": "Welcome to the Tidyverse",
@@ -2064,7 +2067,7 @@
 		"ISSN": "1756-1833",
 		"journalAbbreviation": "BMJ",
 		"language": "en",
-		"note": "publisher: British Medical Journal Publishing Group\nsection: Research\nPMID: 32265220",
+		"note": "publisher: British Medical Journal Publishing Group\nsection: Research\nPMID: 32265220\nEdTechHub.ItemAlsoKnownAs: 10.1136/bmj.m1328 5567156:TS57HJ3T",
 		"source": "www.bmj.com",
 		"title": "Prediction models for diagnosis and prognosis of covid-19: systematic review and critical appraisal",
 		"title-short": "Prediction models for diagnosis and prognosis of covid-19",
@@ -2276,7 +2279,7 @@
 		"ISSN": "1756-1833",
 		"journalAbbreviation": "BMJ",
 		"language": "en",
-		"note": "publisher: British Medical Journal Publishing Group\nsection: Research\nPMID: 32732190",
+		"note": "publisher: British Medical Journal Publishing Group\nsection: Research\nPMID: 32732190\nEdTechHub.ItemAlsoKnownAs: 10.1136/bmj.m2980 5567156:YP62P6XJ",
 		"source": "www.bmj.com",
 		"title": "Drug treatments for covid-19: living systematic review and network meta-analysis",
 		"title-short": "Drug treatments for covid-19",
@@ -2522,7 +2525,7 @@
 		"container-title": "medRxiv",
 		"DOI": "10.1101/2020.04.08.20054551",
 		"language": "en",
-		"note": "publisher: Cold Spring Harbor Laboratory Press",
+		"note": "publisher: Cold Spring Harbor Laboratory Press\nEdTechHub.ItemAlsoKnownAs: 10.1101/2020.04.08.20054551 5567156:JKUH2UDJ",
 		"page": "2020.04.08.20054551",
 		"source": "www.medrxiv.org",
 		"title": "Safety of hydroxychloroquine, alone and in combination with azithromycin, in light of rapid wide-spread use for COVID-19: a multinational, network cohort and self-controlled case series study",
@@ -2800,7 +2803,7 @@
 		"ISSN": "2398-6352",
 		"issue": "1",
 		"language": "en",
-		"note": "number: 1\npublisher: Nature Publishing Group",
+		"note": "number: 1\npublisher: Nature Publishing Group\nEdTechHub.ItemAlsoKnownAs: 10.1038/s41746-020-00308-0 5567156:ARTB8HYZ",
 		"page": "1-9",
 		"source": "www.nature.com",
 		"title": "International electronic health record-derived COVID-19 clinical course profiles: the 4CE consortium",
@@ -3181,7 +3184,7 @@
 		"type": "report",
 		"abstract": "The following review has been prepared in collaboration with members of the MRC-NIHR Trials Methodology Research Partnership. The reviewers named above, and other, unnamed discussants of the paper, are all qualified statisticians with  experience in clinical trials. Our objective is to provide a rapid review of publications, preprints and protocols from clinical trials of  COVID-19 treatments, independent of journal specific review processes. We aim to provide timely, constructive, focused, clear  advice aimed at improving both the research outputs under review, as well as future studies. Given our collective expertise (clinical  trial statistics) our reviews focus on the designs of the trials and other statistical content (methods, presentation and accuracy of  results, inferences). This review reflects the expert opinions of the named authors, and does not imply endorsement by the MRC-NIHR Trials Methodology Research Partnership, its wider membership, or any other organization. Here we review Remdesivir in adults with severe COVID-19: a randomised, double-blind, placebo-controlled, multicentre trial by Wang et al, which was published in The Lancet, April 29, 2020. Overall, this was a well-conducted, well-reported trial, which was faithful to a pre-registered, openly available study protocol. Our comments on the paper, detailed below, are all minor in nature. The trial ended early, roughly half-way to its planned sample size, once successful infection control efforts in the region made it difficult to recruit new patients. It is perhaps not surprising then that the study did not demonstrate any substantial effects of remdesivir, though the authors correctly noted that the study was too small to rule out potentially important effects. Regardless, it will be important for investigators and decision makers to take data from this study into account as our understanding of COVID-19 treatment grows.",
 		"language": "eng",
-		"note": "DOI: 10.5281/zenodo.3819778",
+		"note": "DOI: 10.5281/zenodo.3819778\nEdTechHub.ItemAlsoKnownAs: 10.5281/zenodo.3819778 5567156:AZDZHLJV",
 		"publisher": "Zenodo",
 		"source": "Zenodo",
 		"title": "Statistical review of Remdesivir in adults with severe COVID-19: a randomised, double-blind, placebo-controlled, multicentre trial",
@@ -3230,6 +3233,7 @@
 		"abstract": "The following review has been prepared in collaboration with members of the MRC-NIHR Trials Methodology Research Partnership 1. The reviewers named above, and other, unnamed discussants of the paper, are all qualified statisticians with experience in clinical  rials. Our objective is to provide a rapid review of publications, preprints and protocols from clinical trials of COVID-19  treatments, independent of journal specific review processes. We aim to provide timely, constructive, focused, clear advice aimed at  improving both the research outputs under review, as well as future studies. Given our collective expertise (clinical trial statistics) our  eviews focus on the designs of the trials and other statistical content (methods, presentation and accuracy of results,  inferences). This review reflects the expert opinions of the named authors, and does not imply endorsement by the MRC-NIHR Trials  Methodology Research Partnership, its wider membership, or any other organization. Here we review Efficacy and safety of lopinavir/ritonavir or arbidol in adult patients with mild/moderate COVID-19: an exploratory randomized controlled trial, by Li et al. A pre-proof version of the accepted, peer-reviewed manuscript was published by Med (Cell  ress) https://marlin-prod.literatumonline.com/pb-assets/products/coronavirus/MEDJ1.pdf, following posting of a preprint on  medRxiv on April 15th, 2020: https://www.medrxiv.org/content/10.1101/2020.03.19.20038984v2.",
 		"DOI": "10.5281/zenodo.3779933",
 		"language": "eng",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.5281/zenodo.3779933 5567156:5PZEEPJV",
 		"source": "Zenodo",
 		"title": "Statistical review of Efficacy and safety of lopinavir/ritonavir or arbidol in adult patients with mild/moderate COVID-19: an exploratory randomized controlled trial",
 		"title-short": "Statistical review of Efficacy and safety of lopinavir/ritonavir or arbidol in adult patients with mild/moderate COVID-19",
@@ -3277,7 +3281,7 @@
 		"issue": "5",
 		"journalAbbreviation": "JAMA",
 		"language": "en",
-		"note": "publisher: American Medical Association",
+		"note": "publisher: American Medical Association\nEdTechHub.ItemAlsoKnownAs: 10.1001/jama.2020.10044 5567156:BHGT88US",
 		"page": "460-470",
 		"source": "jamanetwork.com",
 		"title": "Effect of Convalescent Plasma Therapy on Time to Clinical Improvement in Patients With Severe and Life-threatening COVID-19: A Randomized Clinical Trial",
@@ -3448,7 +3452,7 @@
 		"container-title": "medRxiv",
 		"DOI": "10.1101/2020.07.20.20157651",
 		"language": "en",
-		"note": "publisher: Cold Spring Harbor Laboratory Press",
+		"note": "publisher: Cold Spring Harbor Laboratory Press\nEdTechHub.ItemAlsoKnownAs: 10.1101/2020.07.20.20157651 5567156:GMR9FX9Z",
 		"page": "2020.07.20.20157651",
 		"source": "www.medrxiv.org",
 		"title": "A Cluster-Randomized Trial of Hydroxychloroquine as Prevention of Covid-19 Transmission and Disease",
@@ -3677,7 +3681,7 @@
 		"DOI": "10.7326/M20-4207",
 		"ISSN": "0003-4819",
 		"journalAbbreviation": "Annals of Internal Medicine",
-		"note": "publisher: American College of Physicians",
+		"note": "publisher: American College of Physicians\nEdTechHub.ItemAlsoKnownAs: 10.7326/M20-4207 5567156:G6KZKVMI",
 		"source": "acpjournals.org (Atypon)",
 		"title": "Hydroxychloroquine in Nonhospitalized Adults With Early COVID-19",
 		"URL": "https://www.acpjournals.org/doi/10.7326/M20-4207",
@@ -3808,7 +3812,7 @@
 		"issue": "5",
 		"journalAbbreviation": "Perspect Psychol Sci",
 		"language": "eng",
-		"note": "PMID: 27694465",
+		"note": "PMID: 27694465\nEdTechHub.ItemAlsoKnownAs: 10.1177/1745691616658637 5567156:DXWM259V",
 		"page": "702-712",
 		"source": "PubMed",
 		"title": "Increasing Transparency Through a Multiverse Analysis",
@@ -3848,6 +3852,7 @@
 		"ISSN": "1741-7015",
 		"issue": "1",
 		"journalAbbreviation": "BMC Medicine",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1186/s12916-020-01737-0 5567156:MH797GNC",
 		"page": "286",
 		"source": "BioMed Central",
 		"title": "Treatment estimands in clinical trials of patients hospitalised for COVID-19: ensuring trials ask the right questions",
@@ -3922,7 +3927,7 @@
 		"container-title": "medRxiv",
 		"DOI": "10.1101/2020.09.03.20187252",
 		"language": "en",
-		"note": "publisher: Cold Spring Harbor Laboratory Press",
+		"note": "publisher: Cold Spring Harbor Laboratory Press\nEdTechHub.ItemAlsoKnownAs: 10.1101/2020.09.03.20187252 5567156:UEXLDJCB",
 		"page": "2020.09.03.20187252",
 		"source": "www.medrxiv.org",
 		"title": "Convalescent plasma in the management of moderate COVID-19 in India: An open-label parallel-arm phase II multicentre randomized controlled trial (PLACID Trial)",
@@ -5017,7 +5022,7 @@
 		"issue": "0",
 		"journalAbbreviation": "The Lancet",
 		"language": "English",
-		"note": "publisher: Elsevier\nPMID: 32896292",
+		"note": "publisher: Elsevier\nPMID: 32896292\nEdTechHub.ItemAlsoKnownAs: 10.1016/S0140-6736(20)31862-6 5567156:BQLRZGTQ",
 		"source": "www.thelancet.com",
 		"title": "Azithromycin in addition to standard of care versus standard of care alone in the treatment of patients admitted to the hospital with severe COVID-19 in Brazil (COALITION II): a randomised clinical trial",
 		"title-short": "Azithromycin in addition to standard of care versus standard of care alone in the treatment of patients admitted to the hospital with severe COVID-19 in Brazil (COALITION II)",
@@ -5184,6 +5189,7 @@
 		"DOI": "10.1001/jama.2020.17023",
 		"journalAbbreviation": "JAMA",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1001/jama.2020.17023 5567156:5VAKEW58",
 		"source": "jamanetwork.com",
 		"title": "Association Between Administration of Systemic Corticosteroids and Mortality Among Critically Ill Patients With COVID-19: A Meta-analysis",
 		"title-short": "Association Between Administration of Systemic Corticosteroids and Mortality Among Critically Ill Patients With COVID-19",
@@ -5369,7 +5375,7 @@
 		"DOI": "10.1038/s41586-020-2700-3",
 		"ISSN": "1476-4687",
 		"language": "en",
-		"note": "publisher: Nature Publishing Group",
+		"note": "publisher: Nature Publishing Group\nEdTechHub.ItemAlsoKnownAs: 10.1038/s41586-020-2700-3 5567156:5KQZ3XEE",
 		"page": "1-9",
 		"source": "www.nature.com",
 		"title": "Sex differences in immune responses that underlie COVID-19 disease outcomes",
@@ -5544,6 +5550,7 @@
 		"ISSN": "0953-6205",
 		"journalAbbreviation": "European Journal of Internal Medicine",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1016/j.ejim.2020.08.019 5567156:NXC9CDI9",
 		"source": "ScienceDirect",
 		"title": "Use of hydroxychloroquine in hospitalised COVID-19 patients is associated with reduced mortality: Findings from the observational multicentre Italian CORIST study",
 		"title-short": "Use of hydroxychloroquine in hospitalised COVID-19 patients is associated with reduced mortality",
@@ -6001,7 +6008,7 @@
 		"DOI": "10.1038/s41591-020-1051-9",
 		"ISSN": "1546-170X",
 		"language": "en",
-		"note": "publisher: Nature Publishing Group",
+		"note": "publisher: Nature Publishing Group\nEdTechHub.ItemAlsoKnownAs: 10.1038/s41591-020-1051-9 5567156:4HR7MUJ6",
 		"page": "1-8",
 		"source": "www.nature.com",
 		"title": "An inflammatory cytokine signature predicts COVID-19 severity and survival",
@@ -6164,6 +6171,7 @@
 		"ISSN": "0924-8579",
 		"journalAbbreviation": "International Journal of Antimicrobial Agents",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1016/j.ijantimicag.2020.106144 5567156:WZPNBRYN",
 		"page": "106144",
 		"source": "ScienceDirect",
 		"title": "Low-dose hydroxychloroquine therapy and mortality in hospitalised patients with COVID-19: a nationwide observational study of 8075 participants",
@@ -6238,6 +6246,7 @@
 	{
 		"id": "http://zotero.org/users/5567156/items/6I6GAVWU",
 		"type": "report",
+		"note": "EdTechHub.ItemAlsoKnownAs: 5567156:6I6GAVWU",
 		"title": "Statement from the Chief Investigators of the Randomised Evaluation of COVid-19 thERapY (RECOVERY) Trial on lopinavir-ritonavir, 29June2020",
 		"URL": "https://www.recoverytrial.net/files/lopinavir-ritonavir-recovery-statement-29062020_final.pdf",
 		"author": [
@@ -6271,7 +6280,7 @@
 		"container-title": "New England Journal of Medicine",
 		"DOI": "10.1056/NEJMoa2021436",
 		"language": "en",
-		"note": "publisher: Massachusetts Medical Society",
+		"note": "publisher: Massachusetts Medical Society\nEdTechHub.ItemAlsoKnownAs: 10.1056/NEJMoa2021436 5567156:IW6VZ53Q",
 		"source": "www.nejm.org",
 		"title": "Dexamethasone in Hospitalized Patients with Covid-19 — Preliminary Report",
 		"URL": "https://www.nejm.org/doi/10.1056/NEJMoa2021436",
@@ -6301,55 +6310,13 @@
 		}
 	},
 	{
-		"id": "http://zotero.org/users/5567156/items/ID7F3XIH",
-		"type": "article-journal",
-		"abstract": "Since cytokine release syndrome with elevation of interleukin-6 (IL-6) is considered to be associated with severe cases of coronavirus disease 2019 (COVID-19); IL-6 inhibitors, such as tocilizumab, are expected to be effective for its treatment. This was a retrospective study using a consecutive cohort of 224 patients hospitalized with COVID-19 in March 2020. Patients were divided into those admitted to the intensive care unit (ICU group) and those not (no ICU group), and clinical data including usage of tocilizumab were compared. Correlation between IL-6 value at admission and at peak, and tocilizumab use, as well as clinical outcomes were also investigated. The ICU group had higher rates of pre-existing comorbidities such as hypertension, diabetes, and coronary disease, and higher IL-6 than no ICU group (all P < .05). Age, peak IL-6, and peak d-dimer were significant predictors of in-hospital mortality (1.05 [1.01-1.09], P = .012; 1.001 [1.000-1.002], P = .002; 1.10 [1.03-1.18], P = .008). Receiver operating characteristics curve showed higher predictability of in-hospital mortality with IL-6 at peak than others (area under curve; IL-6 at peak: 0.875 [0.87-0.942], IL-6 at admission: 0.794 [0.699-0.889], d-dimer at peak 0.787 [0.690-0.883], d-dimer at admission 0.726 [0.625-0.827]). Incidence of fungal infections was significantly higher in patients who were given tocilizumab than those who were not (13.0% vs 1.1%, P < .001). Notably, tocilizumab did not affect in-hospital mortality after adjustment including IL-6 (odds ratio [95% confidential interval]: 1.00 [0.27-3.72, P = .998]). Age, peak IL-6, and peak d-dimer levels were significant predictors of in-hospital mortality. Tocilizumab did not decrease in-hospital mortality in our cohort.",
-		"container-title": "Journal of Medical Virology",
-		"DOI": "10.1002/jmv.26365",
-		"ISSN": "1096-9071",
-		"issue": "n/a",
-		"language": "en",
-		"note": "_eprint: https://onlinelibrary.wiley.com/doi/pdf/10.1002/jmv.26365",
-		"source": "Wiley Online Library",
-		"title": "The association of interleukin-6 value, interleukin inhibitors, and outcomes of patients with COVID-19 in New York City",
-		"URL": "https://onlinelibrary.wiley.com/doi/abs/10.1002/jmv.26365",
-		"volume": "n/a",
-		"author": [
-			{
-				"family": "Maeda",
-				"given": "Tetsuro"
-			},
-			{
-				"family": "Obata",
-				"given": "Reiichiro"
-			},
-			{
-				"family": "Do",
-				"given": "Dahlia Rizk"
-			},
-			{
-				"family": "Kuno",
-				"given": "Toshiki"
-			}
-		],
-		"accessed": {
-			"date-parts": [
-				[
-					"2020",
-					9,
-					12
-				]
-			]
-		}
-	},
-	{
 		"id": "http://zotero.org/users/5567156/items/9X3UH8ZM",
 		"type": "article-journal",
 		"abstract": "<p>Background: Hydroxychloroquine and chloroquine have been proposed as treatments for coronavirus disease 2019 (COVID-19) on the basis of in vitro activity, uncontrolled data, and small randomized studies. Methods: The Randomised Evaluation of COVID-19 therapy (RECOVERY) trial is a randomized, controlled, open-label, platform trial comparing a range of possible treatments with usual care in patients hospitalized with COVID-19. We report the preliminary results for the comparison of hydroxychloroquine vs. usual care alone. The primary outcome was 28-day mortality. Results: 1561 patients randomly allocated to receive hydroxychloroquine were compared with 3155 patients concurrently allocated to usual care. Overall, 418 (26.8%) patients allocated hydroxychloroquine and 788 (25.0%) patients allocated usual care died within 28 days (rate ratio 1.09; 95% confidence interval [CI] 0.96 to 1.23; P=0.18). Consistent results were seen in all pre-specified subgroups of patients. Patients allocated to hydroxychloroquine were less likely to be discharged from hospital alive within 28 days (60.3% vs. 62.8%; rate ratio 0.92; 95% CI 0.85-0.99) and those not on invasive mechanical ventilation at baseline were more likely to reach the composite endpoint of invasive mechanical ventilation or death (29.8% vs. 26.5%; risk ratio 1.12; 95% CI 1.01-1.25). There was no excess of new major cardiac arrhythmia. Conclusions: In patients hospitalized with COVID-19, hydroxychloroquine was not associated with reductions in 28-day mortality but was associated with an increased length of hospital stay and increased risk of progressing to invasive mechanical ventilation or death.</p>",
 		"container-title": "medRxiv",
 		"DOI": "10.1101/2020.07.15.20151852",
 		"language": "en",
-		"note": "publisher: Cold Spring Harbor Laboratory Press",
+		"note": "publisher: Cold Spring Harbor Laboratory Press\nEdTechHub.ItemAlsoKnownAs: 10.1101/2020.07.15.20151852 5567156:9X3UH8ZM",
 		"page": "2020.07.15.20151852",
 		"source": "www.medrxiv.org",
 		"title": "Effect of Hydroxychloroquine in Hospitalized Patients with COVID-19: Preliminary results from a multi-centre, randomized, controlled trial.",
@@ -6502,6 +6469,7 @@
 		"issue": "3",
 		"journalAbbreviation": "Infection Prevention in Practice",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1016/j.infpip.2020.100061 5567156:6Q8Z8VJR",
 		"page": "100061",
 		"source": "ScienceDirect",
 		"title": "Therapeutic management of patients with COVID-19: a systematic review",
@@ -6567,7 +6535,7 @@
 		"issue": "18",
 		"journalAbbreviation": "JAMA",
 		"language": "en",
-		"note": "publisher: American Medical Association",
+		"note": "publisher: American Medical Association\nEdTechHub.ItemAlsoKnownAs: 10.1001/jama.2020.6019 5567156:8XWTUMUI",
 		"page": "1824-1836",
 		"source": "jamanetwork.com",
 		"title": "Pharmacologic Treatments for Coronavirus Disease 2019 (COVID-19): A Review",
@@ -6618,7 +6586,7 @@
 		"container-title": "medRxiv",
 		"DOI": "10.1101/2020.09.18.20197327",
 		"language": "en",
-		"note": "publisher: Cold Spring Harbor Laboratory Press",
+		"note": "publisher: Cold Spring Harbor Laboratory Press\nEdTechHub.ItemAlsoKnownAs: 10.1101/2020.09.18.20197327 5567156:H4CLJNUR",
 		"page": "2020.09.18.20197327",
 		"source": "www.medrxiv.org",
 		"title": "Hydroxychloroquine as pre-exposure prophylaxis for COVID-19 in healthcare workers: a randomized trial",
@@ -6734,56 +6702,6 @@
 		}
 	},
 	{
-		"id": "http://zotero.org/users/5567156/items/IHATMFTC",
-		"type": "article-journal",
-		"container-title": "Journal of Medical Virology",
-		"DOI": "10.1002/jmv.26488",
-		"ISSN": "1096-9071",
-		"issue": "n/a",
-		"language": "en",
-		"note": "_eprint: https://onlinelibrary.wiley.com/doi/pdf/10.1002/jmv.26488",
-		"source": "Wiley Online Library",
-		"title": "Tolerability of favipiravir therapy in critically ill patients with COVID-19: A report of four cases",
-		"title-short": "Tolerability of favipiravir therapy in critically ill patients with COVID-19",
-		"URL": "https://onlinelibrary.wiley.com/doi/abs/10.1002/jmv.26488",
-		"volume": "n/a",
-		"author": [
-			{
-				"family": "Dauby",
-				"given": "Nicolas"
-			},
-			{
-				"family": "Praet",
-				"given": "Serge Van"
-			},
-			{
-				"family": "Vanhomwegen",
-				"given": "Charlotte"
-			},
-			{
-				"family": "Veliziotis",
-				"given": "Ioannis"
-			},
-			{
-				"family": "Konopnicki",
-				"given": "Deborah"
-			},
-			{
-				"family": "Roman",
-				"given": "Alain"
-			}
-		],
-		"accessed": {
-			"date-parts": [
-				[
-					"2020",
-					10,
-					12
-				]
-			]
-		}
-	},
-	{
 		"id": "http://zotero.org/users/5567156/items/UN6BIC67",
 		"type": "article-journal",
 		"container-title": "BMC Bioinformatics",
@@ -6792,6 +6710,7 @@
 		"issue": "1",
 		"journalAbbreviation": "BMC Bioinformatics",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1186/1471-2105-12-77 5567156:UN6BIC67",
 		"page": "77",
 		"source": "DOI.org (Crossref)",
 		"title": "pROC: an open-source package for R and S+ to analyze and compare ROC curves",
@@ -6854,6 +6773,7 @@
 		"DOI": "10.1093/cid/ciaa1571",
 		"journalAbbreviation": "Clin Infect Dis",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1093/cid/ciaa1571 5567156:SS6NN99Z",
 		"source": "academic.oup.com",
 		"title": "Hydroxychloroquine as pre-exposure prophylaxis for COVID-19 in healthcare workers: a randomized trial",
 		"title-short": "Hydroxychloroquine as pre-exposure prophylaxis for COVID-19 in healthcare workers",
@@ -6969,7 +6889,7 @@
 		"container-title": "medRxiv",
 		"DOI": "10.1101/2020.03.17.20037432",
 		"language": "en",
-		"note": "publisher: Cold Spring Harbor Laboratory Press",
+		"note": "publisher: Cold Spring Harbor Laboratory Press\nEdTechHub.ItemAlsoKnownAs: 10.1101/2020.03.17.20037432 5567156:ISLSL7UC",
 		"page": "2020.03.17.20037432",
 		"source": "www.medrxiv.org",
 		"title": "Favipiravir versus Arbidol for COVID-19: A Randomized Clinical Trial",
@@ -7060,6 +6980,7 @@
 		"ISSN": "1201-9712",
 		"journalAbbreviation": "International Journal of Infectious Diseases",
 		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10.1016/j.ijid.2020.08.047 5567156:894H9N9B",
 		"page": "283-285",
 		"source": "ScienceDirect",
 		"title": "Case studies of SARS-CoV-2 treated with favipiravir among patients in critical or severe condition",
@@ -7127,7 +7048,7 @@
 		"type": "report",
 		"abstract": "The following review has been prepared in collaboration with members of the MRC-NIHR Trials Methodology Research Partnership. The reviewers named above, and other, unnamed discussants of the paper, are all qualified statisticians with experience in clinical trials. Our objective is to provide a rapid review of publications, preprints and protocols from clinical trials of COVID-19 treatments, independent of journal specific review processes. We aim to provide timely, constructive, focused, clear advice aimed at improving both the research outputs under review, as well as future studies. Given our collective expertise (clinical trial statistics) our reviews focus on the designs of the trials and other statistical content (methods, presentation and accuracy of results, inferences). Here we review Favipiravir versus Arbidol for COVID-19: A Randomized Clinical Trial, by Chen et al. https://www.medrxiv.org/content/10.1101/2020.03.17.20037432v2",
 		"language": "eng",
-		"note": "DOI: 10.5281/zenodo.3734198",
+		"note": "DOI: 10.5281/zenodo.3734198\nEdTechHub.ItemAlsoKnownAs: 10.5281/zenodo.3734198 5567156:7HDXLWEA",
 		"publisher": "Zenodo",
 		"source": "Zenodo",
 		"title": "Statistical review of Favipiravir versus Arbidol for COVID-19: A Randomized Clinical Trial",
@@ -7170,7 +7091,7 @@
 		"DOI": "10.1101/2020.04.29.20085761",
 		"ISSN": "2008-5761",
 		"language": "en",
-		"note": "publisher: Cold Spring Harbor Laboratory Press",
+		"note": "publisher: Cold Spring Harbor Laboratory Press\nEdTechHub.ItemAlsoKnownAs: 10.1101/2020.04.29.20085761 5567156:F3VNTQ92",
 		"page": "2020.04.29.20085761",
 		"source": "www.medrxiv.org",
 		"title": "Clinical Outcomes and Plasma Concentrations of Baloxavir Marboxil and Favipiravir in COVID-19 Patients: an Exploratory Randomized, Controlled Trial",
@@ -7217,7 +7138,7 @@
 		"DOI": "10.3390/cells9102206",
 		"issue": "10",
 		"language": "en",
-		"note": "number: 10\npublisher: Multidisciplinary Digital Publishing Institute",
+		"note": "number: 10\npublisher: Multidisciplinary Digital Publishing Institute\nEdTechHub.ItemAlsoKnownAs: 10.3390/cells9102206 5567156:IA4FQCF3",
 		"page": "2206",
 		"source": "www.mdpi.com",
 		"title": "Disharmonic Inflammatory Signatures in COVID-19: Augmented Neutrophils’ but Impaired Monocytes’ and Dendritic Cells’ Responsiveness",
@@ -7280,6 +7201,407 @@
 				[
 					"2020",
 					10
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/MFS3IPPU",
+		"type": "article-journal",
+		"container-title": "New England Journal of Medicine",
+		"DOI": "10.1056/NEJMoa2007764",
+		"ISSN": "0028-4793",
+		"issue": "0",
+		"note": "publisher: Massachusetts Medical Society\n_eprint: https://doi.org/10.1056/NEJMoa2007764\nEdTechHub.ItemAlsoKnownAs: 10.1056/NEJMoa2007764 5567156:MFS3IPPU",
+		"page": "null",
+		"source": "Taylor and Francis+NEJM",
+		"title": "Remdesivir for the Treatment of Covid-19 — Final Report",
+		"URL": "https://doi.org/10.1056/NEJMoa2007764",
+		"volume": "0",
+		"author": [
+			{
+				"family": "Beigel",
+				"given": "John H."
+			},
+			{
+				"family": "Tomashek",
+				"given": "Kay M."
+			},
+			{
+				"family": "Dodd",
+				"given": "Lori E."
+			},
+			{
+				"family": "Mehta",
+				"given": "Aneesh K."
+			},
+			{
+				"family": "Zingman",
+				"given": "Barry S."
+			},
+			{
+				"family": "Kalil",
+				"given": "Andre C."
+			},
+			{
+				"family": "Hohmann",
+				"given": "Elizabeth"
+			},
+			{
+				"family": "Chu",
+				"given": "Helen Y."
+			},
+			{
+				"family": "Luetkemeyer",
+				"given": "Annie"
+			},
+			{
+				"family": "Kline",
+				"given": "Susan"
+			},
+			{
+				"family": "Lopez de Castilla",
+				"given": "Diego"
+			},
+			{
+				"family": "Finberg",
+				"given": "Robert W."
+			},
+			{
+				"family": "Dierberg",
+				"given": "Kerry"
+			},
+			{
+				"family": "Tapson",
+				"given": "Victor"
+			},
+			{
+				"family": "Hsieh",
+				"given": "Lanny"
+			},
+			{
+				"family": "Patterson",
+				"given": "Thomas F."
+			},
+			{
+				"family": "Paredes",
+				"given": "Roger"
+			},
+			{
+				"family": "Sweeney",
+				"given": "Daniel A."
+			},
+			{
+				"family": "Short",
+				"given": "William R."
+			},
+			{
+				"family": "Touloumi",
+				"given": "Giota"
+			},
+			{
+				"family": "Lye",
+				"given": "David Chien"
+			},
+			{
+				"family": "Ohmagari",
+				"given": "Norio"
+			},
+			{
+				"family": "Oh",
+				"given": "Myoung-don"
+			},
+			{
+				"family": "Ruiz-Palacios",
+				"given": "Guillermo M."
+			},
+			{
+				"family": "Benfield",
+				"given": "Thomas"
+			},
+			{
+				"family": "Fätkenheuer",
+				"given": "Gerd"
+			},
+			{
+				"family": "Kortepeter",
+				"given": "Mark G."
+			},
+			{
+				"family": "Atmar",
+				"given": "Robert L."
+			},
+			{
+				"family": "Creech",
+				"given": "C. Buddy"
+			},
+			{
+				"family": "Lundgren",
+				"given": "Jens"
+			},
+			{
+				"family": "Babiker",
+				"given": "Abdel G."
+			},
+			{
+				"family": "Pett",
+				"given": "Sarah"
+			},
+			{
+				"family": "Neaton",
+				"given": "James D."
+			},
+			{
+				"family": "Burgess",
+				"given": "Timothy H."
+			},
+			{
+				"family": "Bonnett",
+				"given": "Tyler"
+			},
+			{
+				"family": "Green",
+				"given": "Michelle"
+			},
+			{
+				"family": "Makowski",
+				"given": "Mat"
+			},
+			{
+				"family": "Osinusi",
+				"given": "Anu"
+			},
+			{
+				"family": "Nayak",
+				"given": "Seema"
+			},
+			{
+				"family": "Lane",
+				"given": "H. Clifford"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					11,
+					4
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					5,
+					22
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/NSTX4EZM",
+		"type": "report",
+		"abstract": "ABSTRACT\n          \n            BACKGROUND\n            WHO expert groups recommended mortality trials in hospitalized COVID-19 of four re-purposed antiviral drugs.\n          \n          \n            METHODS\n            Study drugs were Remdesivir, Hydroxychloroquine, Lopinavir (fixed-dose combination with Ritonavir) and Interferon-β1a (mainly subcutaneous; initially with Lopinavir, later not). COVID-19 inpatients were randomized equally between whichever study drugs were locally available and open control (up to 5 options: 4 active and local standard-of-care). The intent-to-treat primary analyses are of in-hospital mortality in the 4 pairwise comparisons of each study drug vs its controls (concurrently allocated the same management without that drug, despite availability). Kaplan-Meier 28-day risks are unstratified; log-rank death rate ratios (RRs) are stratified for age and ventilation at entry.\n          \n          \n            RESULTS\n            In 405 hospitals in 30 countries 11,266 adults were randomized, with 2750 allocated Remdesivir, 954 Hydroxychloroquine, 1411 Lopinavir, 651 Interferon plus Lopinavir, 1412 only Interferon, and 4088 no study drug. Compliance was 94-96% midway through treatment, with 2-6% crossover. 1253 deaths were reported (at median day 8, IQR 4-14). Kaplan-Meier 28-day mortality was 12% (39% if already ventilated at randomization, 10% otherwise). Death rate ratios (with 95% CIs and numbers dead/randomized, each drug vs its control) were: Remdesivir RR=0.95 (0.81-1.11, p=0.50; 301/2743 active vs 303/2708 control), Hydroxychloroquine RR=1.19 (0.89-1.59, p=0.23; 104/947 vs 84/906), Lopinavir RR=1.00 (0.79-1.25, p=0.97; 148/1399 vs 146/1372) and Interferon RR=1.16 (0.96-1.39, p=0.11; 243/2050 vs 216/2050). No study drug definitely reduced mortality (in unventilated patients or any other subgroup of entry characteristics), initiation of ventilation or hospitalisation duration.\n          \n          \n            CONCLUSIONS\n            \n              These Remdesivir, Hydroxychloroquine, Lopinavir and Interferon regimens appeared to have little or no effect on hospitalized COVID-19, as indicated by overall mortality, initiation of ventilation and duration of hospital stay. The mortality findings contain most of the randomized evidence on Remdesivir and Interferon, and are consistent with meta-analyses of mortality in all major trials. (Funding: WHO. Registration:\n              ISRCTN83971151\n              ,\n              NCT04315948\n              )",
+		"genre": "preprint",
+		"language": "en",
+		"note": "DOI: 10.1101/2020.10.15.20209817\nEdTechHub.ItemAlsoKnownAs: 10.1101/2020.10.15.20209817 5567156:NSTX4EZM",
+		"publisher": "Infectious Diseases (except HIV/AIDS)",
+		"source": "DOI.org (Crossref)",
+		"title": "Repurposed antiviral drugs for COVID-19 –interim WHO SOLIDARITY trial results",
+		"URL": "http://medrxiv.org/lookup/doi/10.1101/2020.10.15.20209817",
+		"author": [
+			{
+				"literal": "WHO Solidarity trial consortium"
+			},
+			{
+				"family": "Pan",
+				"given": "Hongchao"
+			},
+			{
+				"family": "Peto",
+				"given": "Richard"
+			},
+			{
+				"family": "Karim",
+				"given": "Quarraisha Abdool"
+			},
+			{
+				"family": "Alejandria",
+				"given": "Marissa"
+			},
+			{
+				"family": "Henao-Restrepo",
+				"given": "Ana Maria"
+			},
+			{
+				"family": "García",
+				"given": "César Hernández"
+			},
+			{
+				"family": "Kieny",
+				"given": "Marie-Paule"
+			},
+			{
+				"family": "Malekzadeh",
+				"given": "Reza"
+			},
+			{
+				"family": "Murthy",
+				"given": "Srinivas"
+			},
+			{
+				"family": "Preziosi",
+				"given": "Marie-Pierre"
+			},
+			{
+				"family": "Reddy",
+				"given": "Srinath"
+			},
+			{
+				"family": "Periago",
+				"given": "Mirta Roses"
+			},
+			{
+				"family": "Sathiyamoorthy",
+				"given": "Vasee"
+			},
+			{
+				"family": "Røttingen",
+				"given": "John-Arne"
+			},
+			{
+				"family": "Swaminathan",
+				"given": "Soumya"
+			},
+			{
+				"literal": "as the members of the Writing Committee, assume responsibility for the content and integrity of this article"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					11,
+					4
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					10,
+					15
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/K3N3VG2X",
+		"type": "article-journal",
+		"container-title": "Journal of Medical Virology",
+		"DOI": "10/gg6m3s",
+		"ISSN": "0146-6615, 1096-9071",
+		"journalAbbreviation": "J Med Virol",
+		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10/gg6m3s 5567156:ID7F3XIH 5567156:K3N3VG2X",
+		"page": "jmv.26365",
+		"source": "DOI.org (Crossref)",
+		"title": "The association of interleukin‐6 value, interleukin inhibitors, and outcomes of patients with COVID‐19 in New York City",
+		"URL": "https://onlinelibrary.wiley.com/doi/10.1002/jmv.26365",
+		"author": [
+			{
+				"family": "Maeda",
+				"given": "Tetsuro"
+			},
+			{
+				"family": "Obata",
+				"given": "Reiichiro"
+			},
+			{
+				"family": "Rizk DO",
+				"given": "Dahlia"
+			},
+			{
+				"family": "Kuno",
+				"given": "Toshiki"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					11,
+					4
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					8,
+					25
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/FSUQMUP8",
+		"type": "article-journal",
+		"container-title": "Journal of Medical Virology",
+		"DOI": "10/ghhwf6",
+		"ISSN": "0146-6615, 1096-9071",
+		"journalAbbreviation": "J Med Virol",
+		"language": "en",
+		"note": "EdTechHub.ItemAlsoKnownAs: 10/ghhwf6 5567156:FSUQMUP8 5567156:IHATMFTC",
+		"page": "jmv.26488",
+		"source": "DOI.org (Crossref)",
+		"title": "Tolerability of favipiravir therapy in critically ill patients with COVID‐19: A report of four cases",
+		"title-short": "Tolerability of favipiravir therapy in critically ill patients with COVID‐19",
+		"URL": "https://onlinelibrary.wiley.com/doi/10.1002/jmv.26488",
+		"author": [
+			{
+				"family": "Dauby",
+				"given": "Nicolas"
+			},
+			{
+				"family": "Van Praet",
+				"given": "Serge"
+			},
+			{
+				"family": "Vanhomwegen",
+				"given": "Charlotte"
+			},
+			{
+				"family": "Veliziotis",
+				"given": "Ioannis"
+			},
+			{
+				"family": "Konopnicki",
+				"given": "Deborah"
+			},
+			{
+				"family": "Roman",
+				"given": "Alain"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					11,
+					4
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					9,
+					29
 				]
 			]
 		}

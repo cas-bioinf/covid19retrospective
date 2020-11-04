@@ -107,7 +107,8 @@ plot_multiverse <- function(hypo_res, adjustments_to_hide = c(), x_limits = NULL
       scale_y_discrete("Model type", labels = my_labeller) +
       scale_x_discrete("Adjustment") +
       my_facet +
-      theme(axis.text.x = element_text(angle = 90, vjust = 0.2),
+      theme(axis.text.x = element_text(angle = 90, vjust = 0.2, size = 9),
+            axis.text.y = element_text(size = 8),
             strip.text = element_text(color = "white"),
             strip.background = element_blank(),
             plot.margin = margin(r = 2)) +
@@ -116,6 +117,8 @@ plot_multiverse <- function(hypo_res, adjustments_to_hide = c(), x_limits = NULL
   plot_cis <- hypo_res %>%
    ggplot(aes(x = point_estimate, xmin = ci_low, xmax = ci_high, y = id)) +
     geom_vline(xintercept = 0, color = "blue") +
+    geom_vline(xintercept = log(1.5), color = "green") +
+    geom_vline(xintercept = -log(1.5), color = "green") +
     geom_point(na.rm = TRUE) +
     geom_errorbarh(na.rm = TRUE) +
     spacers_geom +
@@ -127,5 +130,5 @@ plot_multiverse <- function(hypo_res, adjustments_to_hide = c(), x_limits = NULL
           plot.margin = margin(l = 0)) +
     shared_theme
 
-  (plot_adj | plot_cis ) + plot_layout(widths = c(1.8,4))
+  (plot_adj | plot_cis ) + plot_layout(widths = c(1.8,4)) & theme(axis.title = element_text(size = 11, face = "bold"))
 }
