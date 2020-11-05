@@ -318,6 +318,9 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
     mutate(
       # Special cases
       value = case_when(value == "Oxygen/NIPPV" ~ "NIPPV",
+                        value == "SPONT" ~ "AA",
+                        value == "HFNO" ~ "Oxygen",
+                        value == "UPV" ~ "MV",
                         TRUE ~ value)
     ) %>%
     select(-indicator, -unit)
@@ -502,6 +505,8 @@ read_progression_data <- function(file, hospital_id, lang, file_version, patient
                                     value = ">100", unit = "mg/day"))
   } else if(hospital_id == "YqNbe") {
     marker_data <- marker_data %>% mutate(value = if_else(marker %in% c("hcq","az") & value == "ano", ">100", value))
+  } else if(hospital_id == "JXnnM") {
+    marker_data <- marker_data %>% mutate(value = gsub("mg", "", value))
   }
 
 
@@ -747,6 +752,7 @@ merge_patients <- function(complete_data, patients_to_merge) {
         filter(!(should_change & day == row$shift)) %>%
         select(-should_change)
 
+        stop("TODO 8PGr47dGTx needs to change outcome and last_recrod when merging")
     } else {
       stop(paste0("Unknown resolution: ", row$resolution))
     }

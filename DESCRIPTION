@@ -26,10 +26,15 @@ Imports:
     MCMCpack,
     janitor,
     stringi,
-    formula.tools
+    formula.tools,
+    splines2,
+    Rcpp
 Remotes: 
     stan-dev/cmdstanr
 Roxygen: list(markdown = TRUE)
 RoxygenNote: 7.1.1
 Suggests: 
-    testthat
+    testthat (>= 2.1.0)
+LinkingTo: 
+    Rcpp,
+    RcppEigen

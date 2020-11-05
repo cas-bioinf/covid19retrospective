@@ -1,31 +1,34 @@
 hypothesis,model,adjusted,estimand,widest_CI_excl_reference,point_estimate,ci_low,ci_high,model_check,data_version
-hcq_reduces_death,brms_binary,"az, favipiravir, sex, age_norm, smoking, obesity",logit(survival),0.9905,1.9780523135,0.5431264,3.5595112500000003,OK,9f64434d7d5780d6e5d28902bbd66efc
-az_reduces_death,brms_binary,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(survival),0.819,-0.897963895113,-2.21878125,0.3568778250000002,OK,9f64434d7d5780d6e5d28902bbd66efc
-favipiravir_reduces_death,brms_binary,"hcq, az, sex, age_norm, smoking, obesity",logit(survival),0.9205,4.3403837230375,-0.3022874,11.414160000000003,OK,9f64434d7d5780d6e5d28902bbd66efc
-hcq_reduces_death,brms_binary_7,"az, favipiravir, sex, age_norm, smoking, obesity",logit(survival),1,2.6748710325,2.21872325,3.1480075000000003,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
-az_reduces_death,brms_binary_7,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(survival),1,-1.2437126545,-1.6019804999999998,-0.883888175,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
-favipiravir_reduces_death,brms_binary_7,"hcq, az, sex, age_norm, smoking, obesity",logit(survival),1,6.8413041825,3.4770167499999998,12.51313,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
-hcq_reduces_death,brms_binary_28,"az, favipiravir, sex, age_norm, smoking, obesity",logit(survival),1,2.67394614,2.22999525,3.144519,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
-az_reduces_death,brms_binary_28,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(survival),1,-1.246555344,-1.59638325,-0.8969605749999998,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
-favipiravir_reduces_death,brms_binary_28,"hcq, az, sex, age_norm, smoking, obesity",logit(survival),1,6.8606841925,3.51005425,12.420667500000004,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,brms_binary,"az, favipiravir, sex, age_norm, smoking, obesity",logit(survival),0.9905,1.9780523135,0.5431264,3.5595112500000003,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,brms_binary,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(survival),0.819,-0.897963895113,-2.21878125,0.3568778250000002,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,brms_binary,"hcq, az, sex, age_norm, smoking, obesity",logit(survival),0.9205,4.3403837230375,-0.3022874,11.414160000000003,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,brms_binary_7,"az, favipiravir, sex, age_norm, smoking, obesity",logit(survival),1,2.6748710325,2.21872325,3.1480075000000003,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,brms_binary_7,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(survival),1,-1.2437126545,-1.6019804999999998,-0.883888175,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,brms_binary_7,"hcq, az, sex, age_norm, smoking, obesity",logit(survival),1,6.8413041825,3.4770167499999998,12.51313,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,brms_binary_28,"az, favipiravir, sex, age_norm, smoking, obesity",logit(survival),1,2.67394614,2.22999525,3.144519,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,brms_binary_28,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(survival),1,-1.246555344,-1.59638325,-0.8969605749999998,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,brms_binary_28,"hcq, az, sex, age_norm, smoking, obesity",logit(survival),1,6.8606841925,3.51005425,12.420667500000004,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
 hcq_reduces_death,brms_cox,"az, favipiravir, sex, age_norm, smoking, obesity",log(HR),1,-2.30852470075,-3.4567574999999997,-1.2096444999999996,some influencial observations,9f64434d7d5780d6e5d28902bbd66efc
 az_reduces_death,brms_cox,"hcq, favipiravir, sex, age_norm, smoking, obesity",log(HR),0.937,0.9928584401975,-0.06785736499999999,2.068,some influencial observations,9f64434d7d5780d6e5d28902bbd66efc
 favipiravir_reduces_death,brms_cox,"hcq, az, sex, age_norm, smoking, obesity",log(HR),0.9415,-4.1919031761975,-10.87344,0.08075125500000035,some influencial observations,9f64434d7d5780d6e5d28902bbd66efc
-hcq_increases_discharged,brms_binary,"az, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),0.996,1.2088947862575,0.33977245,2.1170157499999998,OK,9f64434d7d5780d6e5d28902bbd66efc
-az_increases_discharged,brms_binary,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),0.45099999999999996,0.266212061949425,-0.6631803,1.1741290000000002,OK,9f64434d7d5780d6e5d28902bbd66efc
-favipiravir_increases_discharged,brms_binary,"hcq, az, sex, age_norm, smoking, obesity",logit(discharged),0.789,1.480914120867,-0.70596295,4.36663725,OK,9f64434d7d5780d6e5d28902bbd66efc
-hcq_increases_discharged,brms_binary_7,"az, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),1,1.08201161275,0.7952579750000001,1.380638,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
-az_increases_discharged,brms_binary_7,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),1,0.64140440125,0.38875870000000007,0.89482335,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
-favipiravir_increases_discharged,brms_binary_7,"hcq, az, sex, age_norm, smoking, obesity",logit(discharged),1,2.7530367525,1.6563945,4.10671375,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
-hcq_increases_discharged,brms_binary_28,"az, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),1,1.08919943225,0.80925385,1.3800337500000002,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
-az_increases_discharged,brms_binary_28,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),1,0.63823320025,0.37682125,0.8981283000000001,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
-favipiravir_increases_discharged,brms_binary_28,"hcq, az, sex, age_norm, smoking, obesity",logit(discharged),1,2.758088675,1.68135375,4.10231525,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
-hcq_reduces_death,brms_categorical,"az, favipiravir, sex, age_norm, smoking, obesity",logit(death),0.773,2.71366304359295,-1.42732275,7.934249250000001,OK,9f64434d7d5780d6e5d28902bbd66efc
-az_reduces_death,brms_categorical,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(death),0.29700000000000004,0.639243928976,-2.28983725,3.770393500000002,OK,9f64434d7d5780d6e5d28902bbd66efc
-favipiravir_reduces_death,brms_categorical,"hcq, az, sex, age_norm, smoking, obesity",logit(death),0.5295000000000001,-2.8966097696075,-11.1618525,4.98237425,OK,9f64434d7d5780d6e5d28902bbd66efc
-hcq_increases_discharged,brms_categorical,"az, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),0.9955,5.2385183124275,1.3761349999999999,10.23181,OK,9f64434d7d5780d6e5d28902bbd66efc
-az_increases_discharged,brms_categorical,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),0.2755000000000001,-0.45334139603525,-3.093214,2.596326000000001,OK,9f64434d7d5780d6e5d28902bbd66efc
-favipiravir_increases_discharged,brms_categorical,"hcq, az, sex, age_norm, smoking, obesity",logit(discharged),0.6555,3.67746296469275,-3.0624415,11.549652500000002,OK,9f64434d7d5780d6e5d28902bbd66efc
+hcq_increases_discharged,brms_binary,"az, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),0.996,1.2088947862575,0.33977245,2.1170157499999998,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_increases_discharged,brms_binary,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),0.45099999999999996,0.266212061949425,-0.6631803,1.1741290000000002,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_increases_discharged,brms_binary,"hcq, az, sex, age_norm, smoking, obesity",logit(discharged),0.789,1.480914120867,-0.70596295,4.36663725,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+hcq_increases_discharged,brms_binary_7,"az, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),1,1.08201161275,0.7952579750000001,1.380638,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_increases_discharged,brms_binary_7,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),1,0.64140440125,0.38875870000000007,0.89482335,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_increases_discharged,brms_binary_7,"hcq, az, sex, age_norm, smoking, obesity",logit(discharged),1,2.7530367525,1.6563945,4.10671375,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+hcq_increases_discharged,brms_binary_28,"az, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),1,1.08919943225,0.80925385,1.3800337500000002,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_increases_discharged,brms_binary_28,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),1,0.63823320025,0.37682125,0.8981283000000001,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_increases_discharged,brms_binary_28,"hcq, az, sex, age_norm, smoking, obesity",logit(discharged),1,2.758088675,1.68135375,4.10231525,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+hcq_increases_discharged,brms_cox,"az, favipiravir, sex, age_norm, smoking, obesity",log(HR),0.8720000000000001,-0.4524474393335,-1.0441197500000001,0.1285870250000004,some influencial observations,9f64434d7d5780d6e5d28902bbd66efc
+az_increases_discharged,brms_cox,"hcq, favipiravir, sex, age_norm, smoking, obesity",log(HR),0.7404999999999999,0.30104101009,-0.2391969,0.8388297250000001,some influencial observations,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_increases_discharged,brms_cox,"hcq, az, sex, age_norm, smoking, obesity",log(HR),0.3235,0.177590331669675,-0.6967794749999999,0.9783495000000008,some influencial observations,9f64434d7d5780d6e5d28902bbd66efc
+hcq_reduces_death,brms_categorical,"az, favipiravir, sex, age_norm, smoking, obesity",logit(death),0.773,2.71366304359295,-1.42732275,7.934249250000001,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_reduces_death,brms_categorical,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(death),0.29700000000000004,0.639243928976,-2.28983725,3.770393500000002,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_reduces_death,brms_categorical,"hcq, az, sex, age_norm, smoking, obesity",logit(death),0.5295000000000001,-2.8966097696075,-11.1618525,4.98237425,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+hcq_increases_discharged,brms_categorical,"az, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),0.9955,5.2385183124275,1.3761349999999999,10.23181,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+az_increases_discharged,brms_categorical,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(discharged),0.2755000000000001,-0.45334139603525,-3.093214,2.596326000000001,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
+favipiravir_increases_discharged,brms_categorical,"hcq, az, sex, age_norm, smoking, obesity",logit(discharged),0.6555,3.67746296469275,-3.0624415,11.549652500000002,Suspicious,9f64434d7d5780d6e5d28902bbd66efc
 hcq_reduces_death,brms_categorical_7,"az, favipiravir, sex, age_norm, smoking, obesity",logit(death),1,-3.701195665,-4.860891,-2.6778042499999994,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
 az_reduces_death,brms_categorical_7,"hcq, favipiravir, sex, age_norm, smoking, obesity",logit(death),1,1.91125208475,1.00923775,2.9840220000000004,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc
 favipiravir_reduces_death,brms_categorical_7,"hcq, az, sex, age_norm, smoking, obesity",logit(death),0.998,-5.2092185573,-11.8537325,-1.0027457499999999,probably overconfident,9f64434d7d5780d6e5d28902bbd66efc

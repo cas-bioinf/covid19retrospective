@@ -45,3 +45,5 @@ vignettes/*.pdf
 /private_data/
 /local_temp_data/
 /manuscript/*_files
+
+*.docx

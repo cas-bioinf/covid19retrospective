@@ -1,0 +1,3 @@
+hypothesis,model,adjusted,estimand,point_estimate,p_value,ci_low,ci_high,model_check,data_version
+hcq_reduces_death,coxph1,"age, sex, comorbidities (sum)",log(HR),-0.8085288971723542,0.0593796935980251,-1.6527965059719665,0.03573871162725817,OK,9f64434d7d5780d6e5d28902bbd66efc
+hcq_increases_discharged,coxph1,"age, sex, comorbidities (sum)",log(HR),-0.1116330843162555,0.6372268480151712,-0.5739434407912392,0.3506772721587281,OK,9f64434d7d5780d6e5d28902bbd66efc

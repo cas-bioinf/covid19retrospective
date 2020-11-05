@@ -1,4 +1,5 @@
-dummy_markers <- c("Drugs", "Other marker (optional)", "Other Covid drug", "Yet another drug")
+dummy_markers <- c("Drugs", "Other marker (optional)", "Other Covid drug", "Yet another drug",
+                   "RTG S+P", "Rosuvastatin","Rtg S+P")
 
 
 marker_map <- c(
@@ -97,7 +98,8 @@ marker_map <- c(
         "Aciclovir" = "aciclovir",
         "Isoprinosine" = "isoprinosine",
         "Tamiflu" = "tamiflu",
-        "Lexaurin" = "lexaurin"
+        "Lexaurin" = "lexaurin",
+        "Isoprinosin" = "isoprinosin"
 )
 
 all_antibiotics <- c(
@@ -132,7 +134,7 @@ antibiotics_not_for_pneumonia <- c(
 
 all_macrolides <- c("az", "clarithromycin")
 
-pcr_values_positive <- c("pos","neg", "neg and pos", "susp.", "susp", "poz")
+pcr_values_positive <- c("pos","neg", "neg and pos", "susp.", "susp", "poz", "nejasn\u00fd", "nejsan\u00fd")
 pcr_value_negative <- "neg"
 
 unit_overwrites <- list(

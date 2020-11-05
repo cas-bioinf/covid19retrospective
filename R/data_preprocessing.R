@@ -38,7 +38,10 @@ read_data_for_analysis <- function() {
                                BMI <= 25 ~ "No",
                                BMI <= 30 ~ "Overweight",
                                TRUE ~ "Obese")
-                            ,levels = c("No", "Overweight", "Obese"), ordered = TRUE)
+                            ,levels = c("No", "Overweight", "Obese"), ordered = TRUE),
+           #TODO 8PGr47dGTx - quick fix for bug in preprocessing, incorrectly merged after transfer
+           last_record = if_else(patient_id == "8PGr47dGTx", last_record + 12L, last_record),
+           outcome = if_else(patient_id == "8PGr47dGTx", factor("Discharged", levels = levels(outcome)), outcome)
            )
 
   collapse_breathing <- function(x) {
@@ -66,7 +69,14 @@ read_data_for_analysis <- function() {
                               day = col_integer(),
                               value = col_double(),
                               censored = col_character()
-                            ))
+                            )) %>%
+    # One more bug quick fix (fixed in raw data for further imports)
+    mutate(marker = if_else(patient_id == "809N695Ho6" & marker == "SpO2_native" & day >= 4, "Horowitz_index", marker)) %>%
+    # Filtering harmless NAs (due to error in data)
+    filter(!(patient_id == "d2TgUar00l" & is.na(value)))
+
+
+
 
   multiple_units <- marker_data %>%
     group_by(marker) %>%
@@ -111,7 +121,8 @@ compute_derived_quantities_patients <- function(data) {
               ever_antibiotics = any(took_antibiotics),
               any_d_dimer = any(!is.na(d_dimer)),
               any_IL_6 = any(!is.na(IL_6)),
-              worst_breathing = max(breathing),
+              worst_breathing = max(breathing, na.rm = TRUE),
+              worst_breathing_s = max(breathing_s, na.rm = TRUE),
               had_invasive = any(breathing >= "MV" & breathing < "Death"),
               first_day_invasive = if_else(had_invasive, min(c(day[breathing >= "MV"], 1e6)), NA_real_),
               last_day_invasive = if_else(had_invasive, max(c(day[breathing >= "MV"], 0)), NA_real_),

@@ -66,6 +66,32 @@ pp_check_last_state <- function(fit, predicted_rect) {
   bayesplot::ppc_bars(last_states_observed, t(last_states))
 }
 
+
+pp_check_state_at <- function(fit, predicted_rect, day, newdata = NULL) {
+  last_state_time <- function(x) {
+    max(which(!is.na(x) & x > 0))
+  }
+
+  if(is.null(newdata)) {
+    pred_rawdata <- fit$data
+  } else {
+    pred_rawdata <- newdata
+  }
+
+  data_hmm <- make_data_hmm(pred_rawdata)
+
+  last_state_times <- data_hmm$standata$obs_states_rect %>% apply(MARGIN = 1, last_state_time)
+
+  use_rows <- last_state_times >= day
+
+  states_at_day_observed <- data_hmm$standata$obs_states_rect[use_rows, day]
+
+  states_at <- predicted_rect[day, use_rows, ]
+
+  bayesplot::ppc_bars(states_at_day_observed, t(states_at))
+}
+
+
 pp_check_transitions <- function(fit, predicted_rect, states_from = NULL, states_to = NULL,
                                  binwidth = NULL, scale = "prob", ...) {
   N_states_observed <- fit$data_processed$standata$N_states_observed
@@ -153,4 +179,26 @@ pp_check_transitions_direction <- function(fit, predicted_rect, states_from = NU
   yrep <- apply(predicted_rect, MARGIN = 3, FUN = compute_directions)
 
   bayesplot::ppc_stat_grouped(y, t(yrep), group = c("< 0", "0", "> 0"), binwidth = binwidth)
+}
+
+do_common_pp_checks <- function(fit) {
+  epred_rect <- posterior_epred_rect(fit)
+  predicted_rect <- posterior_epred_to_predicted(fit, epred_rect)
+  predicted <- posterior_rect_to_long(fit, predicted_rect)
+
+  predicted_df <- posterior_long_to_df(fit$data, predicted)
+
+  all_ids <- fit$data$serie_data %>% select(hospital_id, .serie) %>%
+    distinct() %>% arrange(hospital_id) %>% pull(.serie)
+  step_size <- 6
+  for(step in 1:ceiling(length(all_ids) / step_size)) {
+    series_id <- ((step - 1) * step_size + 1) : (step* step_size)
+
+    posterior_state_plot(predicted_df, all_ids[series_id], fit$data) %>% print()
+  }
+
+  pp_check_transitions_direction(fit, predicted_rect) %>% print()
+  pp_check_transitions_direction(fit, predicted_rect, states_from = 2:4)  %>% print()
+
+
 }
