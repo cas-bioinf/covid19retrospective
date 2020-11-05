@@ -177,6 +177,8 @@ fit_survival_base <- add_criterion(fit_survival_base, "loo")
 
 ```{r}
 summary(fit_survival_base)
+pp_check(fit_survival_base, "error_binned")
+loo(fit_survival_base)
 # ce <- conditional_effects(fit_survival_base)
 # plot(ce, ask = FALSE)
 ```
@@ -223,6 +225,8 @@ fit_survival_base_7 <- add_criterion(fit_survival_base_7, "loo")
 
 ```{r}
 summary(fit_survival_base_7)
+pp_check(fit_survival_base_7, "error_binned")
+loo(fit_survival_base_7)
 # ce <- conditional_effects(fit_survival_base_7)
 # plot(ce, ask = FALSE)
 ```
@@ -235,21 +239,24 @@ hypothesis_res_list[["hcq_az_survival_base_7"]] <- rbind(
     model = "brms_binary_7",
     estimand = "logit(survival)",
     hypothesis = hypotheses$hcq_reduces_death,
-    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_binary_7",
     estimand = "logit(survival)",
     hypothesis = hypotheses$az_reduces_death,
-    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_favipiravirTRUE,
     model = "brms_binary_7",
     estimand = "logit(survival)",
     hypothesis = hypotheses$favipiravir_reduces_death,
-    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   )
 )
 ```
@@ -269,6 +276,8 @@ fit_survival_base_28 <- add_criterion(fit_survival_base_28, "loo")
 
 ```{r}
 summary(fit_survival_base_28)
+pp_check(fit_survival_base_28, "error_binned")
+loo(fit_survival_base_28)
 # ce <- conditional_effects(fit_survival_base_28)
 # plot(ce, ask = FALSE)
 ```
@@ -281,21 +290,24 @@ hypothesis_res_list[["hcq_az_survival_base_28"]] <- rbind(
     model = "brms_binary_28",
     estimand = "logit(survival)",
     hypothesis = hypotheses$hcq_reduces_death,
-    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_binary_28",
     estimand = "logit(survival)",
     hypothesis = hypotheses$az_reduces_death,
-    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_favipiravirTRUE,
     model = "brms_binary_28",
     estimand = "logit(survival)",
     hypothesis = hypotheses$favipiravir_reduces_death,
-    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   )
 )
 ```
@@ -326,6 +338,7 @@ fit_survival_time <- add_criterion(fit_survival_time, "loo")
 
 ```{r}
 summary(fit_survival_time)
+loo(fit_survival_time)
 ```
 
 ```{r}
@@ -336,21 +349,24 @@ hypothesis_res_list[["hcq_az_survival_time"]] <- rbind(
     model = "brms_cox",
     estimand = "log(HR)",
     hypothesis = hypotheses$hcq_reduces_death,
-    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "some influencial observations"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_cox",
     estimand = "log(HR)",
     hypothesis = hypotheses$az_reduces_death,
-    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "some influencial observations"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_favipiravirTRUE,
     model = "brms_cox",
     estimand = "log(HR)",
     hypothesis = hypotheses$favipiravir_reduces_death,
-    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity",
+    model_check = "some influencial observations"
   )
 )
 ```
@@ -382,6 +398,8 @@ fit_discharged_base <- add_criterion(fit_discharged_base, "loo")
 
 ```{r}
 summary(fit_discharged_base)
+pp_check(fit_discharged_base, "error_binned")
+loo(fit_discharged_base)
 # ce <- conditional_effects(fit_discharged_base)
 # plot(ce, ask = FALSE)
 ```
@@ -428,6 +446,8 @@ fit_discharged_base_7 <- add_criterion(fit_discharged_base_7, "loo")
 
 ```{r}
 summary(fit_discharged_base_7)
+pp_check(fit_discharged_base_7, "error_binned")
+loo(fit_discharged_base_7)
 # ce <- conditional_effects(fit_discharged_base_7)
 # plot(ce, ask = FALSE)
 ```
@@ -440,21 +460,24 @@ hypothesis_res_list[["hcq_az_discharged_base_7"]] <- rbind(
     model = "brms_binary_7",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$hcq_increases_discharged,
-    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_binary_7",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$az_increases_discharged,
-    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_favipiravirTRUE,
     model = "brms_binary_7",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$favipiravir_increases_discharged,
-    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   )
 )
 ```
@@ -473,6 +496,8 @@ fit_discharged_base_28 <- add_criterion(fit_discharged_base_28, "loo")
 
 ```{r}
 summary(fit_discharged_base_28)
+pp_check(fit_discharged_base_28, "error_binned")
+loo(fit_discharged_base_28)
 # ce <- conditional_effects(fit_discharged_base_28)
 # plot(ce, ask = FALSE)
 ```
@@ -485,21 +510,24 @@ hypothesis_res_list[["hcq_az_discharged_base_28"]] <- rbind(
     model = "brms_binary_28",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$hcq_increases_discharged,
-    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_binary_28",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$az_increases_discharged,
-    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_favipiravirTRUE,
     model = "brms_binary_28",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$favipiravir_increases_discharged,
-    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   )
 )
 ```
@@ -531,6 +559,7 @@ fit_discharged_time <- add_criterion(fit_discharged_time, "loo")
 
 ```{r}
 summary(fit_discharged_time)
+loo(fit_discharged_time)
 ```
 
 ```{r}
@@ -541,21 +570,24 @@ hypothesis_res_list[["hcq_az_discharged_time"]] <- rbind(
     model = "brms_cox",
     estimand = "log(HR)",
     hypothesis = hypotheses$hcq_increases_discharged,
-    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "some influencial observations"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_azTRUE,
     model = "brms_cox",
     estimand = "log(HR)",
     hypothesis = hypotheses$az_increases_discharged,
-    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "some influencial observations"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_ever_favipiraviTRUE,
     model = "brms_cox",
     estimand = "log(HR)",
     hypothesis = hypotheses$favipiravi_increases_discharged,
-    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity",
+    model_check = "some influencial observations"
   )
 )
 ```
@@ -589,6 +621,7 @@ fit_outcome_base <- add_criterion(fit_outcome_base, "loo")
 
 ```{r}
 summary(fit_outcome_base)
+loo(fit_outcome_base)
 # ce <- conditional_effects(fit_outcome_base)
 # plot(ce, ask = FALSE)
 ```
@@ -658,6 +691,8 @@ fit_outcome_base_7 <- add_criterion(fit_outcome_base_7, "loo")
 
 ```{r}
 summary(fit_outcome_base_7)
+pp_check(fit_outcome_base_7)
+loo(fit_outcome_base_7)
 # ce <- conditional_effects(fit_outcome_base_7)
 # plot(ce, ask = FALSE)
 ```
@@ -671,21 +706,24 @@ hypothesis_res_list[["hcq_az_outcome_base_7"]] <- rbind(
     model = "brms_categorical_7",
     estimand = "logit(death)",
     hypothesis = hypotheses$hcq_reduces_death,
-    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDeath_ever_azTRUE,
     model = "brms_categorical_7",
     estimand = "logit(death)",
     hypothesis = hypotheses$az_reduces_death,
-    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDeath_ever_favipiravirTRUE,
     model = "brms_categorical_7",
     estimand = "logit(death)",
     hypothesis = hypotheses$favipiravir_reduces_death,
-    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   # Discharged
   bayesian_hypothesis_res_from_draws(
@@ -693,21 +731,24 @@ hypothesis_res_list[["hcq_az_outcome_base_7"]] <- rbind(
     model = "brms_categorical_7",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$hcq_increases_discharged,
-    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDischarged_ever_azTRUE,
     model = "brms_categorical_7",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$az_increases_discharged,
-    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDischarged_ever_favipiravirTRUE,
     model = "brms_categorical_7",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$favipiravir_increases_discharged,
-    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   )
 )
 ```
@@ -728,6 +769,8 @@ fit_outcome_bas_28 <- add_criterion(fit_outcome_base_28, "loo")
 
 ```{r}
 summary(fit_outcome_base_28)
+pp_check(fit_outcome_base_28)
+loo(fit_outcome_base_28)
 # ce <- conditional_effects(fit_outcome_base_28)
 # plot(ce, ask = FALSE)
 ```
@@ -741,21 +784,24 @@ hypothesis_res_list[["hcq_az_outcome_base_28"]] <- rbind(
     model = "brms_categorical_28",
     estimand = "logit(death)",
     hypothesis = hypotheses$hcq_reduces_death,
-    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDeath_ever_azTRUE,
     model = "brms_categorical_28",
     estimand = "logit(death)",
     hypothesis = hypotheses$az_reduces_death,
-    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDeath_ever_favipiravirTRUE,
     model = "brms_categorical_28",
     estimand = "logit(death)",
     hypothesis = hypotheses$favipiravir_reduces_death,
-    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   # Discharged
   bayesian_hypothesis_res_from_draws(
@@ -763,21 +809,24 @@ hypothesis_res_list[["hcq_az_outcome_base_28"]] <- rbind(
     model = "brms_categorical_28",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$hcq_increases_discharged,
-    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "az, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDischarged_ever_azTRUE,
     model = "brms_categorical_28",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$az_increases_discharged,
-    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, favipiravir, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   ),
   bayesian_hypothesis_res_from_draws(
     draws = draws$b_muDischarged_ever_favipiravirTRUE,
     model = "brms_categorical_28",
     estimand = "logit(discharged)",
     hypothesis = hypotheses$favipiravir_increases_discharged,
-    adjusted = "hcq, az, sex, age_norm, smoking, obesity"
+    adjusted = "hcq, az, sex, age_norm, smoking, obesity",
+    model_check = "probably overconfident"
   )
 )
 ```
@@ -810,6 +859,7 @@ fit_worst_breathing_base <- add_criterion(fit_worst_breathing_base, "loo")
 
 ```{r}
 summary(fit_worst_breathing_base)
+loo(fit_worst_breathing_base)
 # ce <- conditional_effects(fit_worst_breathing_base, categorical = TRUE)
 # plot(ce, ask = FALSE)
 ```
