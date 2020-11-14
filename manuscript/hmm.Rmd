@@ -280,6 +280,35 @@ if(do_pp_checks) {
 ```
 
 
+
+## Treatments + age + sex + hospital, first wave only
+
+```{r trt_group_m3_fw}
+serie_data_fw <- serie_data %>% filter(first_wave)
+simple_initial_states_fw <- serie_data_fw %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed) 
+
+
+trt_group_m3_fw <- brmshmmdata(trt_group_m3_formula, serie_data_fw, 
+                  simple_rate_data, trt_group_m1_hidden_state_data, simple_initial_states_fw, prior = trt_group_m1_prior,
+                  observed_state_data = trt_group_m1_observed_state_data)
+
+trt_group_m3_fw_fit <- brmhmm(trt_group_m3_fw, cache_file = paste0(cache_dir,"/trt_group_m3_fw.rds"), init = 0.1, control = default_control, iter = 1200)
+
+summary(trt_group_m3_fw_fit$brmsfit)
+```
+
+```{r}
+hmm_hypothesis_res_list[["trt_group_m3_fw"]] <-  evaluate_all_treatment_hypotheses(trt_group_m3_fw_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, first_wave", model_check = "OK", cl = cl)
+```
+
+
+```{r}
+if(do_pp_checks) {
+  do_common_pp_checks(trt_group_m3_fw_fit)
+}
+```
+
+
 ## Treatment + age + sex + hospital + comorbidities
 
 
@@ -307,6 +336,30 @@ if(do_pp_checks) {
 }
 ```
 
+## Treatment + age + sex + hospital + comorbidities, first wave
+
+
+```{r trt_group_m4_fw}
+trt_group_m4_fw <- brmshmmdata(trt_group_m4_formula, serie_data_fw, 
+                  simple_rate_data, trt_group_m1_hidden_state_data, simple_initial_states_fw, prior = trt_group_m1_prior,
+                  observed_state_data = trt_group_m1_observed_state_data)
+
+
+trt_group_m4_fw_fit <- brmhmm(trt_group_m4_fw, cache_file = paste0(cache_dir,"/trt_group_m4_fw.rds"), init = 0.1, control = default_control, iter = 1200)
+
+summary(trt_group_m4_fw_fit$brmsfit)
+```
+
+```{r}
+hmm_hypothesis_res_list[["trt_group_m4_fw"]] <-  evaluate_all_treatment_hypotheses(trt_group_m4_fw_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities, first_wave", model_check = "OK", cl = cl)
+```
+
+
+```{r}
+if(do_pp_checks) {
+  do_common_pp_checks(trt_group_m4_fit)
+}
+```
 
 # Treatments - effect on individual rates
 
@@ -397,6 +450,32 @@ if(do_pp_checks) {
 ```
 
 
+## Treatments + age + sex + hospital, first_Wave
+
+```{r trt_rate_m3_fw}
+trt_rate_m3_fw <- brmshmmdata(trt_rate_m3_formula, serie_data_fw, 
+                  trt_rate_m1_rate_data, trt_rate_m1_hidden_state_data, simple_initial_states_fw, prior = trt_rate_m1_prior,
+                  observed_state_data = trt_rate_m1_observed_state_data)
+
+trt_rate_m3_fw_fit <- brmhmm(trt_rate_m3_fw, cache_file = paste0(cache_dir,"/trt_rate_m3_fw.rds"), init = 0.1, control = default_control, iter = 1500)
+
+summary(trt_rate_m3_fw_fit$brmsfit)
+```
+
+```{r}
+hmm_hypothesis_res_list[["trt_rate_m3_fw"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m3_fw_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital, first_wave", model_check = "OK", cl = cl)
+```
+
+
+```{r}
+if(do_pp_checks) {
+  do_common_pp_checks(trt_rate_m3_fw_fit)
+}
+```
+
+
+
+
 ## Treatment + age + sex + hospital + comorbidities
 
 
@@ -422,6 +501,7 @@ if(do_pp_checks) {
   do_common_pp_checks(trt_rate_m4_fit)
 }
 ```
+
 
 # Markers
 
@@ -692,6 +772,33 @@ if(do_pp_checks) {
   do_common_pp_checks(c_trt_m3_fit)
 }
 ```
+
+## Treatments + age + sex + hospital, first wave
+
+```{r c_trt_m3_fw}
+complex_initial_states_fw <- serie_data_fw %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed) %>% paste0(., "_worsening")
+
+c_trt_m3_fw <- brmshmmdata(trt_group_m3_formula, serie_data_fw, 
+                  complex_rate_data, complex_hidden_state_data, complex_initial_states_fw, prior = trt_group_m1_prior,
+                  observed_state_data = base_observed_state_data)
+
+c_trt_m3_fw_fit <- brmhmm(c_trt_m3_fw, cache_file = paste0(cache_dir,"/c_trt_m3_fw.rds"), init = 0.1, control = default_control, iter = 1200)
+
+summary(c_trt_m3_fw_fit$brmsfit)
+```
+
+```{r}
+hmm_hypothesis_res_list[["c_trt_rate_m3_fw"]] <- evaluate_all_treatment_hypotheses(c_trt_m3_fw_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital, first_wave", model_check = "OK", cl = cl)
+
+```
+
+
+```{r}
+if(do_pp_checks) {
+  do_common_pp_checks(c_trt_m3_fit)
+}
+```
+
 
 ## Treatment + age + sex + hospital + comorbidities
 
