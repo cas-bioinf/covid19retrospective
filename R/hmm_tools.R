@@ -34,8 +34,9 @@ compute_counterfactual_mortality_log_OR <- function(hmm_fit, numerator_serie_dat
   log_odds_numerator - log_odds_denominator
 }
 
-evaluate_treatment_hypothesis <- function(fit, hypothesis, treatment_column, model_subgroup,
-                                          adjusted, model_check, cl = NULL, cores = parallel::detectCores()) {
+evaluate_treatment_hypothesis <- function(fit, serie_data_28, hypothesis, treatment_column, model_subgroup,
+                                          adjusted, model_check, cl = NULL, cores = parallel::detectCores()
+                                          ) {
   counterfactual_took <- serie_data_28 %>% mutate({{ treatment_column }} := 1)
   counterfactual_no <- serie_data_28 %>% mutate({{treatment_column }} := 0)
 
@@ -51,10 +52,10 @@ evaluate_treatment_hypothesis <- function(fit, hypothesis, treatment_column, mod
   )
 }
 
-evaluate_all_treatment_hypotheses <- function(fit, model_subgroup, adjusted, model_check, cl = NULL, cores = parallel::detectCores()) {
+evaluate_all_treatment_hypotheses <- function(fit, model_subgroup, adjusted, model_check, serie_data_28 = serie_data_28, cl = NULL, cores = parallel::detectCores()) {
   rbind(
-    evaluate_treatment_hypothesis(fit, hypotheses$hcq_reduces_death, took_hcq, model_subgroup = model_subgroup, adjusted = adjusted, model_check = model_check, cl = cl, cores = cores),
-    evaluate_treatment_hypothesis(fit, hypotheses$az_reduces_death, took_az, model_subgroup = model_subgroup, adjusted = adjusted, model_check = model_check, cl = cl, cores = cores),
-    evaluate_treatment_hypothesis(fit, hypotheses$favipiravir_reduces_death, took_favipiravir, model_subgroup = model_subgroup, adjusted = adjusted, model_check = model_check, cl = cl, cores = cores)
+    evaluate_treatment_hypothesis(fit, serie_data_28, hypotheses$hcq_reduces_death, took_hcq, model_subgroup = model_subgroup, adjusted = adjusted, model_check = model_check, cl = cl, cores = cores),
+    evaluate_treatment_hypothesis(fit, serie_data_28, hypotheses$az_reduces_death, took_az, model_subgroup = model_subgroup, adjusted = adjusted, model_check = model_check, cl = cl, cores = cores),
+    evaluate_treatment_hypothesis(fit, serie_data_28, hypotheses$favipiravir_reduces_death, took_favipiravir, model_subgroup = model_subgroup, adjusted = adjusted, model_check = model_check, cl = cl, cores = cores)
   )
 }

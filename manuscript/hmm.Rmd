@@ -202,7 +202,7 @@ summary(trt_group_m1_fit$brmsfit)
 ```
 
 ```{r}
-hmm_hypothesis_res_list[["trt_group_m1"]] <- evaluate_all_treatment_hypotheses(trt_group_m1_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive", model_check = "OK", cl = cl)
+hmm_hypothesis_res_list[["trt_group_m1"]] <- evaluate_all_treatment_hypotheses(trt_group_m1_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
 ```
 
 ```{r}
@@ -244,7 +244,7 @@ summary(trt_group_m2_fit$brmsfit)
 
 ```{r}
 
-hmm_hypothesis_res_list[["trt_group_m2"]] <- evaluate_all_treatment_hypotheses(trt_group_m2_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex", model_check = "OK", cl = cl)
+hmm_hypothesis_res_list[["trt_group_m2"]] <- evaluate_all_treatment_hypotheses(trt_group_m2_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
 ```
 
 ```{r}
@@ -269,7 +269,7 @@ summary(trt_group_m3_fit$brmsfit)
 ```
 
 ```{r}
-hmm_hypothesis_res_list[["trt_group_m3"]] <-  evaluate_all_treatment_hypotheses(trt_group_m3_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK", cl = cl)
+hmm_hypothesis_res_list[["trt_group_m3"]] <-  evaluate_all_treatment_hypotheses(trt_group_m3_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
 ```
 
 
@@ -298,7 +298,9 @@ summary(trt_group_m3_fw_fit$brmsfit)
 ```
 
 ```{r}
-hmm_hypothesis_res_list[["trt_group_m3_fw"]] <-  evaluate_all_treatment_hypotheses(trt_group_m3_fw_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, first_wave", model_check = "OK", cl = cl)
+serie_data_28_fw = serie_data_28 %>% filter(first_wave)
+
+hmm_hypothesis_res_list[["trt_group_m3_fw"]] <-  evaluate_all_treatment_hypotheses(trt_group_m3_fw_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, first_wave", model_check = "OK", cl = cl, serie_data_28 = serie_data_28_fw)
 ```
 
 
@@ -326,7 +328,7 @@ summary(trt_group_m4_fit$brmsfit)
 ```
 
 ```{r}
-hmm_hypothesis_res_list[["trt_group_m4"]] <-  evaluate_all_treatment_hypotheses(trt_group_m4_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "OK", cl = cl)
+hmm_hypothesis_res_list[["trt_group_m4"]] <-  evaluate_all_treatment_hypotheses(trt_group_m4_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
 ```
 
 
@@ -351,7 +353,7 @@ summary(trt_group_m4_fw_fit$brmsfit)
 ```
 
 ```{r}
-hmm_hypothesis_res_list[["trt_group_m4_fw"]] <-  evaluate_all_treatment_hypotheses(trt_group_m4_fw_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities, first_wave", model_check = "OK", cl = cl)
+hmm_hypothesis_res_list[["trt_group_m4_fw"]] <-  evaluate_all_treatment_hypotheses(trt_group_m4_fw_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities, first_wave", model_check = "OK", cl = cl, serie_data_28 = serie_data_28_fw)
 ```
 
 
@@ -389,7 +391,7 @@ summary(trt_rate_m1_fit$brmsfit)
 
 
 ```{r}
-hmm_hypothesis_res_list[["trt_rate_m1"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m1_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive", model_check = "OK", cl = cl)
+hmm_hypothesis_res_list[["trt_rate_m1"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m1_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
 ```
 
 
@@ -415,7 +417,7 @@ summary(trt_rate_m2_fit$brmsfit)
 ```
 
 ```{r}
-hmm_hypothesis_res_list[["trt_rate_m2"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m2_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex", model_check = "OK", cl = cl)
+hmm_hypothesis_res_list[["trt_rate_m2"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m2_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
 ```
 
 ```{r}
@@ -439,7 +441,7 @@ summary(trt_rate_m3_fit$brmsfit)
 ```
 
 ```{r}
-hmm_hypothesis_res_list[["trt_rate_m3"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m3_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK", cl = cl)
+hmm_hypothesis_res_list[["trt_rate_m3"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m3_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
 ```
 
 
@@ -463,7 +465,7 @@ summary(trt_rate_m3_fw_fit$brmsfit)
 ```
 
 ```{r}
-hmm_hypothesis_res_list[["trt_rate_m3_fw"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m3_fw_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital, first_wave", model_check = "OK", cl = cl)
+hmm_hypothesis_res_list[["trt_rate_m3_fw"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m3_fw_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital, first_wave", model_check = "OK", cl = cl, serie_data_28 = serie_data_28_fw)
 ```
 
 
@@ -492,7 +494,7 @@ summary(trt_rate_m4_fit$brmsfit)
 ```
 
 ```{r}
-hmm_hypothesis_res_list[["trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(trt_rate_m4_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "Suspicious", cl = cl)
+hmm_hypothesis_res_list[["trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(trt_rate_m4_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "Suspicious", cl = cl, serie_data_28 = serie_data_28)
 ```
 
 
@@ -710,7 +712,7 @@ summary(c_trt_m1_fit$brmsfit)
 ```
 
 ```{r}
-hmm_hypothesis_res_list[["c_trt_rate_m1"]] <- evaluate_all_treatment_hypotheses(c_trt_m1_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive", model_check = "OK", cl = cl)
+hmm_hypothesis_res_list[["c_trt_rate_m1"]] <- evaluate_all_treatment_hypotheses(c_trt_m1_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
 ```
 
 
@@ -737,7 +739,7 @@ summary(c_trt_m2_fit$brmsfit)
 
 
 ```{r}
-hmm_hypothesis_res_list[["c_trt_rate_m2"]] <- evaluate_all_treatment_hypotheses(c_trt_m2_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex", model_check = "OK", cl = cl)
+hmm_hypothesis_res_list[["c_trt_rate_m2"]] <- evaluate_all_treatment_hypotheses(c_trt_m2_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
 
 ```
 
@@ -762,7 +764,7 @@ summary(c_trt_m3_fit$brmsfit)
 ```
 
 ```{r}
-hmm_hypothesis_res_list[["c_trt_rate_m3"]] <- evaluate_all_treatment_hypotheses(c_trt_m3_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK", cl = cl)
+hmm_hypothesis_res_list[["c_trt_rate_m3"]] <- evaluate_all_treatment_hypotheses(c_trt_m3_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
 
 ```
 
@@ -788,7 +790,7 @@ summary(c_trt_m3_fw_fit$brmsfit)
 ```
 
 ```{r}
-hmm_hypothesis_res_list[["c_trt_rate_m3_fw"]] <- evaluate_all_treatment_hypotheses(c_trt_m3_fw_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital, first_wave", model_check = "OK", cl = cl)
+hmm_hypothesis_res_list[["c_trt_rate_m3_fw"]] <- evaluate_all_treatment_hypotheses(c_trt_m3_fw_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital, first_wave", model_check = "OK", cl = cl, serie_data_28 = serie_data_28_fw)
 
 ```
 
@@ -815,7 +817,7 @@ summary(c_trt_m4_fit$brmsfit)
 ```
 
 ```{r}
-hmm_hypothesis_res_list[["c_trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(c_trt_m4_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "Suspicious", cl = cl)
+hmm_hypothesis_res_list[["c_trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(c_trt_m4_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "Suspicious", cl = cl, serie_data_28 = serie_data_28)
 
 ```
 

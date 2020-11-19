@@ -7,7 +7,6 @@ output:
   #    toc: false
   bookdown::word_document2: 
     toc: false
-    keep_md: true
     reference_docx: "output_template.docx"
 abstract: "We collected a multi-centric retrospective dataset of patients who were admitted to N hospitals in Czech Republic and tested positive for SARS-CoV-2. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. Patients in the dataset were treated with Hydroxychloroquine (N = 108), Azithromycin (N = 72), Favipiravir (N = 9), convalescent plasma (N = 7), Dexamethasone (N = 4) and Remdesivir (N = 3), often in combination. To explore association between treatments and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom.  Weak evidence to constrain the potential efficacy of Azithromycin and Favipiravir can be extracted from the data. Additionally we performed external validation of several proposed prognostic models for Covid-19 severity showing that they mostly perform unsatisfactorily on our dataset."
 bibliography: Covid19.json
@@ -63,7 +62,7 @@ n_nippv <- data$marker_data_wide %>% filter(breathing == "NIPPV") %>% pull(patie
 ```
 
 
-A convenience sample of patients from `r n_hospitals` sites was collected. For each site, the dataset contains all patients hospitalized in the participating wards over the data collection period. The data collection started at the onset of the Covid-19 pandemic, but the end data for collection differs between sites.   Patients over the age of 18 were included if they had PCR-confirmed infection of SARS-CoV-2 and were not participating in a clinical evaluation of any Covid-19 pharmacotherapy. 
+A convenience sample of patients from `r n_hospitals` sites was collected. For each site, the dataset contains all patients hospitalized in the participating wards over the data collection period. The data collection started at the onset of the Covid-19 pandemic (except for one site where some older records were inaccessible), but the end data for collection differs between sites.   Patients over the age of 18 were included if they had PCR-confirmed infection of SARS-CoV-2 and were not participating in a clinical evaluation of any Covid-19 pharmacotherapy. 
 
 We collected data on comorbidities and information about disease progression on daily resolution including breathing support required, oxygen flow, experimental anti-Covid-19 and antimicrobial drugs taken and several laboratory markers (PCR positivity for SARS-CoV-2, C-reactive protein, D-dimer, Interleukin 6, Ferritin, lymphocyte count). Full protocol for data collection is attached in the supplementary material. Due to very low number of patients using extra-corporeal membrane oxygenation (N = `r n_ecmo`) or non-invasive positive pressure ventilation (N = `r n_nippv`) in our sample, we collapsed those categories with mechanical ventilation.
 
