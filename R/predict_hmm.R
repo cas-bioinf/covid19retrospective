@@ -84,16 +84,18 @@ posterior_epred_state_prob <- function(nsamples, max_times, initial_states, tran
   }
 
   res_internal <- posterior_epred_state_prob_internal(n_samples = nsamples,
-                                      max_times = max_times,
-                                      initial_states = initial_states,
-                                      n_states = n_states,
-                                      n_time = n_time,
-                                      n_predictor_sets = n_predictor_sets,
-                                      transition_matrices = transition_matrices,
-                                      predictor_sets_rect = predictor_sets_rect)
+                                    max_times = max_times,
+                                    initial_states = initial_states,
+                                    n_states = n_states,
+                                    n_time = n_time,
+                                    n_predictor_sets = n_predictor_sets,
+                                    transition_matrices = transition_matrices,
+                                    predictor_sets_rect = predictor_sets_rect)
 
   dim(res_internal) <- c(n_states, n_time, nsamples, n_series);
+
   res_internal
+
 }
 
 posterior_rect_to_long <- function(fit, posterior_rect, newdata = NULL) {
@@ -219,55 +221,77 @@ posterior_long_to_df <- function(data, prediction) {
 
 #'
 #' @return An array of dimensions `N_states_hidden` x `N_states_hidden` x `N_predictor_sets` x `N_samples`
-compute_all_transition_matrices <- function(data_hmm, epred_mu, cl = NULL, cores = parallel::detectCores()) {
-  start_time = proc.time()
-  nsamples <- dim(epred_mu)[1]
-  epred_mu_exp <- exp(epred_mu)
-  standata <- data_hmm$standata
+compute_all_transition_matrices <- function(data_hmm, epred_mu, cl = NULL, cores = parallel::detectCores(), cache = "auto") {
+  res <- NULL
+  if(cache == "auto") {
+    all_params <- list(data_hmm, epred_mu)
 
-  compute_transition_matrices_ps <- function(ps, epred_mu_exp, standata) {
-    res <- array(NA_real_, c(standata$N_states_hidden, standata$N_states_hidden, nsamples))
-    for(i in 1:nsamples) {
-      rate_matrix <- matrix(0, standata$N_states_hidden, standata$N_states_hidden)
+    cache_dir <- here::here("local_temp_data", "hmm", "epred_cache")
+    if(!dir.exists(cache_dir)) {
+      dir.create(cache_dir)
+    }
+    cache_file <- paste0(cache_dir,"/transition_matrices_", digest::digest(all_params), ".rds")
+    if(file.exists(cache_file)) {
+      res <- readRDS(cache_file)
+    }
+  }
 
-      rate_values <- epred_mu_exp[i, standata$rate_predictors[ps,]]
-      for(r in 1:standata$N_rates) {
-        rate_matrix[standata$rates_from[r], standata$rates_to[r]] = rate_values[r]
-        rate_matrix[standata$rates_from[r],standata$rates_from[r]] =
-          rate_matrix[standata$rates_from[r],standata$rates_from[r]] - rate_values[r]
+  if(is.null(res)) {
+    start_time = proc.time()
+    nsamples <- dim(epred_mu)[1]
+    epred_mu_exp <- exp(epred_mu)
+    standata <- data_hmm$standata
+
+    compute_transition_matrices_ps <- function(ps, epred_mu_exp, standata) {
+      res <- array(NA_real_, c(standata$N_states_hidden, standata$N_states_hidden, nsamples))
+      for(i in 1:nsamples) {
+        rate_matrix <- matrix(0, standata$N_states_hidden, standata$N_states_hidden)
+
+        rate_values <- epred_mu_exp[i, standata$rate_predictors[ps,]]
+        for(r in 1:standata$N_rates) {
+          rate_matrix[standata$rates_from[r], standata$rates_to[r]] = rate_values[r]
+          rate_matrix[standata$rates_from[r],standata$rates_from[r]] =
+            rate_matrix[standata$rates_from[r],standata$rates_from[r]] - rate_values[r]
+        }
+
+        res[,, i] <-  expm::expm(rate_matrix)
+      }
+      res
+    }
+
+    res <- array(NA_real_, c(standata$N_states_hidden, standata$N_states_hidden, standata$N_predictor_sets, nsamples))
+    if(cores == 1) {
+      for(ps in 1:standata$N_predictor_sets) {
+        res[,,ps,] <- compute_transition_matrices_ps(ps, epred_mu_exp, standata)
+      }
+    } else {
+      #TODO tryCatch + stopCluster
+      if(is.null(cl)) {
+        cl <- parallel::makePSOCKcluster(min(cores, standata$N_predictor_sets))
+        do_stop_cluster <- TRUE
+      } else {
+        do_stop_cluster <- FALSE
+      }
+      res_list <- parallel::parLapply(cl, 1:standata$N_predictor_sets, fun = compute_transition_matrices_ps,
+                                        epred_mu_exp = epred_mu_exp, standata = standata)
+
+      if(do_stop_cluster) {
+        parallel::stopCluster(cl)
+      }
+      for(ps in 1:standata$N_predictor_sets) {
+        res[,,ps,] <- res_list[[ps]]
       }
 
-      res[,, i] <-  expm::expm(rate_matrix)
     }
-    res
+
+    time_taken <- proc.time() - start_time
+    message(paste0("Transition matrices computed in ", time_taken["elapsed"], "s."))
+
+    if(cache == "auto") {
+      saveRDS(res, cache_file)
+    }
   }
 
-  res <- array(NA_real_, c(standata$N_states_hidden, standata$N_states_hidden, standata$N_predictor_sets, nsamples))
-  if(cores == 1) {
-    for(ps in 1:standata$N_predictor_sets) {
-      res[,,ps,] <- compute_transition_matrices_ps(ps, epred_mu_exp, standata)
-    }
-  } else {
-    #TODO tryCatch + stopCluster
-    if(is.null(cl)) {
-      cl <- parallel::makePSOCKcluster(min(cores, standata$N_predictor_sets))
-      do_stop_cluster <- TRUE
-    } else {
-      do_stop_cluster <- FALSE
-    }
-    res_list <- parallel::parLapply(cl, 1:standata$N_predictor_sets, fun = compute_transition_matrices_ps,
-                                      epred_mu_exp = epred_mu_exp, standata = standata)
 
-    if(do_stop_cluster) {
-      parallel::stopCluster(cl)
-    }
-    for(ps in 1:standata$N_predictor_sets) {
-      res[,,ps,] <- res_list[[ps]]
-    }
-
-  }
-
-  time_taken <- proc.time() - start_time
-  message(paste0("Transition matrices computed in ", time_taken["elapsed"], "s."))
   res
 }

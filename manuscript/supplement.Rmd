@@ -1,0 +1,19 @@
+---
+site: "bookdown::bookdown_site"
+title: "Supplementary material for Detailed disease progression of 213 patients hospitalized with Covid-19 in the Czech Republic: An exploratory analysis"
+output:
+  bookdown::pdf_document2
+bibliography: "Covid19.json"
+date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
+#author: "`r { source(here::here('manuscript', 'authors.R')); get_authors_string() }`"
+---
+
+```{r setup, echo=FALSE, message = FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=FALSE, cache = TRUE, cache.lazy = FALSE)
+```
+
+\newpage
+
+```{r child_hmm, child = 'hmm.Rmd'}
+```
+

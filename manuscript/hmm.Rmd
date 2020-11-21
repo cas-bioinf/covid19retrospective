@@ -1,10 +1,16 @@
 ---
-title: "HMM Model"
-output: html_document
+title: "Hidden Markov Models"
+output: 
+  bookdown::pdf_document2:
+    toc: false
+bibliography: "Covid19.json"
 ---
 
+# Hidden Markov Models
 
-```{r setup}
+```{r setup_hmm, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
+knitr::opts_chunk$set(echo = FALSE)
+
 devtools::load_all()
 library(tidyverse)
 options(mc.cores = parallel::detectCores())
@@ -41,18 +47,18 @@ registerS3method("stan_log_lik", class = "rate_hmm", method = stan_log_lik.rate_
 ```
 
 
-# The overall approach for hidden Markov models
+## The overall approach for hidden Markov models
 
 To complement the more traditionally used proportional hazards models we also use several variants of hidden Markov models (HMMs). A discrete random process $X_1, X_2, X_3, ...$  satisfies the Markov property whenever for all states $x$ and times $t$ we have $P(X_{t + 1} = x | X_1 = x_1, X_2 = x_2, ..., X_t = x_t) = P(X_{t+1} = x | X_t = x_t)$, i.e. when the process is "memoryless". If this process is unobservable, but we can observe another process $Y$ such that $P(Y_{t} = y | X_1 = x_1, X_2 = x_2, ..., X_n = x_n) = P(Y_{t} = y | X_t = x_t)$ we call the pair $(X, Y)$ a hidden Markov process.
 
-We treat the breathing support required as a Markov process, either with states directly corresponding to the breathing support and directly observable (Fig. \@ref(fig:hmmstates)a), or with the states carrying an unobserved binary improving worsening component which is unobservable (Fig. \@ref(fig:hmmstates)b) while the breathing support dimension still being completely observable. The former completely observable model is called _simple_ in the following text while the latter is called _complex_. This is unlike many uses of HMMs where the observation process is usually described by a general observation matrix. The reason is that the breathing support actually used is very likely to correspond to the breathing support needed by the patient. In initial versions of our models we also tested models that treated the breathing support observed as noisy realisation of the actual state, but the fitted probabilities of such imprecise observations were always very low, so we ended up not using them.
+We treat the breathing support required as a Markov process, either with states directly corresponding to the breathing support and directly observable (Fig. \@ref(fig:hmmstates)a), or with the states carrying an unobserved binary improving/worsening component which is unobservable (Fig. \@ref(fig:hmmstates)b) while the breathing support dimension still being completely observable. The former completely observable model is called _simple_ in the following text while the latter is called _complex_. This is unlike many uses of HMMs where the observation process is described by a general observation matrix. The reason is that the breathing support actually used is very likely to correspond to the breathing support needed by the patient. In initial versions of our models we also tested models that treated the breathing support observed as a noisy realisation of the actual state, but the fitted probabilities of such imprecise observations were always very low, so we ended up not using them.
 
-Directly modelling the full transition matrix of the Markov process would not make best use of the data as we know there is additional structure expressed in the ordering of states, e.g. that the probability of being discharged from the "AA" state is higher than from the "Oxygen" state, or that transitioning to "Ventilated" is more likely from the "Oxygen" state than from the "AA" state. To incorporate this structure, we follow the approach outlined in [@http://zotero.org/users/5567156/items/F9K2L5Q8].
+Directly modeling the full transition matrix of the Markov process would not make best use of the data as we know there is additional structure expressed in the ordering of states, e.g. that the probability of being discharged from the "AA" state is higher than from the "Oxygen" state, or that transitioning to "Ventilated" is more likely from the "Oxygen" state than from the "AA" state. To incorporate this structure, we follow the approach outlined in [@http://zotero.org/users/5567156/items/F9K2L5Q8].
 
-Here we define a _rate matrix_ $R$ so that for any two states $i \neq j$ $R_{i,j}$ is the rate of transition from $i$ to $j$. $R$ is intended to be sparse, i.e. $R_{i,j} \neq 0$ only for transitions explicitly intended to be modelled directly. Additionally the diagonal elements are set as $R_{i,i} = -\sum_{j \neq i} R_{i,j}$. 
+We setup a _rate matrix_ $R$ so that for any two states $i \neq j$ $R_{i,j}$ is the rate of transition from $i$ to $j$. $R$ is intended to be sparse, i.e. $R_{i,j} \neq 0$ only for transitions explicitly intended to be modeled directly. Additionally the diagonal elements are set as $R_{i,i} = -\sum_{j \neq i} R_{i,j}$. 
 
-```{r hmmstates, fig.cap="The Markov models used a) simple, b) complex. AA = Ambient air, Oxygen = Nasal oxygen, Ventilated = any form of ventilation, including non-invasive positive-pressure ventilation, mechanical ventilation and extra-corporeal membrane oxygenation. In all models the 'Death' and 'Discharged' states are terminal. In the second hidden Markov model (c), the 'Improving' and 'Worsening' variants of each non-terminal state are not observable - only the breathing support is observed and improving/worsening is inferred from progression of the disease." }
-knitr::include_graphics(here::here("manuscript","static_figs","model_states.png"), auto_pdf = TRUE)
+```{r hmmstates, fig.cap="The Markov models used a) simple, b) complex. AA = Ambient air, Oxygen = Nasal oxygen, Ventilated = any form of ventilation, including non-invasive positive-pressure ventilation, mechanical ventilation and extra-corporeal membrane oxygenation. In all models the 'Death' and 'Discharged' states are terminal. In the complex model (c), the 'Improving' and 'Worsening' variants of each non-terminal state are not observable - only the breathing support is observed." }
+knitr::include_graphics(here::here("manuscript","static_figs","model_states_hmm.png"), auto_pdf = TRUE)
 ```
 
 The evolution of the vector $p(t)$ of the state probabilities in continuous time $t$ is then given by the differential equation
@@ -61,20 +67,24 @@ $$
 \frac{dp(t)}{dt} = Rp
 $$
 
-Given $p(0)$, the solution to this equation is:
+Given the initial state probabilities $p(0)$, the solution to this equation is:
 
 $$
 p(t) = \exp(tR)p(0)
 $$
 
-where $\exp$ is the matrix exponential. We can thus compute a discrete-time transition matrix $S = \exp(R)$ so that $p(t + 1) = Sp(t)$. The appeal of this approach is that we can enforce a lot of structure on the transition matrix while allowing positive probability for almost all transitions. In the case of the complex model, the full transition matrix would have 42 free parameters (no transitions from the "Death" and "Discharged states) while the rate matrix has only 13 free parameters. We could obviously have a sparse transition matrix, but that would make the model overly rigid as transitions that are not modeled directly but actually occur in the data (e.g. from "Oxygen" to "Discharged") would have zero probability.
+where $\exp$ is the matrix exponential. We can thus compute a discrete-time transition matrix $S = \exp(R)$ so that $p(t + 1) = Sp(t)$. The appeal of this approach is that we can enforce a lot of structure on the transition matrix $S$ while allowing positive probability for almost all transitions. In the case of the complex model, the full transition matrix between the 8 states would have 42 free parameters (no transitions from the "Death" and "Discharged states) while the rate matrix has only 13 free parameters. We could obviously have a sparse transition matrix, but that would make the model overly rigid as transitions that are not modeled directly but actually occur in the data (e.g. from "Oxygen" to "Discharged") would have zero probability.
+
+We also find the rate formulation to be theoretically appealing - the disease progression takes place in continuous time, the discretization into individual days is an artifact of the way we collected data, not the reality.
 
 
-Finally we put a mixed-effects linear predictor on each of the rates we model so that $R_{i,j} = \exp(\mu_{i,j})$. We build the model in the Stan language,  using the `brms` package to express the linear predictors.
+Finally we put a mixed-effects linear predictor on each of the rates we model so that they are allowed to differ between patients (indexed by $k$) and over (discrete) time (indexed by $t$) $R_{k,t;i,j} = \exp(\mu_{k,t;i,j})$ and $S_{k,t} = \exp(R_{k,t})$. We build the model in the Stan language,  using the `brms` package to express the linear predictors $\mu_{k,t;i,j}$ - we use baseline patient characteristics as time-constant predictors and the treatments administered, initiation of best supportive care and markers as time-varying predictors.
 
 As an additional structure, we consider _rate groups_ which are: "Improving" (from a breathing level to a better one, including "Discharged"), "Worsening" (from a breathing level to a worse one, not including "Death"), and "Death" (any transition to the "Death" state). In addition, the complex model has "To improving" and "To worsening" which correspond to the switches between the improving and worsening variants of each breathing level.
 
 Below we use three types of models: simple with predictors acting on rate groups (i.e. assuming that any predictor has the same multiplicative effect on all rates in a group), simple with predictors acting on rates directly (i.e. a predictor can have different effect on each rate) and complex with predictors acting on rate groups.
+
+Models will be presented in a unified structure that we explain with the first model and won't be repeated 
 
 ```{r}
 transform_serie_data <- function(raw_serie_data) {
@@ -148,15 +158,9 @@ default_control <- list(adapt_delta = 0.9)
 
 
 
-# Treatments - simple, effects on rate groups
-
-## Only treatments
+## Treatments - simple, effects on rate groups
 
 ```{r}
-trt_group_m1_hidden_state_data <- simple_hidden_state_data
-
-trt_group_m1_observed_state_data <- base_observed_state_data
-
 simple_rate_data <- rbind(
   tibble(.from = c("Oxygen", "Ventilated"), .to = "Death", rate_group = "death"),
   tibble(.from = "AA", .to = "Discharged", rate_group = "improve_one"),
@@ -165,10 +169,26 @@ simple_rate_data <- rbind(
 ) %>%
   mutate(.rate_id = factor(paste0(.from, "_", .to), levels = paste0(.from, "_", .to)),
          .from = factor(.from, levels = disease_s_levels),
-         .to = factor(.to, levels = disease_s_levels)
-  )
+         .to = factor(.to, levels = disease_s_levels),
+          rate_group = fct_relevel(rate_group, "improve_one")
+       )
 
 simple_initial_states <- serie_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed)
+```
+
+The rates included in the simple model are shown in Table&nbsp;\@ref(tab:statessimple).
+
+```{r statessimple}
+simple_rate_data  %>% knitr::kable(booktabs = TRUE, caption="Rates used in the simple model.")
+```
+
+### Only treatments
+
+```{r}
+trt_group_m1_hidden_state_data <- simple_hidden_state_data
+
+trt_group_m1_observed_state_data <- base_observed_state_data
+
 
 trt_group_m1_prior = #brms::set_prior("normal(-2, 5)", "Intercept") +
   brms::set_prior("normal(-2, 5)", "b") +
@@ -178,18 +198,13 @@ trt_group_m1_formula <- ~ 0 + .rate_id +  (0 + best_supportive_care + took_hcq +
 
 ```
 
-For the simple model, the rates we model are:
 
-```{r}
-simple_rate_data  
-```
-
-The $\log(R_{i,j})$ elements are then modeled via the `brms` formula
+For this model, the $\log(R_{i,j})$ elements are then modeled via the `brms` formula
 
 ```{r}
 trt_group_m1_formula
 ```
-I.e. there is a separate coefficient for each rate and then the other predictors act uniformly on each rate group.
+Our code is setup so that the formula can combine predictors drawn from the description of rates (see Table \@ref(tab:statessimple)) and those taken from patient's data. There is a separate coefficient for each rate and then the other predictors act uniformly on each rate group. The `took_XXX` variables are boolean predictors that set to true for all days since the first dose of the treatment was given - i.e. we assume the treatment alters the disease overall disease progression irreversibly.
 
 This is the summary of the fitted coefficients.
 
@@ -200,13 +215,16 @@ trt_group_m1 <- brmshmmdata(trt_group_m1_formula, serie_data,
 
 trt_group_m1_fit <- brmhmm(trt_group_m1, cache_file = paste0(cache_dir,"/trt_group_m1.rds"), control = default_control, init = 0.1, iter = 1500)
 
-summary(trt_group_m1_fit$brmsfit)
+print_my_fit_summary(trt_group_m1_fit)
 
 ```
-
+Note that the coefficients are  hard to interpret directly. E.g. initiated best supportive care (`best_supportive_care`) increases the rate of "Death" but it also might decrease the rate of "worsening" transitions. How should those be combined? To make the results easy to interpret we use the model to build counterfactual predictions for each patient and treatment: what is (according to the model) the probability of the patient being alive at 28 days if they didn't receive the treatment at all and what if the received the treatment upon admission. Those two probabilities can then be used to compute log odds-ratio, which is the value we report. Similarly, we compute the log odds-ratio for being discharged. For this model this results in the following estimates of log ORs.
 
 ```{r}
 hmm_hypothesis_res_list[["trt_group_m1"]] <- evaluate_all_treatment_hypotheses(trt_group_m1_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
+
+hmm_hypothesis_res_list[["trt_group_m1"]] %>% select(hypothesis, point_estimate, ci_low, ci_high) %>%
+  rename(`95% CI Low` = ci_low, `95% CI High` = ci_high)
 ```
 
 
@@ -214,35 +232,31 @@ hmm_hypothesis_res_list[["trt_group_m1"]] <- evaluate_all_treatment_hypotheses(t
 if(do_pp_checks) {
   do_common_pp_checks(trt_group_m1_fit)
 }
+rm(trt_group_m1_fit)
 ```
 
 
-## Treatments + age + sex
+### Treatments + age + sex
+
+In this model the formula is expanded to include age and sex:
 
 ```{r}
 trt_group_m2_formula <- update.formula(trt_group_m1_formula,  ~ . +  (0 + age_norm + is_male || rate_group))
 
+trt_group_m2_formula
 ```
 
+This is the summary of the model parameters
 
 ```{r trt_group_m2}
 trt_group_m2 <- brmshmmdata(trt_group_m2_formula, serie_data, 
                   simple_rate_data, trt_group_m1_hidden_state_data, simple_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = trt_group_m1_observed_state_data)
 
-trt_group_m2_fit <- brmhmm(trt_group_m2, cache_file = paste0(cache_dir,"/trt_group_m2.rds"), init = 0.1, control = default_control, iter = 1200)
+trt_group_m2_fit <- brmhmm(trt_group_m2, cache_file = paste0(cache_dir,"/trt_group_m2.rds"), init = 0.1, control = list(adapt_delta = 0.95), iter = 1200)
 
 #parnames(trt_group_m2_fit$brmsfit)
-summary(trt_group_m2_fit$brmsfit)
-```
-```{r, fig.width=12, fig.height=12}
-# 
-#  
-# bayesplot::mcmc_pairs(trt_group_m2_fit$brmsfit, regex_pars = "improve_one", np = nuts_params(trt_group_m2_fit$brmsfit))
-# 
-# 
-# bayesplot::mcmc_parcoord(trt_group_m2_fit$brmsfit, regex_pars = "death", np = nuts_params(trt_group_m2_fit$brmsfit))
-# bayesplot::mcmc_parcoord(trt_group_m2_fit$brmsfit, regex_pars = "worsen_one", np = nuts_params(trt_group_m2_fit$brmsfit))
+print_my_fit_summary(trt_group_m2_fit)
 ```
 
 
@@ -255,10 +269,11 @@ hmm_hypothesis_res_list[["trt_group_m2"]] <- evaluate_all_treatment_hypotheses(t
 if(do_pp_checks) {
   do_common_pp_checks(trt_group_m2_fit)
 }
+rm(trt_group_m2_fit)
 ```
 
 
-## Treatments + age + sex + hospital
+### Treatments + age + sex + hospital
 
 ```{r trt_group_m3}
 trt_group_m3_formula <- update.formula(trt_group_m2_formula,  ~  . + (0 + .rate_id | hospital_id))
@@ -267,7 +282,7 @@ trt_group_m3 <- brmshmmdata(trt_group_m3_formula, serie_data,
                   simple_rate_data, trt_group_m1_hidden_state_data, simple_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = trt_group_m1_observed_state_data)
 
-trt_group_m3_fit <- brmhmm(trt_group_m3, cache_file = paste0(cache_dir,"/trt_group_m3.rds"), init = 0.1, control = default_control, iter = 1200)
+trt_group_m3_fit <- brmhmm(trt_group_m3, cache_file = paste0(cache_dir,"/trt_group_m3.rds"), init = 0.1, control = list(adapt_delta = 0.95), iter = 1200)
 
 summary(trt_group_m3_fit$brmsfit)
 ```
@@ -281,11 +296,12 @@ hmm_hypothesis_res_list[["trt_group_m3"]] <-  evaluate_all_treatment_hypotheses(
 if(do_pp_checks) {
   do_common_pp_checks(trt_group_m3_fit)
 }
+rm(trt_group_m3_fit)
 ```
 
 
 
-## Treatments + age + sex + hospital, first wave only
+### Treatments + age + sex + hospital, first wave only
 
 ```{r trt_group_m3_fw}
 serie_data_fw <- serie_data %>% filter(first_wave)
@@ -312,10 +328,11 @@ hmm_hypothesis_res_list[["trt_group_m3_fw"]] <-  evaluate_all_treatment_hypothes
 if(do_pp_checks) {
   do_common_pp_checks(trt_group_m3_fw_fit)
 }
+rm(trt_group_m3_fw_fit)
 ```
 
 
-## Treatment + age + sex + hospital + comorbidities
+### Treatment + age + sex + hospital + comorbidities
 
 
 ```{r trt_group_m4}
@@ -340,9 +357,10 @@ hmm_hypothesis_res_list[["trt_group_m4"]] <-  evaluate_all_treatment_hypotheses(
 if(do_pp_checks) {
   do_common_pp_checks(trt_group_m4_fit)
 }
+rm(trt_group_m4_fit)
 ```
 
-## Treatment + age + sex + hospital + comorbidities, first wave
+### Treatment + age + sex + hospital + comorbidities, first wave
 
 
 ```{r trt_group_m4_fw}
@@ -365,11 +383,12 @@ hmm_hypothesis_res_list[["trt_group_m4_fw"]] <-  evaluate_all_treatment_hypothes
 if(do_pp_checks) {
   do_common_pp_checks(trt_group_m4_fit)
 }
+rm(trt_group_m4_fit)
 ```
 
-# Treatments - effect on individual rates
+## Treatments - effect on individual rates
 
-## Only treatments
+### Only treatments
 
 ```{r trt_rate_m1}
 trt_rate_m1_hidden_state_data <- simple_hidden_state_data
@@ -403,10 +422,11 @@ hmm_hypothesis_res_list[["trt_rate_m1"]] <-  evaluate_all_treatment_hypotheses(t
 if(do_pp_checks) {
   do_common_pp_checks(trt_rate_m1_fit)
 }
+rm(trt_rate_m1_fit)
 ```
 
 
-## Treatments + age + sex
+### Treatments + age + sex
 
 
 ```{r trt_rate_m2}
@@ -428,10 +448,11 @@ hmm_hypothesis_res_list[["trt_rate_m2"]] <-  evaluate_all_treatment_hypotheses(t
 if(do_pp_checks) {
   do_common_pp_checks(trt_rate_m2_fit)
 }
+rm(trt_rate_m2_fit)
 ```
 
 
-## Treatments + age + sex + hospital
+### Treatments + age + sex + hospital
 
 ```{r trt_rate_m3}
 trt_rate_m3_formula <- update.formula(trt_rate_m2_formula,  ~  . + (0 + .rate_id | hospital_id))
@@ -439,7 +460,7 @@ trt_rate_m3 <- brmshmmdata(trt_rate_m3_formula, serie_data,
                   trt_rate_m1_rate_data, trt_rate_m1_hidden_state_data, trt_rate_m1_initial_states, prior = trt_rate_m1_prior,
                   observed_state_data = trt_rate_m1_observed_state_data)
 
-trt_rate_m3_fit <- brmhmm(trt_rate_m3, cache_file = paste0(cache_dir,"/trt_rate_m3.rds"), init = 0.1, control = default_control, iter = 1500)
+trt_rate_m3_fit <- brmhmm(trt_rate_m3, cache_file = paste0(cache_dir,"/trt_rate_m3.rds"), init = 0.1, control = list(adapt_delta = 0.95), iter = 1500)
 
 summary(trt_rate_m3_fit$brmsfit)
 ```
@@ -453,17 +474,18 @@ hmm_hypothesis_res_list[["trt_rate_m3"]] <-  evaluate_all_treatment_hypotheses(t
 if(do_pp_checks) {
   do_common_pp_checks(trt_rate_m3_fit)
 }
+rm(trt_rate_m3_fit)
 ```
 
 
-## Treatments + age + sex + hospital, first_Wave
+### Treatments + age + sex + hospital, first_Wave
 
 ```{r trt_rate_m3_fw}
 trt_rate_m3_fw <- brmshmmdata(trt_rate_m3_formula, serie_data_fw, 
                   trt_rate_m1_rate_data, trt_rate_m1_hidden_state_data, simple_initial_states_fw, prior = trt_rate_m1_prior,
                   observed_state_data = trt_rate_m1_observed_state_data)
 
-trt_rate_m3_fw_fit <- brmhmm(trt_rate_m3_fw, cache_file = paste0(cache_dir,"/trt_rate_m3_fw.rds"), init = 0.1, control = default_control, iter = 1500)
+trt_rate_m3_fw_fit <- brmhmm(trt_rate_m3_fw, cache_file = paste0(cache_dir,"/trt_rate_m3_fw.rds"), init = 0.1, control = list(adapt_delta = 0.95), iter = 1500)
 
 summary(trt_rate_m3_fw_fit$brmsfit)
 ```
@@ -477,12 +499,13 @@ hmm_hypothesis_res_list[["trt_rate_m3_fw"]] <-  evaluate_all_treatment_hypothese
 if(do_pp_checks) {
   do_common_pp_checks(trt_rate_m3_fw_fit)
 }
+rm(trt_rate_m3_fw_fit)
 ```
 
 
 
 
-## Treatment + age + sex + hospital + comorbidities
+### Treatment + age + sex + hospital + comorbidities
 
 
 ```{r trt_rate_m4}
@@ -506,13 +529,14 @@ hmm_hypothesis_res_list[["trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(tr
 if(do_pp_checks) {
   do_common_pp_checks(trt_rate_m4_fit)
 }
+rm(trt_group_m4_fit)
 ```
 
 
-# Markers
+## Markers
 
 
-## D-dimer + hospital
+### D-dimer + hospital
 
 
 ```{r d_dimer_m1}
@@ -556,9 +580,10 @@ hmm_hypothesis_res_list[["d_dimer_m1_death"]] <-
 if(do_pp_checks) {
   do_common_pp_checks(d_dimer_m1_fit)
 }
+rm(d_dimer_m1_fit)
 ```
 
-## D-dimer + age + sex + comorbidities
+### D-dimer + age + sex + comorbidities
 
 ```{r}
 d_dimer_m2_formula <-  update.formula(d_dimer_m1_formula, ~ . + (0 + age_norm + is_male || rate_group))
@@ -590,7 +615,7 @@ hmm_hypothesis_res_list[["d_dimer_m2_death"]] <-
 
 
 
-## IL-6 + hospital
+### IL-6 + hospital
 
 
 ```{r}
@@ -634,11 +659,12 @@ hmm_hypothesis_res_list[["IL_6_m1_death"]] <-
 if(do_pp_checks) {
   do_common_pp_checks(IL_6_m1_fit)
 }
+rm(IL_6_m1_fit)
 ```
 
 
 
-## IL_6 + age + sex + comorbidities
+### IL_6 + age + sex + comorbidities
 
 ```{r}
 IL_6_m2_formula <-  update.formula(IL_6_m1_formula, ~ . + (0 + age_norm + is_male || rate_group))
@@ -666,9 +692,9 @@ hmm_hypothesis_res_list[["IL_6_m2_death"]] <-
 ```
 
 
-# Complex: Treatments - effects on rate groups
+## Complex: Treatments - effects on rate groups
 
-## Only treatments
+### Only treatments
 
 ```{r c_trt_m1}
 complex_rate_data <- rbind(
@@ -724,9 +750,10 @@ hmm_hypothesis_res_list[["c_trt_rate_m1"]] <- evaluate_all_treatment_hypotheses(
 if(do_pp_checks) {
   do_common_pp_checks(c_trt_m1_fit)
 }
+rm(c_trt_m1_fit)
 ```
 
-## Treatments + age + sex
+### Treatments + age + sex
 
 
 ```{r c_trt_m2}
@@ -752,10 +779,11 @@ hmm_hypothesis_res_list[["c_trt_rate_m2"]] <- evaluate_all_treatment_hypotheses(
 if(do_pp_checks) {
   do_common_pp_checks(c_trt_m2_fit)
 }
+rm(c_trt_m2_fit)
 ```
 
 
-## Treatments + age + sex + hospital
+### Treatments + age + sex + hospital
 
 ```{r c_trt_m3}
 c_trt_m3 <- brmshmmdata(trt_group_m3_formula, serie_data, 
@@ -777,9 +805,10 @@ hmm_hypothesis_res_list[["c_trt_rate_m3"]] <- evaluate_all_treatment_hypotheses(
 if(do_pp_checks) {
   do_common_pp_checks(c_trt_m3_fit)
 }
+rm(c_trtr_m3_fit)
 ```
 
-## Treatments + age + sex + hospital, first wave
+### Treatments + age + sex + hospital, first wave
 
 ```{r c_trt_m3_fw}
 complex_initial_states_fw <- serie_data_fw %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed) %>% paste0(., "_worsening")
@@ -801,12 +830,13 @@ hmm_hypothesis_res_list[["c_trt_rate_m3_fw"]] <- evaluate_all_treatment_hypothes
 
 ```{r}
 if(do_pp_checks) {
-  do_common_pp_checks(c_trt_m3_fit)
+  do_common_pp_checks(c_trt_m3_fw_fit)
 }
+rm(c_trt_m3_fw_fit)
 ```
 
 
-## Treatment + age + sex + hospital + comorbidities
+### Treatment + age + sex + hospital + comorbidities
 
 
 ```{r c_trt_m4}
@@ -830,10 +860,8 @@ hmm_hypothesis_res_list[["c_trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(
 if(do_pp_checks) {
   do_common_pp_checks(c_trt_m4_fit)
 }
+rm(c_trt_m4_fit)
 ```
-
-
-# Environment
 
 
 ```{r}
@@ -841,7 +869,4 @@ hmm_hypothesis_res_all <- do.call(rbind, hmm_hypothesis_res_list)
 write_csv(hmm_hypothesis_res_all, path = here::here("manuscript", "hmm_res.csv"))
 ```
 
-```{r}
-sessionInfo()
-```
 
