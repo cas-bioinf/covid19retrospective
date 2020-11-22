@@ -17,3 +17,9 @@ knitr::opts_chunk$set(echo=FALSE, cache = TRUE, cache.lazy = FALSE)
 ```{r child_hmm, child = 'hmm.Rmd'}
 ```
 
+
+
+\newpage
+
+```{r child_risk_scores, child = 'risk_scores.Rmd'}
+```

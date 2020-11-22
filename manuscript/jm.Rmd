@@ -1,7 +1,9 @@
 ---
 title: "Joint modelling"
-output: html_notebook
+output: html_document
 ---
+
+# Joint longitudinal and time-to-event models
 
 ```{r setup}
 devtools::load_all()
@@ -114,23 +116,23 @@ jm_hypothesis_res_list[["d_dimer_age_sex_hcq"]]
 
 
 ```{r}
-p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[1:11])
-plot(p1, plot_observed = TRUE)                     
-p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[12:14])
-plot(p1, plot_observed = TRUE)                     
-p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[15:18])
-plot(p1, plot_observed = TRUE)                     
-
-p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[19:20])
-plot(p1, plot_observed = TRUE)                     
-p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[21:22])
-plot(p1, plot_observed = TRUE)                     
-p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[22:26])
-plot(p1, plot_observed = TRUE)
-p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[27:29])
-plot(p1, plot_observed = TRUE)                     
-p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[30:32])
-plot(p1, plot_observed = TRUE)                     
+# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[1:11])
+# plot(p1, plot_observed = TRUE)                     
+# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[12:14])
+# plot(p1, plot_observed = TRUE)                     
+# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[15:18])
+# plot(p1, plot_observed = TRUE)                     
+# 
+# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[19:20])
+# plot(p1, plot_observed = TRUE)                     
+# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[21:22])
+# plot(p1, plot_observed = TRUE)                     
+# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[22:26])
+# plot(p1, plot_observed = TRUE)
+# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[27:29])
+# plot(p1, plot_observed = TRUE)                     
+# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[30:32])
+# plot(p1, plot_observed = TRUE)                     
 ```
 
 

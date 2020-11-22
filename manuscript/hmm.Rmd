@@ -23,12 +23,7 @@ data <- read_data_for_analysis()
 if(length(unique(data$patient_data$patient_id)) != length(data$patient_data$patient_id)) {
   stop("FAil")
 }
-# warning("Subsetting data")
-# set.seed(4568224)
-# patients_to_use <- sample(data$patient_data$patient_id, size = 70)
-# data <- filter_complete_data(data, patient_id %in% patients_to_use)
 
-                          
 wide <- data$marker_data_wide
                           
                           

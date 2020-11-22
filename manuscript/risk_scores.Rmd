@@ -7,6 +7,8 @@ bibliography: Covid19.json
 date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
 ---
 
+# Validating published prognostic models
+
 ```{r setup, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
 knitr::opts_chunk$set(echo = FALSE)
 
@@ -38,7 +40,7 @@ In all of the following we focus on the area under curve (AUC), also often calle
 
 For all risk scores we look at 12-day mortality and 30-day mortality - simply because those are the time horizons reported in the studies we looked at. When needed or when it is uncertain how the outcome was coded in the original study, we can also look at "indefinite horizon" where we only include patients that were not censored and had a known outcome.
 
-# ACP
+## ACP
 
 The ACP index [@http://zotero.org/users/5567156/items/EN4GICJ6] is a simple score that categorizes the patients into 3 categories based on age and C-reactive protein (CRP): grade 1 (age $<$ 60 years and CRP $<$ 34 mg/L), grade 2 (age $\geq$ 60
 years and CRP $<$ 34 mg/L or age $<$ 60 years and CRP $\geq$ 34 mg/L), grade 3 (age $\geq$ 60 years and CRP $\geq$ 34 mg/L) and was evaluated primarily on 12-day mortality. Despite the score being developed on patients in Wuhan, China, the 12-day mortality in our dataset is in rough agreement with the values in the original manuscript as shown in Table \@ref(tab:acpresults).     
@@ -128,7 +130,7 @@ compare_auc_to_orig(acp_auc_orig, acp_auc)
 We see that the score noticeably underperforms in the present dataset.
 
 
-# Chen and Liu
+## Chen and Liu
 
 Chen and Liu [@http://zotero.org/users/5567156/items/4DDUVEKS] propose a score based on a logistic regression model as follows.
 
@@ -229,7 +231,7 @@ compare_auc_to_orig(chen_liu_auc_orig, chen_liu_auc)
 ```
 
 
-# Shi et al.
+## Shi et al.
 
 Shi et al. [@http://zotero.org/users/5567156/items/X4GWJIP5] report a simple score: 1 point for Age >= 50, Male and Hypertension each. They try to predict "severe" illness, but it is not clear what "severe" means. Here, we test both "not ventilated" (or worse, including death) and "not needing supplementary oxygen" as proxy for "severe". They also create a risk score for both "severe" on admission and "severe" during hospitalization. As for other scores we also look at 12- and 30- day mortality.
 
@@ -340,7 +342,7 @@ shi_et_al_compare %>%
 ```
 
 
-# Caramelo et al.
+## Caramelo et al.
 
 Caramelo et al. [@http://zotero.org/users/5567156/items/3A2RN4ZS] uses simulations to get patient-level characterstics from aggregate data and then fit a logistic regression model. We use the coefficients they report for the model (the model can't be used directly, because the intercept is not reported). The covariates in the model are age (by decades), sex, presence of hypertension, presence of diabetes, presence of cardiac disease, presence of chronic respiratory disease and presence of cancer. It is unclear whether NYHA > 1 would be considered "cardiac disease" and similarly whether asthma is chronic respiratory disease, so we compute two versions of the score. Our dataset also does not contain cancer, so we ignore it (cancer has one of the lowest reported OR in the model).
 
@@ -384,7 +386,7 @@ compare_auc_to_orig(tibble(), caramelo_auc)
 The results look somewhat encouraging for the score - the AUC values float around 0.8. 
 
 
-# Bello-Chavolla et al.
+## Bello-Chavolla et al.
 
 The index given in [@http://zotero.org/users/5567156/items/INZVABQI] is built from following elements:
 
@@ -459,7 +461,7 @@ compare_auc_to_orig(bc_auc_orig, bc_auc)
 
 The main surprise here is that not inferring pneumonia (shown as "base" in the figure) works best. This indicates that our data may not be well suited to the use of the score. 
 
-# Age only
+## Age only
 
 As a simple baseline we use age in years and the decade of age as the sole predictor and compute AUC for this.  
 
@@ -483,7 +485,7 @@ plot_my_auc(alive_30 ~ age, at_admission)
 ```
 
 
-# All together now
+## Summary
 
 ```{r, fig.cap = "The AUC and it's 95% credible intervals for all of the scores considered so far. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison."}
 
@@ -511,4 +513,4 @@ all_auc %>% mutate(score = score_caption[score]) %>%
 ```
 
 
-# References
+
