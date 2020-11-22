@@ -93,11 +93,32 @@ evaluate_all_treatment_hypotheses <- function(fit, model_subgroup, adjusted, mod
   res
 }
 
-print_my_fit_summary <- function(brmshmmfit) {
+print_hmm_fit_summary <- function(brmshmmfit) {
   #rstan::check_hmc_diagnostics(brmshmmfit$brmsfit$fit)
   summ <- summary(brmshmmfit$brmsfit)
   cat("\nRate coefficients:\n")
-  print(summ$fixed)
-  cat("\nPer rate group effects:\n")
-  print(brms::ranef(brmshmmfit$brmsfit)$rate_group)
+  fixed_summ <- summ$fixed[,c("Estimate", "Est.Error", "l-95% CI", "u-95% CI")]
+  colnames(fixed_summ) <- c("Estimate", "Est.Error", "Q2.5", "Q97.5")
+  print(fixed_summ)
+  all_ranef <- brms::ranef(brmshmmfit$brmsfit)
+  if(!is.null(all_ranef$rate_group)) {
+    cat("\nPer rate group effects:\n")
+    print(all_ranef$rate_group)
+  }
+  if(!is.null(all_ranef$.rate_id)) {
+    cat("\nPer rate effects:\n")
+    print(all_ranef$.rate_id)
+  }
+
+  if(!is.null(summ$random$hospital_id)) {
+    cat("\nBetween-site differences:\n")
+    hospital_summ <- summ$random$hospital_id[grepl("^sd", rownames(summ$random$hospital_id)),c("Estimate", "Est.Error", "l-95% CI", "u-95% CI")]
+    colnames(hospital_summ) <- c("Estimate", "Est.Error", "Q2.5", "Q97.5")
+    print(hospital_summ)
+  }
+}
+
+print_hmm_hypothesis_res <- function(hypo_res) {
+  hypo_res %>% select(hypothesis, point_estimate, ci_low, ci_high) %>%
+    rename(`95% CI Low` = ci_low, `95% CI High` = ci_high) %>% print()
 }

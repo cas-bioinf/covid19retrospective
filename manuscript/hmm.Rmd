@@ -204,9 +204,10 @@ For this model, the $\log(R_{i,j})$ elements are then modeled via the `brms` for
 ```{r}
 trt_group_m1_formula
 ```
-Our code is setup so that the formula can combine predictors drawn from the description of rates (see Table \@ref(tab:statessimple)) and those taken from patient's data. There is a separate coefficient for each rate and then the other predictors act uniformly on each rate group. The `took_XXX` variables are boolean predictors that set to true for all days since the first dose of the treatment was given - i.e. we assume the treatment alters the disease overall disease progression irreversibly.
 
-This is the summary of the fitted coefficients.
+Our code is setup so that the formula can combine predictors drawn from the description of rates (see Table \@ref(tab:statessimple)) and those taken from patient's data (both the fixed baseline characteristics and time-varying values). There is a separate coefficient for each rate and then the other predictors act uniformly on each rate group. The `took_XXX` variables are boolean predictors that are set to true for all days since the first dose of the treatment was given - i.e. we assume the treatment alters the overall disease progression irreversibly.
+
+This is the summary of the fitted coefficients. `Q2.5` and `Q97.5` are the boundaries of the central 95% credible interval.
 
 ```{r trt_group_m1}
 trt_group_m1 <- brmshmmdata(trt_group_m1_formula, serie_data, 
@@ -215,16 +216,16 @@ trt_group_m1 <- brmshmmdata(trt_group_m1_formula, serie_data,
 
 trt_group_m1_fit <- brmhmm(trt_group_m1, cache_file = paste0(cache_dir,"/trt_group_m1.rds"), control = default_control, init = 0.1, iter = 1500)
 
-print_my_fit_summary(trt_group_m1_fit)
+print_hmm_fit_summary(trt_group_m1_fit)
 
 ```
-Note that the coefficients are  hard to interpret directly. E.g. initiated best supportive care (`best_supportive_care`) increases the rate of "Death" but it also might decrease the rate of "worsening" transitions. How should those be combined? To make the results easy to interpret we use the model to build counterfactual predictions for each patient and treatment: what is (according to the model) the probability of the patient being alive at 28 days if they didn't receive the treatment at all and what if the received the treatment upon admission. Those two probabilities can then be used to compute log odds-ratio, which is the value we report. Similarly, we compute the log odds-ratio for being discharged. For this model this results in the following estimates of log ORs.
+
+Note that the coefficients are  hard to interpret directly. E.g. initiated best supportive care (`best_supportive_care`) increases the rate of "Death" but it also might decrease the rate of "worsening" transitions. How should those be combined? To make the results easy to interpret we use the model to build counterfactual predictions for each patient and treatment: what is (according to the model) the probability of the patient being alive at 28 days if they did not receive the treatment at all and what if they received the treatment immediately upon admission. Those two probabilities can then be used to compute log odds-ratio, which is the value we report. Similarly, we compute the log odds-ratio for being discharged. For this model this results in the following estimates of log ORs.
 
 ```{r}
 hmm_hypothesis_res_list[["trt_group_m1"]] <- evaluate_all_treatment_hypotheses(trt_group_m1_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
 
-hmm_hypothesis_res_list[["trt_group_m1"]] %>% select(hypothesis, point_estimate, ci_low, ci_high) %>%
-  rename(`95% CI Low` = ci_low, `95% CI High` = ci_high)
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["trt_group_m1"]])
 ```
 
 
@@ -256,13 +257,16 @@ trt_group_m2 <- brmshmmdata(trt_group_m2_formula, serie_data,
 trt_group_m2_fit <- brmhmm(trt_group_m2, cache_file = paste0(cache_dir,"/trt_group_m2.rds"), init = 0.1, control = list(adapt_delta = 0.95), iter = 1200)
 
 #parnames(trt_group_m2_fit$brmsfit)
-print_my_fit_summary(trt_group_m2_fit)
+print_hmm_fit_summary(trt_group_m2_fit)
 ```
 
+And here are the estimates of the log ORs:
 
 ```{r}
 
 hmm_hypothesis_res_list[["trt_group_m2"]] <- evaluate_all_treatment_hypotheses(trt_group_m2_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
+
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["trt_group_m2"]])
 ```
 
 ```{r}
@@ -275,8 +279,16 @@ rm(trt_group_m2_fit)
 
 ### Treatments + age + sex + hospital
 
+Here the model is further expanded to allow all the rates to vary between hospitals.
+
+```{r}
+trt_group_m3_formula <- update.formula(trt_group_m2_formula,  ~  . + (0 + .rate_id || hospital_id))
+trt_group_m3_formula
+```
+
+Summary of the coefficients:
+
 ```{r trt_group_m3}
-trt_group_m3_formula <- update.formula(trt_group_m2_formula,  ~  . + (0 + .rate_id | hospital_id))
 
 trt_group_m3 <- brmshmmdata(trt_group_m3_formula, serie_data, 
                   simple_rate_data, trt_group_m1_hidden_state_data, simple_initial_states, prior = trt_group_m1_prior,
@@ -284,11 +296,16 @@ trt_group_m3 <- brmshmmdata(trt_group_m3_formula, serie_data,
 
 trt_group_m3_fit <- brmhmm(trt_group_m3, cache_file = paste0(cache_dir,"/trt_group_m3.rds"), init = 0.1, control = list(adapt_delta = 0.95), iter = 1200)
 
-summary(trt_group_m3_fit$brmsfit)
+print_hmm_fit_summary(trt_group_m3_fit)
 ```
+We see that the data are consistent with quite high between-site differences (measured in standard deviations of the varying intercepts).
+
+And the resulting log ORs are:
 
 ```{r}
 hmm_hypothesis_res_list[["trt_group_m3"]] <-  evaluate_all_treatment_hypotheses(trt_group_m3_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
+
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["trt_group_m3"]])
 ```
 
 
@@ -303,6 +320,8 @@ rm(trt_group_m3_fit)
 
 ### Treatments + age + sex + hospital, first wave only
 
+This is the same model as above, but using only the patients from the first wave. Here is the summary of the coefficients.
+
 ```{r trt_group_m3_fw}
 serie_data_fw <- serie_data %>% filter(first_wave)
 simple_initial_states_fw <- serie_data_fw %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed) 
@@ -314,13 +333,17 @@ trt_group_m3_fw <- brmshmmdata(trt_group_m3_formula, serie_data_fw,
 
 trt_group_m3_fw_fit <- brmhmm(trt_group_m3_fw, cache_file = paste0(cache_dir,"/trt_group_m3_fw.rds"), init = 0.1, control = default_control, iter = 1200)
 
-summary(trt_group_m3_fw_fit$brmsfit)
+print_hmm_fit_summary(trt_group_m3_fw_fit)
 ```
+
+And the resulting log ORs:
 
 ```{r}
 serie_data_28_fw = serie_data_28 %>% filter(first_wave)
 
 hmm_hypothesis_res_list[["trt_group_m3_fw"]] <-  evaluate_all_treatment_hypotheses(trt_group_m3_fw_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, first_wave", model_check = "OK", cl = cl, serie_data_28 = serie_data_28_fw)
+
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["trt_group_m3_fw"]])
 ```
 
 
@@ -334,22 +357,34 @@ rm(trt_group_m3_fw_fit)
 
 ### Treatment + age + sex + hospital + comorbidities
 
+For this model, the sum of comorbidities is added as a continuous predictor, resulting in the formula:
+
+```{r}
+trt_group_m4_formula <-  update.formula(trt_group_m3_formula,  ~ . + (comorbidities_sum || rate_group)) 
+trt_group_m4_formula
+```
+
+Below is the summary of the coefficients:
 
 ```{r trt_group_m4}
-trt_group_m4_formula <-  update.formula(trt_group_m3_formula,  ~ . + (comorbidities_sum || rate_group)) 
 
 trt_group_m4 <- brmshmmdata(trt_group_m4_formula, serie_data, 
                   simple_rate_data, trt_group_m1_hidden_state_data, simple_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = trt_group_m1_observed_state_data)
 
 
-trt_group_m4_fit <- brmhmm(trt_group_m4, cache_file = paste0(cache_dir,"/trt_group_m4.rds"), init = 0.1, control = default_control, iter = 1200)
+trt_group_m4_fit <- brmhmm(trt_group_m4, cache_file = paste0(cache_dir,"/trt_group_m4.rds"), init = 0.1, control = list(adapt_delta = 0.95), iter = 1200)
 
-summary(trt_group_m4_fit$brmsfit)
+print_hmm_fit_summary(trt_group_m4_fit)
 ```
+The sampler warns us of divergent transitions
+
+And the resulting log ORs: 
 
 ```{r}
 hmm_hypothesis_res_list[["trt_group_m4"]] <-  evaluate_all_treatment_hypotheses(trt_group_m4_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
+
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["trt_group_m4"]])
 ```
 
 
@@ -371,7 +406,7 @@ trt_group_m4_fw <- brmshmmdata(trt_group_m4_formula, serie_data_fw,
 
 trt_group_m4_fw_fit <- brmhmm(trt_group_m4_fw, cache_file = paste0(cache_dir,"/trt_group_m4_fw.rds"), init = 0.1, control = default_control, iter = 1200)
 
-summary(trt_group_m4_fw_fit$brmsfit)
+print_hmm_fit_summary(trt_group_m4_fw_fit)
 ```
 
 ```{r}
@@ -384,6 +419,7 @@ if(do_pp_checks) {
   do_common_pp_checks(trt_group_m4_fit)
 }
 rm(trt_group_m4_fit)
+invisible(parallel::clusterEvalQ(cl, gc()))
 ```
 
 ## Treatments - effect on individual rates
@@ -409,7 +445,7 @@ trt_rate_m1 <- brmshmmdata(trt_rate_m1_formula, serie_data,
 
 trt_rate_m1_fit <- brmhmm(trt_rate_m1, cache_file = paste0(cache_dir,"/trt_rate_m1.rds"), control = default_control, init = 0.1)
 
-summary(trt_rate_m1_fit$brmsfit)
+print_hmm_fit_summary(trt_rate_m1_fit)
 ```
 
 
@@ -437,7 +473,7 @@ trt_rate_m2 <- brmshmmdata(trt_rate_m2_formula, serie_data,
 
 trt_rate_m2_fit <- brmhmm(trt_rate_m2, cache_file = paste0(cache_dir,"/trt_rate_m2.rds"), init = 0.1, control = default_control)
 
-summary(trt_rate_m2_fit$brmsfit)
+print_hmm_fit_summary(trt_rate_m2_fit)
 ```
 
 ```{r}
@@ -462,7 +498,7 @@ trt_rate_m3 <- brmshmmdata(trt_rate_m3_formula, serie_data,
 
 trt_rate_m3_fit <- brmhmm(trt_rate_m3, cache_file = paste0(cache_dir,"/trt_rate_m3.rds"), init = 0.1, control = list(adapt_delta = 0.95), iter = 1500)
 
-summary(trt_rate_m3_fit$brmsfit)
+print_hmm_fit_summary(trt_rate_m3_fit)
 ```
 
 ```{r}
@@ -487,7 +523,7 @@ trt_rate_m3_fw <- brmshmmdata(trt_rate_m3_formula, serie_data_fw,
 
 trt_rate_m3_fw_fit <- brmhmm(trt_rate_m3_fw, cache_file = paste0(cache_dir,"/trt_rate_m3_fw.rds"), init = 0.1, control = list(adapt_delta = 0.95), iter = 1500)
 
-summary(trt_rate_m3_fw_fit$brmsfit)
+print_hmm_fit_summary(trt_rate_m3_fw_fit)
 ```
 
 ```{r}
@@ -517,7 +553,7 @@ trt_rate_m4 <- brmshmmdata(trt_rate_m4_formula, serie_data,
 
 trt_rate_m4_fit <- brmhmm(trt_rate_m4, cache_file = paste0(cache_dir,"/trt_rate_m4.rds"), init = 0.1, control = default_control, iter = 1500)
 
-summary(trt_rate_m4_fit$brmsfit)
+print_hmm_fit_summary(trt_rate_m4_fit)
 ```
 
 ```{r}
@@ -529,7 +565,9 @@ hmm_hypothesis_res_list[["trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(tr
 if(do_pp_checks) {
   do_common_pp_checks(trt_rate_m4_fit)
 }
-rm(trt_group_m4_fit)
+rm(trt_rate_m4_fit)
+invisible(parallel::clusterEvalQ(cl, gc()))
+
 ```
 
 
@@ -559,7 +597,7 @@ d_dimer_m1 <- brmshmmdata(d_dimer_m1_formula, d_dimer_serie_data,
 
 d_dimer_m1_fit <- brmhmm(d_dimer_m1, cache_file = paste0(cache_dir,"/d_dimer_m1.rds"), init = 0.1, control = default_control, iter = 1500)
 
-summary(d_dimer_m1_fit$brmsfit)
+print_hmm_fit_summary(d_dimer_m1_fit)
 ```
 
 ```{r}
@@ -595,7 +633,7 @@ d_dimer_m2 <- brmshmmdata(d_dimer_m2_formula, d_dimer_serie_data,
 
 d_dimer_m2_fit <- brmhmm(d_dimer_m2, cache_file = paste0(cache_dir,"/d_dimer_m2.rds"), init = 0.1, control = default_control, iter = 1500)
 
-summary(d_dimer_m2_fit$brmsfit)
+print_hmm_fit_summary(d_dimer_m2_fit)
 
 ```
 
@@ -610,6 +648,7 @@ hmm_hypothesis_res_list[["d_dimer_m2_death"]] <-
     adjusted = "supportive, age, sex, hospital",
     model_check = "Suspicious"
   )
+rm(d_dimer_m2_fit)
 
 ```
 
@@ -637,7 +676,7 @@ IL_6_m1 <- brmshmmdata(IL_6_m1_formula, IL_6_serie_data,
 
 IL_6_m1_fit <- brmhmm(IL_6_m1, cache_file = paste0(cache_dir,"/IL_6_m1.rds"), init = 0.1, control = default_control, iter = 1500)
 
-summary(IL_6_m1_fit$brmsfit)
+print_hmm_fit_summary(IL_6_m1_fit)
 ```
 
 
@@ -675,7 +714,7 @@ IL_6_m2 <- brmshmmdata(IL_6_m2_formula, IL_6_serie_data,
 
 IL_6_m2_fit <- brmhmm(IL_6_m2, cache_file = paste0(cache_dir,"/IL_6_m2.rds"), init = 0.1, control = default_control, iter = 1500)
 
-summary(IL_6_m2_fit$brmsfit)
+print_hmm_fit_summary(IL_6_m2_fit)
 ```
 
 ```{r}
@@ -688,6 +727,12 @@ hmm_hypothesis_res_list[["IL_6_m2_death"]] <-
     hypothesis = hypotheses$IL_6_increases_death,
     adjusted = "supportive, age, sex, hospital"
   )
+
+```
+
+```{r}
+rm(IL_6_m2_fit)
+invisible(parallel::clusterEvalQ(cl, gc()))
 
 ```
 
@@ -736,7 +781,7 @@ c_trt_m1 <- brmshmmdata(trt_group_m1_formula, serie_data,
 
 c_trt_m1_fit <- brmhmm(c_trt_m1, cache_file = paste0(cache_dir,"/c_trt_m1.rds"), control = default_control, init = 0.1, iter = 1500)
 
-summary(c_trt_m1_fit$brmsfit)
+print_hmm_fit_summary(c_trt_m1_fit)
 
 
 ```
@@ -765,7 +810,7 @@ c_trt_m2 <- brmshmmdata(trt_group_m2_formula, serie_data,
 c_trt_m2_fit <- brmhmm(c_trt_m2, cache_file = paste0(cache_dir,"/c_trt_m2.rds"), init = 0.1, control = default_control, iter = 1200)
 
 #parnames(c_trt_m2_fit$brmsfit)
-summary(c_trt_m2_fit$brmsfit)
+print_hmm_fit_summary(c_trt_m2_fit)
 ```
 
 
@@ -792,7 +837,7 @@ c_trt_m3 <- brmshmmdata(trt_group_m3_formula, serie_data,
 
 c_trt_m3_fit <- brmhmm(c_trt_m3, cache_file = paste0(cache_dir,"/c_trt_m3.rds"), init = 0.1, control = default_control, iter = 1200)
 
-summary(c_trt_m3_fit$brmsfit)
+print_hmm_fit_summary(c_trt_m3_fit)
 ```
 
 ```{r}
@@ -819,7 +864,7 @@ c_trt_m3_fw <- brmshmmdata(trt_group_m3_formula, serie_data_fw,
 
 c_trt_m3_fw_fit <- brmhmm(c_trt_m3_fw, cache_file = paste0(cache_dir,"/c_trt_m3_fw.rds"), init = 0.1, control = default_control, iter = 1200)
 
-summary(c_trt_m3_fw_fit$brmsfit)
+print_hmm_fit_summary(c_trt_m3_fw_fit)
 ```
 
 ```{r}
@@ -847,7 +892,7 @@ c_trt_m4 <- brmshmmdata(trt_group_m4_formula, serie_data,
 
 c_trt_m4_fit <- brmhmm(c_trt_m4, cache_file = paste0(cache_dir,"/c_trt_m4.rds"), init = 0.1, control = default_control, iter = 1200)
 
-summary(c_trt_m4_fit$brmsfit)
+print_hmm_fit_summary(c_trt_m4_fit)
 ```
 
 ```{r}
@@ -861,6 +906,7 @@ if(do_pp_checks) {
   do_common_pp_checks(c_trt_m4_fit)
 }
 rm(c_trt_m4_fit)
+invisible(parallel::clusterEvalQ(cl, gc()))
 ```
 
 
