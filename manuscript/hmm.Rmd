@@ -171,9 +171,9 @@ simple_rate_data <- rbind(
 simple_initial_states <- serie_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed)
 ```
 
-The rates included in the simple model are shown in Table&nbsp;\@ref(tab:statessimple).
+The rates included in the simple model are shown in Table&nbsp;\@ref(tab:ratessimple).
 
-```{r statessimple}
+```{r ratessimple}
 simple_rate_data  %>% knitr::kable(booktabs = TRUE, caption="Rates used in the simple model.")
 ```
 
@@ -215,9 +215,17 @@ print_hmm_fit_summary(trt_group_m1_fit)
 
 ```
 
-Note that the coefficients are  hard to interpret directly. E.g. initiated best supportive care (`best_supportive_care`) increases the rate of "Death" but it also might decrease the rate of "worsening" transitions. How should those be combined? To make the results easy to interpret we use the model to build counterfactual predictions for each patient and treatment: what is (according to the model) the probability of the patient being alive at 28 days if they did not receive the treatment at all and what if they received the treatment immediately upon admission. Those two probabilities can then be used to compute log odds-ratio, which is the value we report. Similarly, we compute the log odds-ratio for being discharged. For this model this results in the following estimates of log ORs.
+Note that the coefficients are  hard to interpret directly. E.g. initiated best supportive care (`best_supportive_care`) increases the rate of "Death" but it also might decrease the rate of "worsening" transitions. How should those be combined? To make the results easy to interpret we use the model to build counterfactual predictions for each patient and treatment: what is (according to the model) the probability of the patient being alive at 28 days if they did not receive the treatment at all and what if they received the treatment immediately upon admission. Those two probabilities can then be used to compute log odds-ratio, which is the value we report. Similarly, we compute the log odds-ratio for being still hospitalized against being discharged. In both cases log odds ratio > 0 is worse for the patient (higher chance of death, higher chance of being hospitalized) in the treatment group. 
+
+Additionally we also look on the (counterfactual) time of hospitalization for patients discharged by day 28 in both groups and - to put it on the same scale, compare the mean of the log of the per-patient ratios of those times, i.e. estimate > 0 implies worse outcome (longer hospitalization) in the treatment group. This value is not reported in the main manuscript, only in the supplement.
+
+
+For this model this results in the following estimates:
 
 ```{r}
+
+# 
+
 hmm_hypothesis_res_list[["trt_group_m1"]] <- evaluate_all_treatment_hypotheses(trt_group_m1_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
 
 print_hmm_hypothesis_res(hmm_hypothesis_res_list[["trt_group_m1"]])
@@ -277,7 +285,7 @@ rm(trt_group_m2_fit)
 Here the model is further expanded to allow all the rates to vary between hospitals.
 
 ```{r}
-trt_group_m3_formula <- update.formula(trt_group_m2_formula,  ~  . + (0 + .rate_id || hospital_id))
+trt_group_m3_formula <- update.formula(trt_group_m2_formula,  ~  . + (0 + .rate_id | hospital_id))
 trt_group_m3_formula
 ```
 
@@ -372,9 +380,9 @@ trt_group_m4_fit <- brmhmm(trt_group_m4, cache_file = paste0(cache_dir,"/trt_gro
 
 print_hmm_fit_summary(trt_group_m4_fit)
 ```
-The sampler warns us of divergent transitions
+The sampler warns us of divergent transitions, indicating the posterior might not have been fully explored. This is most likely because we do not have enough data to estimate all the parameters. Here and in the following, we mark models that had such problems as "Suspicious" and do not report their results in the main text of the manuscript.
 
-And the resulting log ORs: 
+The resulting log ORs (which cannot be fully trusted): 
 
 ```{r}
 hmm_hypothesis_res_list[["trt_group_m4"]] <-  evaluate_all_treatment_hypotheses(trt_group_m4_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
@@ -392,6 +400,7 @@ rm(trt_group_m4_fit)
 
 ### Treatment + age + sex + hospital + comorbidities, first wave
 
+Once again, we run the same model but for the first wave data only. Similarly to the previous case this results in divergent transitions and the model should not be fully trusted.
 
 ```{r trt_group_m4_fw}
 trt_group_m4_fw <- brmshmmdata(trt_group_m4_formula, serie_data_fw, 
@@ -403,25 +412,32 @@ trt_group_m4_fw_fit <- brmhmm(trt_group_m4_fw, cache_file = paste0(cache_dir,"/t
 
 print_hmm_fit_summary(trt_group_m4_fw_fit)
 ```
+And here are the resulting log ORs
 
 ```{r}
-hmm_hypothesis_res_list[["trt_group_m4_fw"]] <-  evaluate_all_treatment_hypotheses(trt_group_m4_fw_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities, first_wave", model_check = "OK", cl = cl, serie_data_28 = serie_data_28_fw)
+hmm_hypothesis_res_list[["trt_group_m4_fw"]] <-  evaluate_all_treatment_hypotheses(trt_group_m4_fw_fit, model_subgroup = "simple_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities, first_wave", model_check = "Suspicious", cl = cl, serie_data_28 = serie_data_28_fw)
+
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["trt_group_m4_fw"]])
 ```
 
 
 ```{r}
 if(do_pp_checks) {
-  do_common_pp_checks(trt_group_m4_fit)
+  do_common_pp_checks(trt_group_m4_fw_fit)
 }
-rm(trt_group_m4_fit)
+rm(trt_group_m4_fw_fit)
 invisible(parallel::clusterEvalQ(cl, gc()))
 ```
 
 ## Treatments - effect on individual rates
 
+In this set of models the effects (especially the treatments) act directly on the individual rates.
+
 ### Only treatments
 
-```{r trt_rate_m1}
+For treatments only, this boils down to the following `brms` formula:
+
+```{r}
 trt_rate_m1_hidden_state_data <- simple_hidden_state_data
 
 trt_rate_m1_observed_state_data <- base_observed_state_data
@@ -434,6 +450,12 @@ trt_rate_m1_prior = trt_group_m1_prior
 
 trt_rate_m1_formula <- ~ 0 + .rate_id +  (0 + best_supportive_care + took_hcq + took_az + took_favipiravir + took_convalescent_plasma || .rate_id)
 
+trt_rate_m1_formula
+```
+
+Resulting in the following fitted coefficients:
+
+```{r trt_rate_m1}
 trt_rate_m1 <- brmshmmdata(trt_rate_m1_formula, serie_data, 
                   trt_rate_m1_rate_data, simple_hidden_state_data, simple_initial_states, prior = trt_rate_m1_prior,
                   observed_state_data = base_observed_state_data)
@@ -442,6 +464,7 @@ trt_rate_m1_fit <- brmhmm(trt_rate_m1, cache_file = paste0(cache_dir,"/trt_rate_
 
 print_hmm_fit_summary(trt_rate_m1_fit)
 ```
+
 
 
 ```{r}
@@ -470,9 +493,12 @@ trt_rate_m2_fit <- brmhmm(trt_rate_m2, cache_file = paste0(cache_dir,"/trt_rate_
 
 print_hmm_fit_summary(trt_rate_m2_fit)
 ```
+And those log ORs for the outcomes:
 
 ```{r}
 hmm_hypothesis_res_list[["trt_rate_m2"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m2_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
+
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["trt_rate_m2"]])
 ```
 
 ```{r}
@@ -485,8 +511,16 @@ rm(trt_rate_m2_fit)
 
 ### Treatments + age + sex + hospital
 
-```{r trt_rate_m3}
+We allow the rates to differ by hospital site with this formula:
+
+```{r}
 trt_rate_m3_formula <- update.formula(trt_rate_m2_formula,  ~  . + (0 + .rate_id | hospital_id))
+trt_rate_m3_formula
+```
+
+Those are the resulting fitted coefficients:
+
+```{r trt_rate_m3}
 trt_rate_m3 <- brmshmmdata(trt_rate_m3_formula, serie_data, 
                   trt_rate_m1_rate_data, trt_rate_m1_hidden_state_data, trt_rate_m1_initial_states, prior = trt_rate_m1_prior,
                   observed_state_data = trt_rate_m1_observed_state_data)
@@ -496,8 +530,12 @@ trt_rate_m3_fit <- brmhmm(trt_rate_m3, cache_file = paste0(cache_dir,"/trt_rate_
 print_hmm_fit_summary(trt_rate_m3_fit)
 ```
 
+And the resulting estimates:
+
 ```{r}
 hmm_hypothesis_res_list[["trt_rate_m3"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m3_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
+
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["trt_rate_m3"]])
 ```
 
 
@@ -511,6 +549,8 @@ rm(trt_rate_m3_fit)
 
 ### Treatments + age + sex + hospital, first_Wave
 
+This is same as the previous model, but limiting only to first wave patients, the fitted coefficients:
+
 ```{r trt_rate_m3_fw}
 trt_rate_m3_fw <- brmshmmdata(trt_rate_m3_formula, serie_data_fw, 
                   trt_rate_m1_rate_data, trt_rate_m1_hidden_state_data, simple_initial_states_fw, prior = trt_rate_m1_prior,
@@ -521,8 +561,12 @@ trt_rate_m3_fw_fit <- brmhmm(trt_rate_m3_fw, cache_file = paste0(cache_dir,"/trt
 print_hmm_fit_summary(trt_rate_m3_fw_fit)
 ```
 
+And the log(OR) estimates:
+
 ```{r}
 hmm_hypothesis_res_list[["trt_rate_m3_fw"]] <-  evaluate_all_treatment_hypotheses(trt_rate_m3_fw_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital, first_wave", model_check = "OK", cl = cl, serie_data_28 = serie_data_28_fw)
+
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["trt_rate_m3_fw"]])
 ```
 
 
@@ -539,8 +583,16 @@ rm(trt_rate_m3_fw_fit)
 ### Treatment + age + sex + hospital + comorbidities
 
 
-```{r trt_rate_m4}
+Adding comorbidities, the complete formula:
+
+```{r}
 trt_rate_m4_formula <-  update.formula(trt_rate_m3_formula, ~ . + (comorbidities_sum || .rate_id))
+trt_rate_m4_formula
+```
+
+Coefficient estimates - note the divergent transitions, indicating the results are not completely trustworthy:
+
+```{r trt_rate_m4}
 
 trt_rate_m4 <- brmshmmdata(trt_rate_m4_formula, serie_data, 
                   trt_rate_m1_rate_data, trt_rate_m1_hidden_state_data, trt_rate_m1_initial_states, prior = trt_rate_m1_prior,
@@ -551,8 +603,12 @@ trt_rate_m4_fit <- brmhmm(trt_rate_m4, cache_file = paste0(cache_dir,"/trt_rate_
 print_hmm_fit_summary(trt_rate_m4_fit)
 ```
 
+Log odds-ratio estimates:
+
 ```{r}
 hmm_hypothesis_res_list[["trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(trt_rate_m4_fit, model_subgroup = "simple_rate", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "Suspicious", cl = cl, serie_data_28 = serie_data_28)
+
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["trt_rate_m4"]])
 ```
 
 
@@ -568,11 +624,13 @@ invisible(parallel::clusterEvalQ(cl, gc()))
 
 ## Markers
 
+In the marker models, we use the simple model and investigate effects on rate groups. We filter only for patients that at had the marker measured at least once. We use the peak of the marker so far as a predictor in the model and investigate its estimated coefficient. Unfortunately, none of the results are trustworthy as the sampler encountered divergent transitions. 
 
 ### D-dimer + hospital
 
+The formula is:
 
-```{r d_dimer_m1}
+```{r}
 d_dimer_serie_data <- serie_data %>% 
   group_by(.serie) %>%
   filter(any(!is.na(d_dimer))) %>%
@@ -584,6 +642,14 @@ d_dimer_initial_states <- d_dimer_serie_data %>% filter(.time == 1) %>% arrange(
 
 
 d_dimer_m1_formula <-  ~ 0 + .rate_id +  (0 + best_supportive_care || rate_group)  + (0 + .rate_id | hospital_id) + (log_peak_d_dimer || rate_group) 
+
+
+d_dimer_m1_formula
+```
+
+And here are the coefficient estimates  - note the divergent transitions, indicating the results are not completely trustworthy:
+
+```{r d_dimer_m1}
 
 
 d_dimer_m1 <- brmshmmdata(d_dimer_m1_formula, d_dimer_serie_data, 
@@ -602,7 +668,7 @@ hmm_hypothesis_res_list[["d_dimer_m1_death"]] <-
     draws = draws$`r_rate_group[death,log_peak_d_dimer]`,
     model = "HMMsimple_group",
     estimand = "log(HR)",
-    hypothesis = hypotheses$d_dimer_increases_death,
+    hypothesis = hypotheses$d_dimer_death,
     adjusted = "supportive, hospital",
     model_check = "Suspicious"
   )
@@ -618,8 +684,16 @@ rm(d_dimer_m1_fit)
 
 ### D-dimer + age + sex + comorbidities
 
+Including comorbidites in the model gives the formula:
+
 ```{r}
 d_dimer_m2_formula <-  update.formula(d_dimer_m1_formula, ~ . + (0 + age_norm + is_male || rate_group))
+d_dimer_m2_formula
+```
+
+And here are the coefficient estimates - note the divergent transitions, indicating the results are not completely trustworthy:
+
+```{r}
 
 
 d_dimer_m2 <- brmshmmdata(d_dimer_m2_formula, d_dimer_serie_data, 
@@ -639,7 +713,7 @@ hmm_hypothesis_res_list[["d_dimer_m2_death"]] <-
     draws = draws$`r_rate_group[death,log_peak_d_dimer]`,
     model = "HMMsimple_group",
     estimand = "log(HR)",
-    hypothesis = hypotheses$d_dimer_increases_death,
+    hypothesis = hypotheses$d_dimer_death,
     adjusted = "supportive, age, sex, hospital",
     model_check = "Suspicious"
   )
@@ -651,6 +725,7 @@ rm(d_dimer_m2_fit)
 
 ### IL-6 + hospital
 
+We further look into Interleukin 6 using the formula:
 
 ```{r}
 IL_6_serie_data <- serie_data %>% 
@@ -664,6 +739,12 @@ IL_6_initial_states <- IL_6_serie_data %>% filter(.time == 1) %>% arrange(.serie
 
 
 IL_6_m1_formula <- ~ 0 + .rate_id +  (0 + best_supportive_care || rate_group)  + (0 + .rate_id | hospital_id) + (log_peak_IL_6 || rate_group) 
+IL_6_m1_formula
+```
+
+Giving us the following coefficients - note the divergent transitions, indicating the results are not completely trustworthy:
+
+```{r}
 
 IL_6_m1 <- brmshmmdata(IL_6_m1_formula, IL_6_serie_data, 
                   simple_rate_data, trt_group_m1_hidden_state_data, IL_6_initial_states, prior = trt_group_m1_prior,
@@ -682,7 +763,7 @@ hmm_hypothesis_res_list[["IL_6_m1_death"]] <-
     draws = draws$`r_rate_group[death,log_peak_IL_6]`,
     model = "HMMsimple_group",
     estimand = "log(HR)",
-    hypothesis = hypotheses$IL_6_increases_death,
+    hypothesis = hypotheses$IL_6_death,
     adjusted = "supportive, hospital"
   )
 
@@ -700,8 +781,16 @@ rm(IL_6_m1_fit)
 
 ### IL_6 + age + sex + comorbidities
 
+And finally adding comorbidities with the formula:
+
 ```{r}
 IL_6_m2_formula <-  update.formula(IL_6_m1_formula, ~ . + (0 + age_norm + is_male || rate_group))
+IL_6_m2_formula
+```
+
+Gives us those estimates - note the divergent transitions, indicating the results are not completely trustworthy:
+
+```{r}
 
 IL_6_m2 <- brmshmmdata(IL_6_m2_formula, IL_6_serie_data, 
                   simple_rate_data, trt_group_m1_hidden_state_data, IL_6_initial_states, prior = trt_group_m1_prior,
@@ -719,7 +808,7 @@ hmm_hypothesis_res_list[["IL_6_m2_death"]] <-
     draws = draws$`r_rate_group[death,log_peak_IL_6]`,
     model = "HMMsimple_group",
     estimand = "log(HR)",
-    hypothesis = hypotheses$IL_6_increases_death,
+    hypothesis = hypotheses$IL_6_death,
     adjusted = "supportive, age, sex, hospital"
   )
 
@@ -734,9 +823,7 @@ invisible(parallel::clusterEvalQ(cl, gc()))
 
 ## Complex: Treatments - effects on rate groups
 
-### Only treatments
-
-```{r c_trt_m1}
+```{r}
 complex_rate_data <- rbind(
   tibble(.from = paste0(c("Oxygen", "Ventilated"), "_worsening"), .to = "Death", rate_group = "death"),
   tibble(.from = "AA_improving", 
@@ -770,6 +857,28 @@ complex_hidden_state_data <- rbind(
 
 complex_initial_states <- serie_data %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed) %>% paste0(., "_worsening")
 
+```
+
+
+```{r ratescomplex}
+complex_rate_data %>% knitr::kable(booktabs = TRUE, caption="Rates used in the complex model.") 
+```
+
+
+Here we use the complex model and let treatments have effect on the rate groups. The models have the same formulae as the simple models, only the rate (and state) definitions change. The rates used are shown in Table&nbsp;\@ref(tab:ratescomplex). 
+
+### Only treatments
+
+Using treatments only with the formula: 
+
+```{r}
+trt_group_m1_formula
+```
+
+Fitted coefficients:
+
+```{r c_trt_m1}
+
 c_trt_m1 <- brmshmmdata(trt_group_m1_formula, serie_data, 
                   complex_rate_data, complex_hidden_state_data, complex_initial_states, prior = trt_group_m1_prior,
                   observed_state_data = base_observed_state_data)
@@ -781,8 +890,12 @@ print_hmm_fit_summary(c_trt_m1_fit)
 
 ```
 
+Estimates:
+
 ```{r}
 hmm_hypothesis_res_list[["c_trt_rate_m1"]] <- evaluate_all_treatment_hypotheses(c_trt_m1_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
+
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["c_trt_rate_m1"]])
 ```
 
 
@@ -795,6 +908,13 @@ rm(c_trt_m1_fit)
 
 ### Treatments + age + sex
 
+Adding age and sex with formula:
+
+```{r}
+trt_group_m2_formula
+```
+
+Fitted coefficients:
 
 ```{r c_trt_m2}
 c_trt_m2 <- brmshmmdata(trt_group_m2_formula, serie_data, 
@@ -809,8 +929,12 @@ print_hmm_fit_summary(c_trt_m2_fit)
 ```
 
 
+Estimates:
+
 ```{r}
 hmm_hypothesis_res_list[["c_trt_rate_m2"]] <- evaluate_all_treatment_hypotheses(c_trt_m2_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
+
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["c_trt_rate_m2"]])
 
 ```
 
@@ -825,6 +949,14 @@ rm(c_trt_m2_fit)
 
 ### Treatments + age + sex + hospital
 
+Including hospital as well with the formula:
+
+```{r}
+trt_group_m3_formula
+```
+
+Fitted coefficients:
+
 ```{r c_trt_m3}
 c_trt_m3 <- brmshmmdata(trt_group_m3_formula, serie_data, 
                   complex_rate_data, complex_hidden_state_data, complex_initial_states, prior = trt_group_m1_prior,
@@ -835,9 +967,12 @@ c_trt_m3_fit <- brmhmm(c_trt_m3, cache_file = paste0(cache_dir,"/c_trt_m3.rds"),
 print_hmm_fit_summary(c_trt_m3_fit)
 ```
 
+Estimates:
+
 ```{r}
 hmm_hypothesis_res_list[["c_trt_rate_m3"]] <- evaluate_all_treatment_hypotheses(c_trt_m3_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital", model_check = "OK", cl = cl, serie_data_28 = serie_data_28)
 
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["c_trt_rate_m3"]])
 ```
 
 
@@ -845,10 +980,12 @@ hmm_hypothesis_res_list[["c_trt_rate_m3"]] <- evaluate_all_treatment_hypotheses(
 if(do_pp_checks) {
   do_common_pp_checks(c_trt_m3_fit)
 }
-rm(c_trtr_m3_fit)
+rm(c_trt_m3_fit)
 ```
 
 ### Treatments + age + sex + hospital, first wave
+
+The same model as above, but using only first wave patients. Fitted coefficients:
 
 ```{r c_trt_m3_fw}
 complex_initial_states_fw <- serie_data_fw %>% filter(.time == 1) %>% arrange(.serie) %>% pull(.observed) %>% paste0(., "_worsening")
@@ -862,9 +999,12 @@ c_trt_m3_fw_fit <- brmhmm(c_trt_m3_fw, cache_file = paste0(cache_dir,"/c_trt_m3_
 print_hmm_fit_summary(c_trt_m3_fw_fit)
 ```
 
+Estimates:
+
 ```{r}
 hmm_hypothesis_res_list[["c_trt_rate_m3_fw"]] <- evaluate_all_treatment_hypotheses(c_trt_m3_fw_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital, first_wave", model_check = "OK", cl = cl, serie_data_28 = serie_data_28_fw)
 
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["c_trt_rate_m3_fw"]])
 ```
 
 
@@ -878,6 +1018,13 @@ rm(c_trt_m3_fw_fit)
 
 ### Treatment + age + sex + hospital + comorbidities
 
+Adding comorbidities with the formula: 
+
+```{r}
+trt_group_m4_formula
+```
+
+Fitted coefficients - note the divergent transitions, indicating the results are not completely trustworthy:
 
 ```{r c_trt_m4}
 c_trt_m4 <- brmshmmdata(trt_group_m4_formula, serie_data, 
@@ -890,8 +1037,12 @@ c_trt_m4_fit <- brmhmm(c_trt_m4, cache_file = paste0(cache_dir,"/c_trt_m4.rds"),
 print_hmm_fit_summary(c_trt_m4_fit)
 ```
 
+Estimates (not completely trustworthy due to the divergent transitions):
+
 ```{r}
 hmm_hypothesis_res_list[["c_trt_rate_m4"]] <- evaluate_all_treatment_hypotheses(c_trt_m4_fit, model_subgroup = "complex_group", adjusted ="all treatments, supportive, age, sex, hospital, comorbidities", model_check = "Suspicious", cl = cl, serie_data_28 = serie_data_28)
+
+print_hmm_hypothesis_res(hmm_hypothesis_res_list[["c_trt_rate_m4"]])
 
 ```
 

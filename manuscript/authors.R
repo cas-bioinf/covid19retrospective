@@ -1,5 +1,5 @@
 get_authors_string <- function() {
-  authors_file <- here::here("private_data", "authors.csv")
+  authors_file <- here::here("manuscript", "authors.csv")
   if(!file.exists(authors_file)) {
     return("Authors file not found")
   }

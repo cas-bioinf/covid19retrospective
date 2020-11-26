@@ -7,9 +7,12 @@ output:
   #    toc: false
   bookdown::word_document2: 
     toc: false
+    number_sections: false
     reference_docx: "output_template.docx"
-abstract: "We collected a multi-centric retrospective dataset of patients who were admitted to N hospitals in Czech Republic and tested positive for SARS-CoV-2. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. Patients in the dataset were treated with Hydroxychloroquine (N = 108), Azithromycin (N = 72), Favipiravir (N = 9), convalescent plasma (N = 7), Dexamethasone (N = 4) and Remdesivir (N = 3), often in combination. To explore association between treatments and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom.  Weak evidence to constrain the potential efficacy of Azithromycin and Favipiravir can be extracted from the data. Additionally we performed external validation of several proposed prognostic models for Covid-19 severity showing that they mostly perform unsatisfactorily on our dataset."
+abstract: |  
+  **Abstract:** We collected a multi-centric retrospective dataset of patients who were admitted to 10 hospitals in Czech Republic and tested positive for SARS-CoV-2. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. Patients in the dataset were treated with hydroxychloroquine (N = 108), azithromycin (N = 72), favipiravir (N = 9), convalescent plasma (N = 7), dexamethasone (N = 4) and remdesivir (N = 3), often in combination. Most patients were admitted during the first wave of the epidemic. To explore association between treatments and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom.  Weak evidence to constrain the potential efficacy of azithromycin and favipiravir can be extracted from the data. Additionally we performed external validation of several proposed prognostic models for Covid-19 severity showing that they mostly perform unsatisfactorily on our dataset.
 bibliography: Covid19.json
+csl: journal-of-medical-virology.csl
 date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
 author: "`r { source(here::here('manuscript', 'authors.R')); get_authors_string() }`"
 ---
@@ -31,12 +34,14 @@ n_hospitals <- length(unique(data$patient_data$hospital_id))
 
 # Introduction 
 
-The Covid-19 pandemic, caused by severe acute respiratory syndrome coronavirus (SARS-CoV-2) has, as of November 2020 led to over 46 million cases and over 1.1 million deaths. Proposed treatments include antivirals approved for other indications (Chloroquine, Hydroxychloroquine, Lopinavir/Ritonavir, Remdesivir, Favipiravir, Umifenovir), Azithromycin, corticosteroids, immunoglobulins, Tocilizumab and convalescent plasma [@http://zotero.org/users/5567156/items/8XWTUMUI; @http://zotero.org/users/5567156/items/6Q8Z8VJR]. Currently, the only treatment that exhibited positive effects in randomized trials is the corticosteroid Dexamethasone for severe cases [@http://zotero.org/users/5567156/items/IW6VZ53Q; @http://zotero.org/users/5567156/items/5VAKEW58], while results on Remdesivir have been conflicting [@http://zotero.org/users/5567156/items/MFS3IPPU; @http://zotero.org/users/5567156/items/NSTX4EZM]. Despite initial promise, Hydroxychloroquine has failed to show benefit for both hospitalized patients [@http://zotero.org/users/5567156/items/9X3UH8ZM; @http://zotero.org/users/5567156/items/NSTX4EZM], as early treatment [@http://zotero.org/users/5567156/items/G6KZKVMI], and as both pre- and post-exposure prophylaxis [@http://zotero.org/users/5567156/items/7C23YCV5; @http://zotero.org/users/5567156/items/GMR9FX9Z; @http://zotero.org/users/5567156/items/H4CLJNUR]. Further, no improvement could be discerned when adding Azithromycin to Hydroxychloroquine therapy [@http://zotero.org/users/5567156/items/BQLRZGTQ]. Similarly, Lopinavir/Ritonavir also did not show benefit [@http://zotero.org/users/5567156/items/6I6GAVWU]. No benefit was observed for convalescent plasma [@http://zotero.org/users/5567156/items/UEXLDJCB; @http://zotero.org/users/5567156/items/BHGT88US]. 
+The Covid-19 pandemic, caused by severe acute respiratory syndrome coronavirus (SARS-CoV-2) has, as of November 2020, led to over 46 million cases and over 1.1 million deaths. Proposed treatments include antivirals approved for other indications (chloroquine, hydroxychloroquine, lopinavir/ritonavir, remdesivir, favipiravir, umifenovir), azithromycin, corticosteroids, immunoglobulins, tocilizumab and convalescent plasma [@http://zotero.org/users/5567156/items/8XWTUMUI; @http://zotero.org/users/5567156/items/6Q8Z8VJR]. Currently, the only treatment that exhibited positive effects in randomized trials is the corticosteroid dexamethasone for severe cases [@http://zotero.org/users/5567156/items/IW6VZ53Q; @http://zotero.org/users/5567156/items/5VAKEW58]. Remdesivir, previously designed and approved for Ebola, SARS and MERS, is currently the only antiviral against SARS-CoV-2 approved by the FDA. However, during spring and summer it was available only in limited amounts via compassionate use programme. Randomized clinical trials on remdesivir have provided  conflicting evidence [@http://zotero.org/users/5567156/items/MFS3IPPU; @http://zotero.org/users/5567156/items/KB5UDZH3]. Despite initial promise, hydroxychloroquine has failed to show benefit for both hospitalized patients [@http://zotero.org/users/5567156/items/9X3UH8ZM; @http://zotero.org/users/5567156/items/KB5UDZH3], as early treatment [@http://zotero.org/users/5567156/items/G6KZKVMI], and as both pre- and post-exposure prophylaxis [@http://zotero.org/users/5567156/items/7C23YCV5; @http://zotero.org/users/5567156/items/GMR9FX9Z; @http://zotero.org/users/5567156/items/H4CLJNUR]. Further, no improvement could be discerned when adding azithromycin to hydroxychloroquine therapy [@http://zotero.org/users/5567156/items/BQLRZGTQ]. Similarly, Lopinavir/Ritonavir also did not show benefit [@http://zotero.org/users/5567156/items/6I6GAVWU]. No benefit was observed for convalescent plasma [@http://zotero.org/users/5567156/items/UEXLDJCB; @http://zotero.org/users/5567156/items/BHGT88US]. 
 
-Interestingly, in observational studies, Hydroxychloroquine was often found to be associated with better outcomes [e. g., @http://zotero.org/users/5567156/items/WZPNBRYN; @http://zotero.org/users/5567156/items/4HR7MUJ6; @http://zotero.org/users/5567156/items/NXC9CDI9].
+Interestingly, in observational studies, hydroxychloroquine was often found to be associated with better outcomes [e. g., @http://zotero.org/users/5567156/items/WZPNBRYN; @http://zotero.org/users/5567156/items/4HR7MUJ6; @http://zotero.org/users/5567156/items/NXC9CDI9].
 
 
-Favipiravir is one of the less explored experimental treatments, with only one larger study known to us [@http://zotero.org/users/5567156/items/ISLSL7UC], the study however has many potentially severe problems [@http://zotero.org/users/5567156/items/7HDXLWEA]. Even considering studies or case series with only several treated patients, very few are available [@http://zotero.org/users/5567156/items/F3VNTQ92; @http://zotero.org/users/5567156/items/FSUQMUP8; @http://zotero.org/users/5567156/items/894H9N9B]. None of the results allow strong conclusions about benefits or harms of Favipiravir. For additional summary of treatments under investigation see [@http://zotero.org/users/5567156/items/YP62P6XJ].
+Favipiravir is one of the less explored experimental treatments, previously used for influenza including avian types, with only one larger RCT in Covid- 19 known to us [@http://zotero.org/users/5567156/items/ISLSL7UC], the study however has many potentially severe problems [@http://zotero.org/users/5567156/items/7HDXLWEA]. Even considering studies or case series with only several treated patients, very few are available [@http://zotero.org/users/5567156/items/F3VNTQ92; @http://zotero.org/users/5567156/items/FSUQMUP8; @http://zotero.org/users/5567156/items/894H9N9B]. None of the results allow strong conclusions about benefits or harms of favipiravir, although a  metaanalysis of all available small studies showed an effect of favipiravir on clinical improvement in mild and moderate disease [@http://zotero.org/users/5567156/items/7595KBWR].
+
+ For additional summary of treatments under investigation see [@http://zotero.org/users/5567156/items/YP62P6XJ].
 
 
 High IL-6, D-dimer values were observed to be associated with outcome and disease severity [@http://zotero.org/users/5567156/items/K3N3VG2X].
@@ -48,7 +53,7 @@ Additionally, many methods for predicting disease severity of Covid-19 were publ
 
 The present study aims to describe the outcomes and disease course of hospitalized patients with mild to severe clinical presentation in a multicentric Czech cohort, explore the association between the outcomes and pharmacological interventions and to provide external validation to previously published prognostic models for Covid-19 severity.
 
-# Methods
+# Patients and Methods
 
 
 ## Data Collection
@@ -59,14 +64,16 @@ ethics_string <- ethics_data %>% pull(Site) %>% paste0(collapse = ", ")
 
 n_ecmo <- data$marker_data_wide %>% filter(breathing == "ECMO") %>% pull(patient_id) %>% unique() %>% length()
 n_nippv <- data$marker_data_wide %>% filter(breathing == "NIPPV") %>% pull(patient_id) %>% unique() %>% length()
+
+n_second_wave <- data$patient_data %>% filter(!first_wave) %>% nrow()
 ```
 
 
-A convenience sample of patients from `r n_hospitals` sites was collected. For each site, the dataset contains all patients hospitalized in the participating wards over the data collection period. The data collection started at the onset of the Covid-19 pandemic (except for one site where some older records were inaccessible), but the end data for collection differs between sites.   Patients over the age of 18 were included if they had PCR-confirmed infection of SARS-CoV-2 and were not participating in a clinical evaluation of any Covid-19 pharmacotherapy. 
+A convenience sample of patients from `r n_hospitals` sites was collected. For each site, the dataset contains all patients hospitalized in the participating wards over the data collection period. The data collection started at the onset of the Covid-19 pandemic (except for one site where some older records were inaccessible), but the end date for collection differs between sites due to time constraints of the participating physicians. Three sites included total of `r n_second_wave` patients that could be considered part of "second wave", i.e. admitted after September 1st, last patient included in the dataset was admitted on October 12th. See Supplementary Figure 1 for per-site data collection periods. Patients over the age of 18 were included if they had PCR-confirmed infection of SARS-CoV-2 and were not participating in a clinical trial of any Covid-19 pharmacotherapy. 
 
-We collected data on comorbidities and information about disease progression on daily resolution including breathing support required, oxygen flow, experimental anti-Covid-19 and antimicrobial drugs taken and several laboratory markers (PCR positivity for SARS-CoV-2, C-reactive protein, D-dimer, Interleukin 6, Ferritin, lymphocyte count). Full protocol for data collection is attached in the supplementary material. Due to very low number of patients using extra-corporeal membrane oxygenation (N = `r n_ecmo`) or non-invasive positive pressure ventilation (N = `r n_nippv`) in our sample, we collapsed those categories with mechanical ventilation.
+We collected data on comorbidities and information about disease progression on daily resolution including breathing support required, oxygen flow, experimental anti-Covid-19 and antimicrobial drugs taken and several laboratory markers (PCR positivity for SARS-CoV-2, C-reactive protein, D-dimer, Interleukin 6, Ferritin, lymphocyte count). Full protocol for data collection is attached in the supplementary material. Due to very low number of patients using extra-corporeal membrane oxygenation (N = `r n_ecmo`) or non-invasive positive pressure ventilation (N = `r n_nippv`) in our sample, we merged those categories with mechanical ventilation.
 
-Not all patients developed pneumonia or other symptoms of Covid-19. All patients received the standard of care including supplemental oxygen and ventilation, antibiotics for bacterial superinfections. Some patients were not indicated for all treatment modalities (especially mechanical ventilation) based on decision of attending physician and underlying patient condition. We note that the participating sites were not homogeneous in either patient population or treatment protocols. The choice of treatment was based on the decision of the attending clinician and availability.
+Not all patients developed pneumonia or other symptoms of Covid-19. All patients received the standard of care including supplemental oxygen and ventilation, antibiotics for bacterial superinfections. Some patients were not indicated for all treatment modalities (especially mechanical ventilation) based on decision of the attending physician and underlying patient condition. We note that the participating sites were not homogeneous in either patient population or treatment protocols. The choice of treatment was based on the decision of the attending clinician and availability.
 
 The study was approved by the Ethical committees of `r ethics_string`.
 
@@ -75,7 +82,7 @@ The study was approved by the Ethical committees of `r ethics_string`.
 The character of the convenience sample does not allow for a proper assessment of
 the association between treatments and patient outcomes,
 because the treatments had not been assigned to patients at random, 
-but were only observed retrospectively. This can be partially remedied by adjusting for patient characteristic in the analysis, but such adjustments will always be imperfect and the analysis  needs to be treated as exploratory and interpreted cautiously.
+but were only observed retrospectively. This can be partially remedied by adjusting for patient characteristics in the analysis, but such adjustments will always be imperfect and the analysis  needs to be treated as exploratory and interpreted cautiously.
 
 Since many details of analysis may influence the conclusions made, we performed multiverse analysis [@http://zotero.org/users/5567156/items/DXWM259V] and report results for all the hypothesis tested across multiple different models using both frequentist and Bayesian paradigms. For each model class we worked with several possible sets of adjustments. All analyses were performed in the R language [@http://zotero.org/users/5567156/items/67XKBC2W], visualizations and data cleaning was run with the `tidyverse` package [@http://zotero.org/users/5567156/items/8EWY8TKM]. 
 
@@ -83,9 +90,9 @@ Since many details of analysis may influence the conclusions made, we performed 
  # and - where applicable - with multiple estimands of the outcome as different tasks require different estimands [@http://zotero.org/users/5567156/items/MH797GNC]
 ```
 
-First class of models are frequentist multistate models under the proportional hazards assumption as implemented in the `coxph` function from the `survival` package [@http://zotero.org/users/5567156/items/I9UVTUJF]. We primarily use a model with competing risks for death and discharge from hospital (see Figure&nbsp;\@ref(fig:modelstates)a).
+First class of models are frequentist survival and multistate models under the proportional hazards assumption as implemented in the `coxph` function from the `survival` package [@http://zotero.org/users/5567156/items/I9UVTUJF]. We primarily use a model with competing risks for death and discharge from hospital (see Figure&nbsp;\@ref(fig:modelstates)a).
 
-Second class of models are Bayesian hidden Markov models of disease progression implemented via a custom extension to the `brms` package [@http://zotero.org/users/5567156/items/7ER3ZSER]. The parametrization of the HMM is inspired by [@http://zotero.org/users/5567156/items/F9K2L5Q8]: the actual process of disease is assumed to be continuous and allow only for transitions between neighboring states (as shown in Figure&nbsp;\@ref(fig:modelstates)b, c). The total probability of transition between any two states over the period of a day is then computed as the total probability of transition across all possible paths. This class of models does not satisfy the proportional hazards assumption, instead, it is assumed the process has the Markov property - i.e. that the (potentially unobserved) state and the covariates at a given day contain all the information to determine probabilities of the states on the next day. We use two versions of such models, one working solely with the observed breathing support and one assuming a hidden improving/worsening distinction. All of the hidden Markov models take into account whether best supportive care was initiated and a patient was thus not indicated to progress to more intensive treatment modalities.
+Second class of models are Bayesian hidden Markov models (HMM) of disease progression implemented via a custom extension to the `brms` package [@http://zotero.org/users/5567156/items/7ER3ZSER]. The parametrization of the HMM is inspired by Williams et al.[@http://zotero.org/users/5567156/items/F9K2L5Q8]: the actual process of disease is assumed to be continuous and allow only for transitions between neighboring states (as shown in Figure&nbsp;\@ref(fig:modelstates)b, c). The total probability of transition between any two states over the period of a day is then computed as the total probability of transition across all possible paths. This class of models does not satisfy the proportional hazards assumption, instead, it is assumed the process has the Markov property - i.e. that the (potentially unobserved) state and the covariates at a given day contain all the information to determine probabilities of the states on the next day. We use two versions of such models, one working solely with the observed breathing support and one assuming a hidden improving/worsening distinction. All of the hidden Markov models take into account whether best supportive care was initiated and a patient was thus not indicated to progress to more intensive treatment modalities.
 
 
 ```{r modelstates, fig.cap="States used in the competing risk model (a) and in the two hidden Markov model variants (b,c). AA = Ambient air, Oxygen = Nasal oxygen, Ventilated = any form of ventilation, including non-invasive positive-pressure ventilation, mechanical ventilation and extra-corporeal membrane oxygenation. In all models the 'Death' and 'Discharged' states are terminal. In the second hidden Markov model (c), the 'Improving' and 'Worsening' variants of each non-terminal state are not observable - only the breathing support is observed and improving/worsening is inferred from progression of the disease." }
@@ -102,7 +109,7 @@ Finally we used a set of Bayesian regression models implemented with the `brms` 
 #Since `stan_jm` does not support competing risks, we imputed the second event...
 ```
 
-Except for age, sex and comorbidities, all covariates are treated as time-varying, e.g. the effect of taking a drug is only included for the days after the drug was taken. 
+Except for age, sex and comorbidities, all covariates are treated as time-varying, e.g., the effect of taking a drug is only included for the days after the drug was taken. More details on the exact model formulations can be found in the supplementary statistical analysis.
 
 ```{r}
 #Sex differences are to be expected for both sociological and biological [@http://zotero.org/users/5567156/items/5KQZ3XEE] reasons.
@@ -110,7 +117,7 @@ Except for age, sex and comorbidities, all covariates are treated as time-varyin
 
 ## Evaluating prognostic models
 
-We searched the living systematic review of Covid-19 prognostic models [@http://zotero.org/users/5567156/items/TS57HJ3T] for models that could be applied to our dataset (i.e. where we have gathered all the input features).  We primarily focused on the Area Under Receiver Operating Characteristic Curve (AUC), and its bootstrapped 95% confidence intervals which we computed using the `pROC` package [@http://zotero.org/users/5567156/items/UN6BIC67]. When there were multiple reasonable ways to evaluate the outcome or a predictor in our dataset, we computed and reported all of those options. We used two simple scores with age or the decade of age as the sole predictor to have a simple baseline to compare the scores against.
+We searched the living systematic review of Covid-19 prognostic models [@http://zotero.org/users/5567156/items/TS57HJ3T] for those that could be applied to our dataset (i.e. where we have gathered all the input features).  We primarily focused on the Area Under Receiver Operating Characteristic Curve (AUC), and its bootstrapped 95% confidence intervals which we computed using the `pROC` package [@http://zotero.org/users/5567156/items/UN6BIC67]. When there were multiple reasonable ways to evaluate the outcome or a predictor in our dataset, we computed and reported all of those options. We used two simple scores with age or the decade of age as the sole predictor to have a baseline to compare the scores against.
 
 Complete code for all analyses is available at https://github.com/cas-bioinf/covid19retrospective/.
 
@@ -138,10 +145,10 @@ data_table_1 %>% group_by(group) %>%
     Male = sum_percent(sex == "M"),
     `Age (mean, IQR)` = mean_iqr(age),
     `Admitted for Covid` = sum_percent(admitted_for_covid),
-    `Took Azithromycin` = sum_percent(ever_az),
-    `Took Dexamethasone` = sum_percent(ever_dexamethasone),
-    `Took Favipiravir` = sum_percent(ever_favipiravir),
-    `Took Remdesivir` = sum_percent(ever_remdesivir),
+    `Took azithromycin` = sum_percent(ever_az),
+    `Took dexamethasone` = sum_percent(ever_dexamethasone),
+    `Took favipiravir` = sum_percent(ever_favipiravir),
+    `Took remdesivir` = sum_percent(ever_remdesivir),
     `Convalescent plasma` = sum_percent(ever_convalescent_plasma),
     `Ischemic Heart Disease` = sum_percent(ischemic_heart_disease),
     `Takes antihypertensives` = sum_percent(has_hypertension_drugs),	
@@ -164,7 +171,7 @@ data_table_1 %>% group_by(group) %>%
   as.data.frame() %>%
   column_to_rownames("group") %>%
   t() %>% 
-  knitr::kable(caption = "Patient characteristics for the overall sample and treatment subgroups. Note that the Favipiravir subgroup is not exclusive with either the HCQ or No HCQ group. IQR = interquartile range, COPD = Chronic obstructive pulmonary disease, BMI = body-mass index, Best supportive care = patient was not indicated for progression to a more intensive treatment modality.", booktabs = TRUE)
+  knitr::kable(caption = "Patient characteristics for the overall sample and treatment subgroups. Note that the favipiravir subgroup is not exclusive with either the HCQ or No HCQ group. IQR = interquartile range, COPD = Chronic obstructive pulmonary disease, BMI = body-mass index, Best supportive care = patient was not indicated for progression to a more intensive treatment modality.", booktabs = TRUE)
 
 # Note that the 'Measured D-dimer' and 'Measured IL-6' are neither exclusive nor exhaustive.
 ```
@@ -196,7 +203,7 @@ data_table_1 %>% group_by(group) %>%
 # knitr::kable(x2,caption = "Treatment combinations in individual patients.", booktabs = TRUE)
 ```
 
-In Figure&nbsp;\@ref(fig:progression) we show the overall disease progression for all patients and in Figure&nbsp;\@ref(fig:selectedmarkers) we show the time-course of a subset of the markers we have measured. The data show some interesting patterns: patients with low Interleukin-6 or D-dimer values are overrepresented among patients with better outcomes, most patients were hospitalized with high CRP and for many the CRP levels stayed elevated over the whole hospitalization. The limited nature of the data however does not allow for any statistically robust conclusions. We also see that the marker levels were not substantially stratified by study site.  Those patterns should however be interpreted with care due to systematic missingness of the data - in particular, patients that fared worse were probably more likely to have the markers measured. However we believe this kind of patient-level view is useful to appreciate both the extent of between- and within-patient variability.
+In Figure&nbsp;\@ref(fig:progression) we show the overall disease progression for all patients and in Figure&nbsp;\@ref(fig:selectedmarkers) we show the time-course of a subset of the markers we have measured. The data show some interesting patterns: patients with low Interleukin-6 or D-dimer values are overrepresented among patients with better outcomes, most patients had high CRP upon admission and for many the CRP levels stayed elevated over the whole hospitalization. The limited nature of the data however does not allow for any statistically robust conclusions. We also see that the marker levels were not substantially stratified by study site.  Those patterns should however be interpreted with care due to systematic missingness of the data - in particular, patients that fared worse were probably more likely to have the markers measured. However we believe this kind of patient-level view is useful to appreciate the extent of both between-patient and within-patient variability.
 
 ```{r progression, fig.cap="Disease progression for all patients included in the study as determined by breathing support required. Ventilated = any form of ventilation, including non-invasive positive-pressure ventilation, mechanical ventilation and extra-corporeal membrane oxygenation."}
 my_paste <- function(x) {
@@ -329,82 +336,7 @@ fig_markers
 
 ## Association between patients' characteristics and treatments
 
-As noted above, the nature of the convenience sample did not enforce random assignment of treatments to patients. To illustrate this phenomenon, we give an example of the association of treatment with Hydroxychloroquine on patients' baseline characteristics. 
-
-```{r hcqassoc, message=FALSE, fig.width=7, fig.height=4.5, fig.cap="The choice of treatment with Hydroxychloroquine seemed to be associated with the status of patients upon hospitalization. Comorbidities were associated with both worse outcome (black) and lower chance of treatment with Hydroxychloroquine (red). HCQ: hydroxychloroquine, IHD: ischemic heart disease, HD: hypertension drugs, HF: heart failure history, COPD: chronic obstructive pulmonary disease, LungD: other lung disease, Dia: diabetes, RenalD: renal disease, LiverD: liver disease, HighCr: creatinin above 115 for males or above 97 for females, HighInr: Prothrombin time (Quick test) as International Normalized Ratio above 1.2, LowAlb: albumin in serum/plasma below 36 g/l."}
-
-tmp<-data$patient_data[,c('age','sex','days_from_symptom_onset','admitted_for_covid','ischemic_heart_disease','has_hypertension_drugs','heart_failure',
-  'COPD','asthma','other_lung_disease','diabetes','renal_disease','liver_disease','smoking','BMI','obesity','last_record','high_creatinin','high_pt_inr','low_albumin',
-  'heart_problems','outcome','ever_hcq','ever_az','worst_breathing','had_invasive'),]
-tmp$outcome[tmp$outcome=='Transferred']<-'Hospitalized'
-tmp$outcome<-dropLevels(tmp$outcome)
-tmp2<-tmp[tmp$outcome%in%c('Death','Discharged'),]
-tmp2$outcome<-dropLevels(tmp2$outcome)
-tmp2$outcome<-tmp2$outcome=='Death'
-
-m.ihd<-glm(outcome~ischemic_heart_disease,tmp2,family='binomial')
-m.hd<-glm(outcome~has_hypertension_drugs,tmp2,family='binomial')
-m.hf<-glm(outcome~heart_failure,tmp2,family='binomial')
-m.copd<-glm(outcome~COPD,tmp2,family='binomial')
-m.asthma<-glm(outcome~asthma,tmp2,family='binomial')
-m.old<-glm(outcome~other_lung_disease,tmp2,family='binomial')
-m.dia<-glm(outcome~diabetes,tmp2,family='binomial')
-m.rd<-glm(outcome~renal_disease,tmp2,family='binomial')
-m.ld<-glm(outcome~liver_disease,tmp2,family='binomial')
-m.s<-glm(outcome~smoking,tmp2,family='binomial')
-m.ob<-glm(outcome~obesity,tmp2,family='binomial')
-m.hc<-glm(outcome~high_creatinin,tmp2,family='binomial')
-m.hi<-glm(outcome~high_pt_inr,tmp2,family='binomial')
-m.la<-glm(outcome~low_albumin,tmp2,family='binomial')
-
-m2.ihd<-glm(ever_hcq~ischemic_heart_disease,tmp2,family='binomial')
-m2.hd<-glm(ever_hcq~has_hypertension_drugs,tmp2,family='binomial')
-m2.hf<-glm(ever_hcq~heart_failure,tmp2,family='binomial')
-m2.copd<-glm(ever_hcq~COPD,tmp2,family='binomial')
-m2.asthma<-glm(ever_hcq~asthma,tmp2,family='binomial')
-m2.old<-glm(ever_hcq~other_lung_disease,tmp2,family='binomial')
-m2.dia<-glm(ever_hcq~diabetes,tmp2,family='binomial')
-m2.rd<-glm(ever_hcq~renal_disease,tmp2,family='binomial')
-m2.ld<-glm(ever_hcq~liver_disease,tmp2,family='binomial')
-m2.s<-glm(ever_hcq~smoking,tmp2,family='binomial')
-m2.ob<-glm(outcome~obesity,tmp2,family='binomial')
-m2.hc<-glm(ever_hcq~high_creatinin,tmp2,family='binomial')
-m2.hi<-glm(ever_hcq~high_pt_inr,tmp2,family='binomial')
-m2.la<-glm(ever_hcq~low_albumin,tmp2,family='binomial')
-
-models<-list(m.ihd,m.hd,m.hf,m.copd,m.asthma,m.old,m.dia,m.rd,m.ld,m.s,m.ob,m.hc,m.hi,m.la)
-modelNames<-c('IHD','HD','HF','COPD','Asthma','LungD','Dia','RenalD','LiverD','Smoking','Obesity','HighCr','HighInr','LowAlb')
-ys<-c(0)
-for (m in models) {
-  ys<-c(min(min(ys),confint(m)[2,1]),max(max(ys),confint(m)[2,2]))
-}
-models2<-list(m2.ihd,m2.hd,m2.hf,m2.copd,m2.asthma,m2.old,m2.dia,m2.rd,m2.ld,m2.s,m2.ob,m2.hc,m2.hi,m2.la)
-modelNames2<-modelNames
-ys2<-c(0)
-for (m in models2) {
-  ys2<-c(min(min(ys2),confint(m)[2,1]),max(max(ys2),confint(m)[2,2]))
-}
-
-plot(ys,c(1,length(modelNames)),ty='n',yaxt='n',xlab='Log odds ratio',ylab='')
-abline(v=0,col='blue')
-col.hcq<-bfc()["Vermillion"]
-for (i in seq(along=models)) {
-  ii<-length(models)-i+1
-  m<-models[[i]]
-  m2<-models2[[i]]
-  lines(confint(m)[2,],rep(ii,2))
-  points(coef(m)[2],ii,pch=19)
-  lines(-confint(m2)[2,],rep(ii,2)-.3,col=col.hcq)
-  points(-coef(m2)[2],ii-.3,col=col.hcq,pch=19)
-}
-axis(2,length(modelNames):1,modelNames,las=2)
-legend('right',c('Death','No HCQ'),lty=1,col=c('black',col.hcq))
-```
-
-Figure&nbsp;\@ref(fig:hcqassoc) shows that patients with worse baseline characteristics, which lead to worse outcome, 
-were less likely to receive Hydroxychloroquine treatment. 
-This clearly creates a bias towards a positive effect of Hydroxychloroquine on the outcome, 
-which, however, could be false. 
+As noted above, the nature of the convenience sample did not enforce random assignment of treatments to patients. In fact, patients with worse baseline characteristics, which lead to worse outcomes, were less likely to receive hydroxychloroquine (see Supplementary Figure 3). This clearly creates a bias towards a positive effect of hydroxychloroquine on the outcome (and potentially for other treatments as well - most were used in combination with hydroxychloroquine), which, however, could be false. 
 
 ```{r}
 # condition on the sum of comorbidities
@@ -414,10 +346,10 @@ m.hcq_treatment2<-glm(ever_hcq~cnd,pdd,family='binomial')
 m.hcq_treatment0<-glm(ever_hcq~1,pdd,subset=!is.na(cnd),family='binomial')
 ```
 
-Taken quantitatively, the comorbidities known upon hospitalization were informative with respect to future Hydroxychloroquine treatment:
+Taken quantitatively, the comorbidities known upon hospitalization were informative with respect to future hydroxychloroquine treatment:
 the score representing the cumulative presence of ischemic heart disease, hypertension drugs, former heart failure, COPD, 
-other lung diseases, renal disease, or high creatinin 
-was associated with a lower chance of taking Hydroxychloroquine over the course of the hospitalization 
+other lung diseases, renal disease, or high creatinine 
+was associated with a lower chance of taking hydroxychloroquine over the course of the hospitalization 
 (the chance was only `r round(100*exp(coef(m.hcq_treatment2)[2]),1)`%, 95% confidence interval 
 (`r round(100*exp(confint(m.hcq_treatment2)[2,]),1)`)%,
 Chi-square test in the logistic regression model, 
@@ -427,128 +359,66 @@ P=`r round(anova(m.hcq_treatment2,m.hcq_treatment0,test='Chisq')[2,5],3)`).
 ## Association between treatments and outcomes
 
 ```{r}
-bayesian_cols <- cols(
-  hypothesis = col_character(),
-  model = col_character(),
-  adjusted = col_character(),
-  estimand = col_character(),
-  widest_CI_excl_reference = col_double(),
-  point_estimate = col_double(),
-  ci_low = col_double(),
-  ci_high = col_double()
-)
-res_bayesian <- 
-  rbind(read_csv(here::here("manuscript", "hmm_res.csv"), col_types = bayesian_cols),
-        read_csv(here::here("manuscript", "analysis_brms.csv"), col_types = bayesian_cols),
-        read_csv(here::here("manuscript", "jm_res.csv"), col_types = bayesian_cols)
-        )
 
-frequentist_cols <- cols(
-  hypothesis = col_character(),
-  model = col_character(),
-  adjusted = col_character(),
-  p_value = col_double(),
-  ci_low = col_double(),
-  ci_high = col_double()
-)
+all_hypo_drugs <- read_all_multiverse_res()  %>%
+  filter(model_check == "OK", !adj.first_wave, estimand_group == "")
 
-res_frequentist <- 
-  rbind(read_csv(here::here("manuscript", "competing_risks_res.csv"), col_types = frequentist_cols),
-        read_csv(here::here("manuscript", "single_outcome_coxph_res.csv"), col_types = frequentist_cols))
-
-all_hypo <- rbind(res_bayesian %>% select(-widest_CI_excl_reference), 
-      res_frequentist %>% select(-p_value)) %>%
-    inner_join(hypotheses_df, by = c("hypothesis" = "name"))
-
-all_hypo_drugs <- all_hypo  %>%
-  filter(model_check == "OK")
-
-
+first_fig_multiverse_drugs <- 4
+last_fig_multiverse_drugs <- 6
+supplementary_figure_markers <- last_fig_multiverse_drugs + 1 
+supplementary_figures_multiverse <-  paste0(first_fig_multiverse_drugs, "-", last_fig_multiverse_drugs)
+ 
 ```
 
 
-Here, we focus on Hydroxychloroquine and Azithromycin as those are the only treatment with larger sample size. We also investigate Favipiravir as it is less well reported in the literature. Hydroxychloroquine was dosed almost exclusively in a 5-day regime starting with a loading dose of 800mg on the first day and followed by 400mg. Majority of patients complemented Hydroxychloroquine with Azithromycin while Azithromycin was rarely used alone (see Table \@ref(tab:summarytable)). Azithromycin was most frequently dosed 250 or 500mg/day, but doses ranging from 100mg/day to 1500 mg/day were observed.  Favipiravir was used only at one site with a loading dose of 3600mg on the first day, followed by at most 9 days with a 1600mg dose. All but one of the patients receiving Favipiravir also received Hydroxychloroquine. Treatment was initiated mostly within two days of admission (see Figure&nbsp;\@ref(fig:initiation)).
-
-```{r initiation, fig.cap="Histogram of timing of first treatment relative to admission into one of the study sites. Two patients initiated treatment before admission, which is shown as the negative numbers.", fig.height=2}
-#data$marker_data %>% filter(marker == "favipiravir") %>% group_by(patient_id) %>% summarise(days = n(), .groups = "drop") %>% summarise(min_days = min(days), max_days = max(days))
-#data$marker_data %>% filter(marker == "az") %>% group_by(patient_id) %>% summarise(days = sum(!is.na(value) & value > 0), .groups = "drop") %>% filter(days > 0) %>% ggplot(aes(x = days)) + geom_histogram(binwidth = 1)
-#data$marker_data%>% filter(marker == "az") %>% group_by(value) %>% summarise(n())
-
-#Patients treated with convalescent plasma received 1-3 units of plasma over 1-2 days.
-
-marker_map <- c("az" = "Azithromycin", "hcq" = "Hydroxychloroquine", "favipiravir" = "Favipiravir", "convalescent_plasma" = "Conv. plasma")
-
-data$marker_data %>% 
-  filter(marker %in% c("az", "hcq", "favipiravir"), !is.na(value), value > 0) %>%
-  mutate(marker = marker_map[marker]) %>%
-  group_by(marker, patient_id) %>% 
-  summarise(first_day = min(day), .groups = "drop") %>% 
-  ggplot(aes(x = first_day)) + geom_histogram(binwidth = 1) + facet_wrap(~marker, scales = "free", nrow = 1) + scale_x_continuous("First day of treatment relative to admission")
-```
-
-The results of the multiverse analysis for association between Hydroxochloroquine and Azithromycin usage and outcomes is shown in Figure&nbsp;\@ref(fig:multiverseresultsdrugs) - here, we only show models that we did not find to have immediate problems representing the data well or computational issues. Results for all models we tested are reported in the supplementary material. Notably, most models report that using Hydroxychloroquine is associated with lower risk of death, we must however bear in mind the potential bias noted in the previous section. Also, we see that for the HMM models, as we add adjustments the credible intervals do not widen but instead shift towards zero. This is a weak indication that further adjustments could drive the effect towards zero. We did not attempt to model additional adjustments as the models became computationally intractable. The case of Hydroxychloroquine serves as a "control group" for our other results - since randomized trials give us high confidence that Hydroxychloroquine does not substantially reduce mortality, we can be quite certain the associations we observe for Hydroxychloroquine are just a measure of bias in the data. The models we used cannot discern the sign of association between Hydroxychloroquine and length of hospital stay. Additionally, our models either cannot determine the sign of association between Azithromycin and the outcome or even show an increase in risk of death or length of hospitalization. This serves as a weak evidence that a substantial improvement from Azithromycin is unlikely.  
+Here, we focus on hydroxychloroquine and azithromycin as those are the only treatments with larger sample size. We also investigate favipiravir as it is less well reported in the literature. Hydroxychloroquine was dosed almost exclusively in a 5-day regime starting with a loading dose of 800mg on the first day and followed by 400mg. Majority of patients complemented hydroxychloroquine with azithromycin while azithromycin was rarely used alone (see Table \@ref(tab:summarytable)). Azithromycin was most frequently dosed 250 or 500mg/day, but doses ranging from 100mg/day to 1500 mg/day were observed.  Favipiravir was used only at one site with a loading dose of 3600mg on the first day, followed by at most 9 days with a 1600mg dose. All but one of the patients receiving favipiravir also received hydroxychloroquine. Treatment was initiated mostly within two days of admission (see Supplementary Figure 2).
 
 
-```{r multiverseresultsdrugs, fig.height=7, fig.width=8.5, fig.cap="Estimates of model coefficients for association between treatments and main outcomes. Each row represents a model - Categorical 7/28 = Bayesian categorical regression for state at day 7/28, Bayes Cox = Bayesian version of the Cox proportional hazards model with a binary outcome, Cox (single) = frequentist Cox model with a binary outcome, Cox (competing) = frequentist Cox model using competing risks (as in Figure \\@ref(fig:modelstates)a, HMM A = Bayesian hidden-markov model as in Figure \\@ref(fig:modelstates)b with predictors for rate groups, HMM B = Bayesian hidden-markov model as in Figure \\@ref(fig:modelstates)b with predictors for individual rates, HMM C = Bayesian hidden-markov model as in Figure \\@ref(fig:modelstates)c. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. The estimands are either log odds-ratio (Categorical, HMM) or log hazard ratio (Cox variants). Vertical lines indicate zero (blue) and substantial increase or decrease with odds or hazard ratio of 3:2 or 2:3 (green). Additionally the factors the model adjusted for are listed - Site = the study site, admitted = Admitted for Covid-19, Supportive = best supportive care initiated, Comorb. = total number of comorbidities, AZ = took Azithromycin, HCQ = took Hydroxychloroquine, FPV = took Favipiravir, C. plasma = received convalescent plasma.  "}
+
+The results of the multiverse analysis for association between hydroxochloroquine, azithromycin and favipiravir usage and death is shown in Figure&nbsp;\@ref(fig:multiverseresultsdrugs) - here, we only show models that were not found to have immediate problems representing the data well or computational issues. Results for all models we tested are reported in  supplementary Figures `r supplementary_figures_multiverse`, with additional details in supplementary statistical analysis. The results do not change noticeably when only patients from the first wave are included (supplementary Figures `r supplementary_figures_multiverse`).
+
+Most models report that using hydroxychloroquine is associated with lower risk of death. We must however bear in mind the potential bias noted in the previous section. Also, we see that for the HMM models, as we add adjustments the credible intervals do not widen but instead shift towards zero. This is a weak indication that further adjustments could drive the effect towards zero. We did not attempt to model additional adjustments as the models became computationally unstable. The case of hydroxychloroquine serves as a "control group" for our other results - since randomized trials give us high confidence that hydroxychloroquine does not substantially reduce mortality, we can be quite certain the associations we observe for hydroxychloroquine are just a measure of bias in the data. Additionally, our models either cannot determine the sign of association between azithromycin and  risk of death or even show an increase in risk of death. This serves as a weak evidence that a substantial improvement in mortality from azithromycin is unlikely.  
+
+Most models exclude very strong association between increased risk of death and using favipiravir, but our data are necessarily quite limited, which is reflected in the very wide uncertainties around estimates. We also cannot put strict bounds on the association between favipiravir and length of hospitalization.
+
+We also examined the association between treatments and length of hospital stay for patients that survived. Almost all models cannot discern the sign of the association for all treatments examined (Supplementary Figures `r supplementary_figures_multiverse`). Similarly, we studied the association between D-dimer and Interleukin 6 and outcomes, with unconclusive results as well (Supplementary Figure `r supplementary_figure_markers` ) 
 
 
-#In the current dataset, we see a possibly strong negative association between using Hydroxychloroquine and risk of death across all models, although for several models we cannot rule out that the association is of negligible strength. Across all models, the data offer no definitive conclusions on the association between taking Hydroxychloroquine and length of hospital stay (represented as risk for being discharged). After adjusting for Hydroxychloroquine usage, we also cannot make any strong claims on the association of using Azithromycin with either outcome. In all cases, the results seem to not be strongly affected by model choice.
+```{r multiverseresultsdrugs, fig.height=7, fig.width=8.5, fig.cap="Estimates of model coefficients for association between treatments and main outcomes. Each row represents a model - Categorical 7/28 = Bayesian categorical regression for state at day 7/28, Bayes Cox = Bayesian version of the Cox proportional hazards model with a binary outcome, Cox (single) = frequentist Cox model with a binary outcome, Cox (competing) = frequentist Cox model using competing risks (as in Figure \\@ref(fig:modelstates)a), HMM A = Bayesian hidden-Markov model as in Figure \\@ref(fig:modelstates)b with predictors for rate groups, HMM B = Bayesian hidden-markov model as in Figure \\@ref(fig:modelstates)b with predictors for individual rates, HMM C = Bayesian hidden-Markov model as in Figure \\@ref(fig:modelstates)c. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. The estimands are either log odds-ratio (Categorical, HMM) or log hazard ratio (Cox variants). In all cases coefficient < 0 means better patient outcome in the treatment group. Vertical lines indicate zero (blue) and substantial increase or decrease with odds or hazard ratio of 3:2 or 2:3 (green). Additionally the factors the model adjusted for are listed - Site = the study site, admitted = Admitted for Covid-19, Supportive = best supportive care initiated, Comorb. = total number of comorbidities, AZ = took azithromycin, HCQ = took hydroxychloroquine, FPV = took favipiravir, C. plasma = received convalescent plasma.  "}
+
+
+#In the current dataset, we see a possibly strong negative association between using hydroxychloroquine and risk of death across all models, although for several models we cannot rule out that the association is of negligible strength. Across all models, the data offer no definitive conclusions on the association between taking hydroxychloroquine and length of hospital stay (represented as risk for being discharged). After adjusting for hydroxychloroquine usage, we also cannot make any strong claims on the association of using azithromycin with either outcome. In all cases, the results seem to not be strongly affected by model choice.
 
 
 my_lims <- c(-5.5,3.5)
-multiverse_hcq1 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "hcq_reduces_death"), x_limits = my_lims)
-multiverse_hcq2 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "hcq_increases_discharged"), x_limits = my_lims)
-multiverse_az1 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "az_reduces_death"), x_limits = my_lims)
-multiverse_az2 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "az_increases_discharged"), x_limits = my_lims)
+multiverse_hcq1 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "hcq_death"), x_limits = my_lims, adjustments_to_hide = "first_wave")
+multiverse_az1 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "az_death"), x_limits = my_lims, adjustments_to_hide = "first_wave")
 
-# multiverse_fpv1 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "favipiravir_reduces_death"))
-# multiverse_fpv2 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "favipiravir_increases_discharged"))
+# multiverse_fpv1 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "favipiravir_death"))
+# multiverse_fpv2 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "favipiravir_hospital"))
 
 
 
 # ((multiverse_hcq1 & hide_axis_theme) / (multiverse_hcq2 & hide_axis_theme) / (multiverse_az1 & hide_axis_theme) / (multiverse_az2 & hide_axis_theme) / (multiverse_fpv1 & hide_axis_theme) / (multiverse_fpv2)) + plot_layout(heights = c(1, 0.65,0.8,0.4, 0.8,0.3)) & theme(axis.title.y = element_blank())
 
-((multiverse_hcq1 & hide_axis_theme) / (multiverse_hcq2 & hide_axis_theme) / (multiverse_az1 & hide_axis_theme) / (multiverse_az2))  + plot_layout(heights = c(1, 0.65,0.8,0.4)) & theme(axis.title.y = element_blank())
-
-
-```
-
-Figure \@ref(fig:multiverseresultsfpv) shows a similar analysis for Favipiravir. Most models exclude very strong association between death/hospitalization and using Favipiravir, but our data are necessarily quite limited, which is reflected in the very wide uncertainties around estimates. The only exception is the Categorical model  at 28 days which allows for substantially higher risk of being hospitalized in the Favipiravir group. 
-
-```{r multiverseresultsfpv, fig.height=3.3, fig.width=8.5, fig.cap="Estimates of model coefficients for association between Favipiravir and main outcomes. Abbreviations and other elements as in Figure&nbsp;\\@ref(fig:multiverseresultsdrugs)."}
-
 fpv_lims <- c(-12,2)
 
-multiverse_fpv1 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "favipiravir_reduces_death"), x_limits = fpv_lims, adjustments_to_hide = "FPV")
-multiverse_fpv2 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "favipiravir_increases_discharged"), x_limits = fpv_lims, adjustments_to_hide = "FPV")
+multiverse_fpv1 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "favipiravir_death"), x_limits = fpv_lims, adjustments_to_hide = "FPV")
 
-((multiverse_fpv1 & hide_axis_theme) / (multiverse_fpv2)) + plot_layout(heights = c(0.8,0.3)) & theme(axis.title.y = element_blank())
-
-
-```
-
-
-```{r}
-# ## Association between markers and outcomes
-# 
-# We additionally investigated the association of several markers with disease progression. Due to low number of patients in the current dataset, the results are inconclusive and dependent on model choice, many models also proved to be problematic to fit to this reduced dataset. All of the coefficient estimates can be seen in Figure&nbsp;\@ref(fig:multiverseresultsmarkers)
-# 
-# 
-# ``{r multiverseresultsmarkers, fig.height=3.5, fig.width=8.5, fig.cap="Estimates of model coefficients (log hazard ratios) for association between markers and death. Each row represents a model - Cox (competing) =  frequentist Cox model using competing risks (as in Figure \\@ref(fig:modelstates)a, HMM A = Bayesian hidden-markov model as in Figure \\@ref(fig:modelstates)b with predictors for rate groups, JM = Bayesian joint longitudinal and time-to-event model. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. Additionally the factors the model adjusted for are listed - Site = the study site, Supportive = best supportive care initiated, HCQ = took Hydroxychloroquine. We show posterior mean and 95% credible interval."}
-# plot_multiverse(all_hypo %>% filter(group == "markers", model_check != "Problematic"), adjustments_to_hide = c("admitted", "smoking", "obesity", "comorbidities \\(sum\\)", "az", "favipiravir", "convalescent_plasma"))
-# ``
+((multiverse_hcq1 & hide_axis_theme) / (multiverse_az1 & theme(axis.title.x = element_blank())) / multiverse_fpv1)  + plot_layout(heights = c(0.8, 0.7,0.70)) & theme(axis.title.y = element_blank())
 
 
 ```
+
 ## Prognostic models are not better than just using age
 
-Following [@http://zotero.org/users/5567156/items/TS57HJ3T] we found five prediction models we were able to recompute: Li et al. report the ACP index [@http://zotero.org/users/5567156/items/EN4GICJ6] combining CRP and age to form 3 grades, Chen & Liu [@http://zotero.org/users/5567156/items/4DDUVEKS] report a continuous score using age, CRP, D-dimer and lymphocyte count,
-Shi et al. [@http://zotero.org/users/5567156/items/X4GWJIP5] use age, sex and hypertension to form 4 grades, Caramelo et al. use age, sex, hypertension, diabetes, cardiac disease, chronic respiratory disease and cancer to form a continuous score [@http://zotero.org/users/5567156/items/3A2RN4ZS], Bello-Chavolla et al. [@http://zotero.org/users/5567156/items/INZVABQI] use age, diabetes, obesity, pneumonia, chronic kidney disease, COPD and immunosuppression to build a score ranging from -6 to 22. For the latter two scores we had to impute some of the predictors as they had no immediate equivalent in our dataset. The outcomes present in the studies were: 12-day mortality, 30-day mortality and mortality without any further details, here we report results for both 12-day and 30-day mortality. Full details on the scores and how we used our dataset to compute them is given in the supplementary material. 
+Following Wynants et al.[@http://zotero.org/users/5567156/items/TS57HJ3T] we found five prediction models we were able to recompute: Li et al. report the ACP index [@http://zotero.org/users/5567156/items/EN4GICJ6] combining CRP and age to form 3 grades, Chen & Liu [@http://zotero.org/users/5567156/items/4DDUVEKS] report a continuous score using age, CRP, D-dimer and lymphocyte count,
+Shi et al. [@http://zotero.org/users/5567156/items/X4GWJIP5] use age, sex and hypertension to form 4 grades, Caramelo et al. use age, sex, hypertension, diabetes, cardiac disease, chronic respiratory disease and cancer to form a continuous score [@http://zotero.org/users/5567156/items/3A2RN4ZS], Bello-Chavolla et al. [@http://zotero.org/users/5567156/items/INZVABQI] use age, diabetes, obesity, pneumonia, chronic kidney disease, COPD and immunosuppression to build a score ranging from -6 to 22. For the latter two scores we had to impute some of the predictors as they had no immediate equivalent in our dataset. The outcomes present in the studies were: 12-day mortality, 30-day mortality and mortality without any further details, here we report results for both 12-day and 30-day mortality. Full details on the scores and how we used our dataset to compute them is given in the supplementary statistical analysis. 
 
-Overall all prognostic models we tested performed similarly to or notably worse than using age as the only predictor and also worse than originally reported (Figure&nbsp;\@ref(fig:riskscores)). Additionally, some publications did not provide enough detail to unambigously reconstruct how the score and/or outcome was assessed. We thus concur with [@http://zotero.org/users/5567156/items/TS57HJ3T] that reported prediction scores are at high risk of bias and need additional careful evaluation.
+All prognostic models we tested performed similarly to or notably worse than using age as the only predictor and also worse than originally reported (Figure&nbsp;\@ref(fig:riskscores)). Additionally, some publications did not provide enough detail to unambigously reconstruct how the score and/or outcome was assessed. We thus concur with Wynants et al. [@http://zotero.org/users/5567156/items/TS57HJ3T] that reported prediction scores are at high risk of bias and need additional careful evaluation.
 
 
-```{r riskscores, fig.cap="Performance of tested prediction scores as measured by AUC. AUC = 1 means perfect prediction while AUC <= 0.5 means that the score is worse than random guess and a better prediction would be obtained by reversing the score (marked by thick blue line). The line ranges represent the bootstrapped 95% confidence intervals. Red dots show results computed in present study - individual dots vary in the outcome measured (12-day or 30-day mortality) and potentially on how ambiguities in score computation were resolved, although this rarely makes a big difference. Cyan triangles show AUC as reported by the original authors or recomputed based on their published data. When the confidence interval or the AUC of the original study is not shown, it means that the value was not reported by the authors and not enough information to recompute it was given."}
+```{r riskscores, fig.cap="Performance of tested prediction scores as measured by AUC. AUC = 1 means perfect prediction while AUC $\\leq$ 0.5 means that the score is worse than random guess and a better prediction would be obtained by reversing the score (marked by thick blue line). The line ranges represent the bootstrapped 95% confidence intervals. Red dots show results computed in present study - individual dots vary in the outcome measured (12-day or 30-day mortality) and potentially on how ambiguities in score computation were resolved, although this rarely makes a big difference. Cyan triangles show AUC as reported by the original authors or recomputed based on their published data. When the confidence interval or the AUC of the original study is not shown, it means that the value was not reported by the authors and not enough information to recompute it was given."}
 col_types_auc <- cols(
   auc = col_double(),
   auc_low = col_double(),
@@ -573,12 +443,17 @@ compare_auc_to_orig(all_auc_orig,
 
 Our data show the extent of between-patient variability in progression of the disease in terms of both length of hospital stay, duration of various types of breathing support and basic markers.
 
-We provide very weak observational evidence against a substantial beneficiary effect of using Azithromycin (both with or without Hydroxychloroquine) and against substantial negative effect of using Favipiravir in hospitalized Covid-19 patients. 
+We provide very weak observational evidence against a substantial beneficiary effect of using azithromycin (both with or without hydroxychloroquine) and against substantial negative effect of using favipiravir in hospitalized Covid-19 patients. We also observed better outcomes associated with taking hydroxychloroquine, which is likely linked to substantial confounding by indication.
 Where our results contradict randomized trials, the most likely explanation is systematic bias in our dataset.
 
-A lesson from our analysis is that the assessment of treatment efficacy from observational data is very sensitive to modelling assumptions while it is usually almost impossible to determine which of the models is more likely to reflect reality (if any). We believe that using multiverse analysis is an appropriate way to explore data in such contexts as it lets us be transparent about this sensitivity. We further believe that using Hidden Markov models is a promising complement to the standard Cox proportional hazards analysis when detailed information on disease progression is available, particularly because it lets us impose additional structure on the model and thus make inferences with more disease states than would be possible to handle in the Cox framework, making better use of the available data.
+A lesson from our analysis is that the assessment of treatment efficacy from observational data is very sensitive to modelling assumptions while it is usually almost impossible to determine which of the models is more likely to reflect reality (if any). We believe that using multiverse analysis is an appropriate way to explore data in such contexts as it lets us be transparent about this sensitivity. We further believe that using hidden Markov models is a promising complement to the standard Cox proportional hazards analysis when detailed information on disease progression is available, particularly because it lets us impose additional structure on the model and thus make inferences with more disease states than would be possible to handle in the Cox framework, making better use of the available data.
 
 Additionally our experience indicates that a substantial fraction of published prognostic models will perform much worse on new patients than on the datasets they were built for and that external validation is crucial. We suggest that comparing the prognostic models against simple baselines (e.g. decade of age as the single predictor) should be a first step in validation. Further, some of the published scores lack enough information to let others exactly implement the score.
+
+# Conflict of Interest
+
+The authors declare that there is no conflict of interest.
+
 
 # Acknowledgements
 

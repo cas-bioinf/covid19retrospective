@@ -72,22 +72,22 @@ mt0<-with(d,coxph(S<-Surv(t0,t1,outcome=='Discharged')~    age+sex+strata(hospit
 
 hypothesis_res_list[["competing_hcq_comorbidities_sum"]] <-
   rbind(
-  frequentist_hypothesis_res_from_coxph1(hypotheses$hcq_reduces_death, 
+  frequentist_hypothesis_res_from_coxph1(hypotheses$hcq_death, 
                                          point_estimate = coef(m1)[1],
-                                         adjusted = "age, sex, comorbidities (sum)", 
+                                         adjusted = "age, sex, hospital, comorbidities (sum)", 
                                          test_stat = anova(m1,m0,test='Chisq')[2,2],
                                          df = anova(m1,m0,test='Chisq')[2,3],
                                          p = anova(m1,m0,test='Chisq')[2,4],
                                          ci_low = confint(m1)[1,1],
                                          ci_high = confint(m1)[1,2]),
-  frequentist_hypothesis_res_from_coxph1(hypotheses$hcq_increases_discharged, 
-                                         point_estimate = coef(mt1)[1],
-                                         adjusted = "age, sex, comorbidities (sum)", 
+  frequentist_hypothesis_res_from_coxph1(hypotheses$hcq_hospital, 
+                                         point_estimate = -coef(mt1)[1],
+                                         adjusted = "age, sex, hospital, comorbidities (sum)", 
                                          test_stat = anova(mt1,mt0,test='Chisq')[2,2],
                                          df = anova(mt1,mt0,test='Chisq')[2,3],
                                          p = anova(mt1,mt0,test='Chisq')[2,4],
-                                         ci_low = confint(mt1)[1,1],
-                                         ci_high = confint(mt1)[1,2])
+                                         ci_low = -confint(mt1)[1,2],
+                                         ci_high = -confint(mt1)[1,1])
   )
 hypothesis_res_list[["competing_hcq_comorbidities_sum"]]
 

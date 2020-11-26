@@ -1,0 +1,143 @@
+---
+title: "Supplementary figures for Detailed disease progression of 213 patients hospitalized with Covid-19 in the Czech Republic: An exploratory analysis" 
+output: 
+  #rticles::arxiv_article
+  # bookdown::pdf_document2:
+  #    toc: false
+  bookdown::word_document2: 
+    toc: false
+    reference_docx: "output_template.docx"
+date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
+---
+
+```{r setup, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
+knitr::opts_chunk$set(echo = FALSE, fig.width = 8, cache = TRUE)
+
+devtools::load_all()
+library(tidyverse)
+library(patchwork)
+library(tsiMisc) # devtools::install_github("tsieger/tsiMisc")
+
+theme_set(cowplot::theme_cowplot())
+data <- read_data_for_analysis()
+wide <- data$marker_data_wide
+
+```
+
+
+```{r datacollectionperiod, fig.height=2.5, fig.cap= "Data collection periods at individual sites, showing the range of admission dates of patients included in the study. Note that we cannot provide additional information to link the sites here with data shown elsewhere as that would  increase the risk of deanonymization of the patients."}
+data_collection_period <- read_csv(here::here("manuscript", "data_collection_period.csv"), col_types = cols(
+  first_admission = col_date(format = "%Y-%m-%d"),
+  last_admission = col_date(format = "%Y-%m-%d"),
+  hospital_id_anon = col_integer()
+))
+
+data_collection_period %>% ggplot(aes(xmin = first_admission, xmax = last_admission, y = hospital_id_anon)) + geom_linerange(size = 3) + scale_y_continuous("Study site")+
+  scale_x_date("Data collection period", date_breaks = "2 weeks")  + theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)  )
+```
+
+
+```{r initiation, fig.cap="Histogram of timing of first treatment relative to admission into one of the study sites. Two patients initiated treatment before admission, which is shown as the negative numbers.", fig.height=2}
+#data$marker_data %>% filter(marker == "favipiravir") %>% group_by(patient_id) %>% summarise(days = n(), .groups = "drop") %>% summarise(min_days = min(days), max_days = max(days))
+#data$marker_data %>% filter(marker == "az") %>% group_by(patient_id) %>% summarise(days = sum(!is.na(value) & value > 0), .groups = "drop") %>% filter(days > 0) %>% ggplot(aes(x = days)) + geom_histogram(binwidth = 1)
+#data$marker_data%>% filter(marker == "az") %>% group_by(value) %>% summarise(n())
+
+#Patients treated with convalescent plasma received 1-3 units of plasma over 1-2 days.
+
+marker_map <- c("az" = "Azithromycin", "hcq" = "Hydroxychloroquine", "favipiravir" = "Favipiravir", "convalescent_plasma" = "Conv. plasma")
+
+data$marker_data %>% 
+  filter(marker %in% c("az", "hcq", "favipiravir"), !is.na(value), value > 0) %>%
+  mutate(marker = marker_map[marker]) %>%
+  group_by(marker, patient_id) %>% 
+  summarise(first_day = min(day), .groups = "drop") %>% 
+  ggplot(aes(x = first_day)) + geom_histogram(binwidth = 1) + facet_wrap(~marker, scales = "free", nrow = 1) + scale_x_continuous("First day of treatment relative to admission")
+```
+
+
+```{r hcqassoc, message=FALSE, fig.width=7, fig.height=4.5, fig.cap="The choice of treatment with hydroxychloroquine seemed to be associated with the status of patients upon hospitalization. Comorbidities were associated with both worse outcome (black) and lower chance of treatment with hydroxychloroquine (red). Dots and lines represent the estimates and the 95% confidence intervals of the log odds ratio of the respective outcome. HCQ: hydroxychloroquine, IHD: ischemic heart disease, HD: hypertension drugs, HF: heart failure history, COPD: chronic obstructive pulmonary disease, LungD: other lung disease, Dia: diabetes, RenalD: renal disease, LiverD: liver disease, HighCr: creatinin above 115 for males or above 97 for females, HighInr: Prothrombin time (Quick test) as International Normalized Ratio above 1.2, LowAlb: albumin in serum/plasma below 36 g/l."}
+
+tmp<-data$patient_data[,c('age','sex','days_from_symptom_onset','admitted_for_covid','ischemic_heart_disease','has_hypertension_drugs','heart_failure',
+  'COPD','asthma','other_lung_disease','diabetes','renal_disease','liver_disease','smoking','BMI','obesity','last_record','high_creatinin','high_pt_inr','low_albumin',
+  'heart_problems','outcome','ever_hcq','ever_az','worst_breathing','had_invasive'),]
+tmp$outcome[tmp$outcome=='Transferred']<-'Hospitalized'
+tmp$outcome<-dropLevels(tmp$outcome)
+tmp2<-tmp[tmp$outcome%in%c('Death','Discharged'),]
+tmp2$outcome<-dropLevels(tmp2$outcome)
+tmp2$outcome<-tmp2$outcome=='Death'
+
+m.ihd<-glm(outcome~ischemic_heart_disease,tmp2,family='binomial')
+m.hd<-glm(outcome~has_hypertension_drugs,tmp2,family='binomial')
+m.hf<-glm(outcome~heart_failure,tmp2,family='binomial')
+m.copd<-glm(outcome~COPD,tmp2,family='binomial')
+m.asthma<-glm(outcome~asthma,tmp2,family='binomial')
+m.old<-glm(outcome~other_lung_disease,tmp2,family='binomial')
+m.dia<-glm(outcome~diabetes,tmp2,family='binomial')
+m.rd<-glm(outcome~renal_disease,tmp2,family='binomial')
+m.ld<-glm(outcome~liver_disease,tmp2,family='binomial')
+m.s<-glm(outcome~smoking,tmp2,family='binomial')
+m.ob<-glm(outcome~obesity,tmp2,family='binomial')
+m.hc<-glm(outcome~high_creatinin,tmp2,family='binomial')
+m.hi<-glm(outcome~high_pt_inr,tmp2,family='binomial')
+m.la<-glm(outcome~low_albumin,tmp2,family='binomial')
+
+m2.ihd<-glm(ever_hcq~ischemic_heart_disease,tmp2,family='binomial')
+m2.hd<-glm(ever_hcq~has_hypertension_drugs,tmp2,family='binomial')
+m2.hf<-glm(ever_hcq~heart_failure,tmp2,family='binomial')
+m2.copd<-glm(ever_hcq~COPD,tmp2,family='binomial')
+m2.asthma<-glm(ever_hcq~asthma,tmp2,family='binomial')
+m2.old<-glm(ever_hcq~other_lung_disease,tmp2,family='binomial')
+m2.dia<-glm(ever_hcq~diabetes,tmp2,family='binomial')
+m2.rd<-glm(ever_hcq~renal_disease,tmp2,family='binomial')
+m2.ld<-glm(ever_hcq~liver_disease,tmp2,family='binomial')
+m2.s<-glm(ever_hcq~smoking,tmp2,family='binomial')
+m2.ob<-glm(outcome~obesity,tmp2,family='binomial')
+m2.hc<-glm(ever_hcq~high_creatinin,tmp2,family='binomial')
+m2.hi<-glm(ever_hcq~high_pt_inr,tmp2,family='binomial')
+m2.la<-glm(ever_hcq~low_albumin,tmp2,family='binomial')
+
+models<-list(m.ihd,m.hd,m.hf,m.copd,m.asthma,m.old,m.dia,m.rd,m.ld,m.s,m.ob,m.hc,m.hi,m.la)
+modelNames<-c('IHD','HD','HF','COPD','Asthma','LungD','Dia','RenalD','LiverD','Smoking','Obesity','HighCr','HighInr','LowAlb')
+ys<-c(0)
+for (m in models) {
+  ys<-c(min(min(ys),confint(m)[2,1]),max(max(ys),confint(m)[2,2]))
+}
+models2<-list(m2.ihd,m2.hd,m2.hf,m2.copd,m2.asthma,m2.old,m2.dia,m2.rd,m2.ld,m2.s,m2.ob,m2.hc,m2.hi,m2.la)
+modelNames2<-modelNames
+ys2<-c(0)
+for (m in models2) {
+  ys2<-c(min(min(ys2),confint(m)[2,1]),max(max(ys2),confint(m)[2,2]))
+}
+
+plot(ys,c(1,length(modelNames)),ty='n',yaxt='n',xlab='Log odds ratio',ylab='')
+abline(v=0,col='blue')
+col.hcq<-bfc()["Vermillion"]
+for (i in seq(along=models)) {
+  ii<-length(models)-i+1
+  m<-models[[i]]
+  m2<-models2[[i]]
+  lines(confint(m)[2,],rep(ii,2))
+  points(coef(m)[2],ii,pch=19)
+  lines(-confint(m2)[2,],rep(ii,2)-.3,col=col.hcq)
+  points(-coef(m2)[2],ii-.3,col=col.hcq,pch=19)
+}
+axis(2,length(modelNames):1,modelNames,las=2)
+legend('right',c('Death','No HCQ'),lty=1,col=c('black',col.hcq))
+```
+
+
+```{r allmulthcq, fig.height=11, fig.cap = "Estimates of model coefficients for association between hydroxychloroquine and main outcomes. The \"Suspicious\" section shows models that were found to not fit the data well or have computational issues - see supplementary statistical analysis for details.  Each row represents a model - Categorical All/7/28 = Bayesian categorical regression for state at last observed day/day 7/day 28, Binary All/7/28 = Bayesian logistic regression for state at last observed day/day 7/day 28, Bayes Cox = Bayesian version of the Cox proportional hazards model with a binary outcome, Cox (single) = frequentist Cox model with a binary outcome, Cox (competing) = frequentist Cox model using competing risks (as in Figure 1a), HMM A = Bayesian hidden-Markov model as in Figure 1b with predictors for rate groups, HMM B = Bayesian hidden-markov model as in Figure 1b with predictors for individual rates, HMM C = Bayesian hidden-Markov model as in Figure 1c. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. The estimands are either log odds-ratio (Categorical, HMM) or log hazard ratio (Cox variants) or log ratio of mean duration of hospitalization (HMM duration). In all cases coefficient < 0 means better patient outcome in the treatment group. Vertical lines indicate zero (blue) and substantial increase or decrease with odds or hazard ratio of 3:2 or 2:3 (green). Additionally the factors the model adjusted for are listed - Site = the study site, admitted = Admitted for Covid-19, Supportive = best supportive care initiated, Comorb. = total number of comorbidities, AZ = took azithromycin, HCQ = took hydroxychloroquine, FPV = took favipiravir, C. plasma = received convalescent plasma, first wave = only patients admitted before September 1st were included. "}
+plot_multiverse(read_all_multiverse_res() %>% filter(grepl("hcq", hypothesis)), show_check = TRUE)
+```
+
+```{r allmultaz, fig.height=11, fig.cap = "Estimates of model coefficients for association between azithromycin and main outcomes. The \"Suspicious\" section shows models that were found to not fit the data well or have computational issues - see supplementary statistical analysis for details.  Each row represents a model - Categorical All/7/28 = Bayesian categorical regression for state at last observed day/day 7/day 28, Binary All/7/28 = Bayesian logistic regression for state at last observed day/day 7/day 28, Bayes Cox = Bayesian version of the Cox proportional hazards model with a binary outcome, Cox (single) = frequentist Cox model with a binary outcome, Cox (competing) = frequentist Cox model using competing risks (as in Figure 1a), HMM A = Bayesian hidden-Markov model as in Figure 1b with predictors for rate groups, HMM B = Bayesian hidden-markov model as in Figure 1b with predictors for individual rates, HMM C = Bayesian hidden-Markov model as in Figure 1c. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. The estimands are either log odds-ratio (Categorical, HMM) or log hazard ratio (Cox variants) or log ratio of mean duration of hospitalization (HMM duration). In all cases coefficient < 0 means better patient outcome in the treatment group. Vertical lines indicate zero (blue) and substantial increase or decrease with odds or hazard ratio of 3:2 or 2:3 (green). Additionally the factors the model adjusted for are listed - Site = the study site, admitted = Admitted for Covid-19, Supportive = best supportive care initiated, Comorb. = total number of comorbidities, AZ = took azithromycin, HCQ = took hydroxychloroquine, FPV = took favipiravir, C. plasma = received convalescent plasma, first wave = only patients admitted before September 1st were included. "}
+plot_multiverse(read_all_multiverse_res() %>% filter(grepl("az", hypothesis)), show_check = TRUE)
+```
+```{r allmultfpv, fig.height=11, fig.cap = "Estimates of model coefficients for association between favipiravir and main outcomes. The \"Suspicious\" section shows models that were found to not fit the data well or have computational issues - see supplementary statistical analysis for details.  Each row represents a model - Categorical All/7/28 = Bayesian categorical regression for state at last observed day/day 7/day 28, Binary All/7/28 = Bayesian logistic regression for state at last observed day/day 7/day 28, Bayes Cox = Bayesian version of the Cox proportional hazards model with a binary outcome, Cox (single) = frequentist Cox model with a binary outcome, Cox (competing) = frequentist Cox model using competing risks (as in Figure 1a), HMM A = Bayesian hidden-Markov model as in Figure 1b with predictors for rate groups, HMM B = Bayesian hidden-markov model as in Figure 1b with predictors for individual rates, HMM C = Bayesian hidden-Markov model as in Figure 1c. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. The estimands are either log odds-ratio (Categorical, HMM) or log hazard ratio (Cox variants) or log ratio of mean duration of hospitalization (HMM duration). In all cases coefficient < 0 means better patient outcome in the treatment group. Vertical lines indicate zero (blue) and substantial increase or decrease with odds or hazard ratio of 3:2 or 2:3 (green). Additionally the factors the model adjusted for are listed - Site = the study site, admitted = Admitted for Covid-19, Supportive = best supportive care initiated, Comorb. = total number of comorbidities, AZ = took azithromycin, HCQ = took hydroxychloroquine, FPV = took favipiravir, C. plasma = received convalescent plasma, first wave = only patients admitted before September 1st were included. "}
+plot_multiverse(read_all_multiverse_res() %>% filter(grepl("favipiravir", hypothesis), model_check != "Problematic"), show_check = TRUE)
+```
+
+```{r multiverseresultsmarkers, fig.height=3.5, fig.width=8.5, fig.cap="Estimates of model coefficients (log hazard ratios) for association between markers and death. The \"Suspicious\" section shows models that were found to not fit the data well or have computational issues, \"Problematic\" section shows models that were completely broken - see supplementary statistical analysis for details. Each row represents a model - Cox (competing) =  frequentist Cox model using competing risks (as in Figure 1a), HMM A = Bayesian hidden-markov model as in Figure 1b with predictors for rate groups, JM = Bayesian joint longitudinal and time-to-event model. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. Additionally the factors the model adjusted for are listed - Site = the study site, Supportive = best supportive care initiated, HCQ = took Hydroxychloroquine. We show posterior mean and 95% credible interval."}
+plot_multiverse(read_all_multiverse_res() %>% filter(group == "markers"), adjustments_to_hide = c("admitted", "smoking", "obesity", "comorbidities \\(sum\\)", "az", "favipiravir", "convalescent_plasma"), show_check = TRUE)
+
+```

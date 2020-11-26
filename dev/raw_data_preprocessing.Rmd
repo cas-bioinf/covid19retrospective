@@ -9,7 +9,6 @@ library(tidyverse)
 ```
 
 
-TODO: check last day
 
 ```{r}
 raw_data_dir <- "H:/raw/"
@@ -184,6 +183,18 @@ Patient counts
 complete_data$patient_data %>% group_by(hospital_id) %>%
   summarise(n())
 ```
+Data collection periods
+
+```{r}
+data_collection_period <- complete_data$patient_data %>% group_by(hospital_id) %>%
+  summarise(first_admission = min(admission), last_admission = max(admission), .groups = "drop") %>%
+  arrange(first_admission) %>%
+  mutate(hospital_id_anon = 1:n()) %>% 
+  select(-hospital_id)
+
+write_csv(data_collection_period, here::here("manuscript", "data_collection_period.csv"))
+```
+
 
 ```{r}
 complete_data$patient_data <- complete_data$patient_data  %>% mutate(first_wave = admission < lubridate::ymd("2020-09-01"))

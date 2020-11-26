@@ -75,7 +75,7 @@ fit_d_dimer_age_sex
 ```{r}
 jm_hypothesis_res_list[["d_dimer_age_sex"]] <-
   bayesian_hypothesis_res_from_jm(
-    hypotheses$d_dimer_increases_death,
+    hypotheses$d_dimer_death,
     fit_d_dimer_age_sex,
     coefficient_name = "Assoc|Long1|etavalue",
     adjusted  = "age, sex",
@@ -105,7 +105,7 @@ fit_d_dimer_age_sex_hcq
 ```{r}
 jm_hypothesis_res_list[["d_dimer_age_sex_hcq"]] <-
   bayesian_hypothesis_res_from_jm(
-    hypotheses$d_dimer_increases_death,
+    hypotheses$d_dimer_death,
     fit_d_dimer_age_sex_hcq,
     coefficient_name = "Assoc|Long1|etavalue",
     adjusted  = "age, sex, hcq",
@@ -161,7 +161,7 @@ fit_IL_6_age_sex
 ```{r}
 jm_hypothesis_res_list[["IL_6_age_sex"]] <-
   bayesian_hypothesis_res_from_jm(
-    hypotheses$IL_6_increases_death,
+    hypotheses$IL_6_death,
     fit_IL_6_age_sex,
     coefficient_name = "Assoc|Long1|etavalue",
     adjusted  = "age, sex",
@@ -186,7 +186,7 @@ fit_IL_6_age_sex_hcq
 ```{r}
 jm_hypothesis_res_list[["IL_6_age_sex_hcq"]] <-
   bayesian_hypothesis_res_from_jm(
-    hypotheses$IL_6_increases_death,
+    hypotheses$IL_6_death,
     fit_IL_6_age_sex_hcq,
     coefficient_name = "Assoc|Long1|etavalue",
     adjusted  = "age, sex, hcq",
