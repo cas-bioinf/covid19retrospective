@@ -227,3 +227,12 @@ plot_multiverse <- function(hypo_res, adjustments_to_hide = c(), x_limits = NULL
 
   (plot_adj | plot_cis ) + plot_layout(widths = c(1.8,4)) & theme(axis.title = element_text(size = 11, face = "bold"))
 }
+
+print_formula <- function(f) {
+  if(is.brmsformula(f)) {
+    actual_f <- f$formula
+  } else {
+    actual_f <- f
+  }
+  cat(strwrap(paste(as.character(actual_f), collapse = " "), width = 80, prefix = "\n\t", initial = ""), "\n")
+}

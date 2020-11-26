@@ -1,3 +1,5 @@
 hypothesis,model,adjusted,estimand,point_estimate,p_value,ci_low,ci_high,model_check,data_version
 hcq_death,coxph_single,"age, sex, hospital, comorbidities (sum)",log(HR),-0.8085288971723542,0.0593796935980251,-1.6527965059719665,0.03573871162725817,OK,9f64434d7d5780d6e5d28902bbd66efc
 hcq_hospital,coxph_single,"age, sex, hospital, comorbidities (sum)",log(HR),0.1116330843162555,0.6372268480151712,-0.3506772721587281,0.5739434407912392,OK,9f64434d7d5780d6e5d28902bbd66efc
+hcq_death,coxph_single,"age, sex, hospital, comorbidities (sum), first_wave",log(HR),-0.8789060794408838,0.04322965813428505,-1.7378091939210458,-0.020002964960721736,OK,9f64434d7d5780d6e5d28902bbd66efc
+hcq_hospital,coxph_single,"age, sex, hospital, comorbidities (sum), first_wave",log(HR),0.07306166960126848,0.7645732077666944,-0.4040117527017822,0.5501350919043191,OK,9f64434d7d5780d6e5d28902bbd66efc

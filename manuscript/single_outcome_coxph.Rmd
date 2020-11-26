@@ -1,11 +1,17 @@
 ---
 title: "Survival - frequentist, single outcome"
-output: html_notebook
+output:
+  bookdown::pdf_document2
 ---
 
+# Single outcome proprtional hazards model
 
-```{r}
-devtools::load_all()
+Here we use a single outcome survival model via the `coxph` function of the `Survival` package. Hydroxychloroquine is treated as a time-varying covariate, other covariates are fixed.
+
+
+```{r setup_coxph_single, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
+knitr::opts_chunk$set(echo = FALSE)
+devtools::load_all(here::here())
 library(tidyverse)
 library(survival)
 
@@ -33,17 +39,17 @@ for (i in unique(pd$patient_id)) {
     if (hcq_first>0) {
       if (pd$last_record[cnd]>hcq_first) {
         if (hcq_first>1) {
-          d<-rbind(d,data.frame(t0=0,t1=hcq_first-1,outcome=0,patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],hcq=0))
+          d<-rbind(d,data.frame(t0=0,t1=hcq_first-1,outcome=0,patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],first_wave=pd$first_wave[cnd],hcq=0))
         }
-        d<-rbind(d,data.frame(t0=hcq_first-1,t1=pd$last_record[cnd],outcome=pd$outcome[cnd],patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],hcq=1))
+        d<-rbind(d,data.frame(t0=hcq_first-1,t1=pd$last_record[cnd],outcome=pd$outcome[cnd],patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],first_wave=pd$first_wave[cnd],hcq=1))
       } else {
-        d<-rbind(d,data.frame(t0=0,t1=pd$last_record[cnd],outcome=pd$outcome[cnd],patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],hcq=0))
+        d<-rbind(d,data.frame(t0=0,t1=pd$last_record[cnd],outcome=pd$outcome[cnd],patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],first_wave=pd$first_wave[cnd],hcq=0))
       }
     } else { # hcq_first=0
-      d<-rbind(d,data.frame(t0=0,t1=pd$last_record[cnd],outcome=pd$outcome[cnd],patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],hcq=1))
+      d<-rbind(d,data.frame(t0=0,t1=pd$last_record[cnd],outcome=pd$outcome[cnd],patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],first_wave=pd$first_wave[cnd],hcq=1))
     }
   } else {
-    d<-rbind(d,data.frame(t0=0,t1=pd$last_record[cnd],outcome=pd$outcome[cnd],patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],hcq=0))
+    d<-rbind(d,data.frame(t0=0,t1=pd$last_record[cnd],outcome=pd$outcome[cnd],patientId=i,hcq_first=pd$hcq_first[cnd],last_record=pd$last_record[cnd],age=pd$age[cnd],sex=pd$sex[cnd],hospital_id=pd$hospital_id[cnd],admitted_for_covid=pd$admitted_for_covid[cnd],ischemic_heart_disease=pd$ischemic_heart_disease[cnd],has_hypertension_drugs=pd$has_hypertension_drugs[cnd],heart_failure=pd$heart_failure[cnd],renal_disease=pd$renal_disease[cnd],high_creatinin=pd$high_creatinin[cnd],COPD=pd$COPD[cnd],other_lung_disease=pd$other_lung_disease[cnd],renal_disease=pd$renal_disease[cnd],obesity=pd$obesity[cnd],first_wave=pd$first_wave[cnd],hcq=0))
   }
 }
 d<-within(d,comorb_sum<-ischemic_heart_disease+has_hypertension_drugs+heart_failure+COPD+    other_lung_disease+    renal_disease)
@@ -53,23 +59,48 @@ d<-within(d,comorb_sum<-ischemic_heart_disease+has_hypertension_drugs+heart_fail
 
 hypothesis_res_list <- list()
 
-cache_dir <- here::here("local_temp_data")
-if(!dir.exists(cache_dir)) {
-  dir.create(cache_dir)
-}
 
 ```
 
-# Risk of death, increased discharge
+## Risk of death, increased discharge
+
+Here, we compare the model with hydroxychloroquine as a covariate (`m1`) with model not including hydroxychloroquine (`m0`), the formulas used are:
+
+```
+m1: Surv(t0,t1,outcome=='Death')~hcq+age+sex+strata(hospital_id)+comorb_sum)
+m0: Surv(t0,t1,outcome=='Death')~    age+sex+strata(hospital_id)+comorb_sum)
+```
+
+where `comorb_sum` is a score representing the cumulative presence of ischemic heart disease, hypertension drugs, former heart failure, COPD, other lung diseases, renal disease, or high creatinine. A separate model is fitted for the "Discharged" outcome.
+
+The point estimate of the effect and its confidence intervals are taken directly from the `m1` model, a p-value is computed via a call `anova` comparing the two models. 
+
+Here are the fitted models for the "Death" outcome:
 
 ```{r}
 
 m1<-with(d,coxph(S<-Surv(t0,t1,outcome=='Death')~hcq+age+sex+strata(hospital_id)+comorb_sum))
 m0<-with(d,coxph(S<-Surv(t0,t1,outcome=='Death')~    age+sex+strata(hospital_id)+comorb_sum))
 
+m1
+m0
+
+```
+
+And the fitted models for the "Discharged" outcome:
+
+```{r}
 mt1<-with(d,coxph(S<-Surv(t0,t1,outcome=='Discharged')~hcq+age+sex+strata(hospital_id)+comorb_sum))
 mt0<-with(d,coxph(S<-Surv(t0,t1,outcome=='Discharged')~    age+sex+strata(hospital_id)+comorb_sum))
 
+mt1
+mt0
+```
+
+
+And here are the resulting evaluation of individual hypotheses:
+
+```{r}
 hypothesis_res_list[["competing_hcq_comorbidities_sum"]] <-
   rbind(
   frequentist_hypothesis_res_from_coxph1(hypotheses$hcq_death, 
@@ -89,11 +120,63 @@ hypothesis_res_list[["competing_hcq_comorbidities_sum"]] <-
                                          ci_low = -confint(mt1)[1,2],
                                          ci_high = -confint(mt1)[1,1])
   )
-hypothesis_res_list[["competing_hcq_comorbidities_sum"]]
+hypothesis_res_list[["competing_hcq_comorbidities_sum"]] %>% select(hypothesis, point_estimate, p_value, ci_low, ci_high)
 
 ```
 
 
+## Risk of death, increased discharge - first wave only
+
+Here, we perform the same analysis as above, but including only patients from the first wave, here are the fitted models for the "Death" outcome:
+
+```{r}
+d_first <- d %>% filter(first_wave)
+m1_first<-with(d_first,coxph(S<-Surv(t0,t1,outcome=='Death')~hcq+age+sex+strata(hospital_id)+comorb_sum))
+m0_first<-with(d_first,coxph(S<-Surv(t0,t1,outcome=='Death')~    age+sex+strata(hospital_id)+comorb_sum))
+
+m1_first
+m0_first
+
+```
+
+And here are the fits for the "Discharged" outcome:
+
+```{r}
+mt1_first<-with(d_first,coxph(S<-Surv(t0,t1,outcome=='Discharged')~hcq+age+sex+strata(hospital_id)+comorb_sum))
+mt0_first<-with(d_first,coxph(S<-Surv(t0,t1,outcome=='Discharged')~    age+sex+strata(hospital_id)+comorb_sum))
+
+mt1_first
+mt0_first
+```
+
+
+Which give us the following evaluation of the hypotheses:
+
+```{r}
+hypothesis_res_list[["competing_hcq_comorbidities_sum_fw"]] <-
+  rbind(
+  frequentist_hypothesis_res_from_coxph1(hypotheses$hcq_death, 
+                                         point_estimate = coef(m1_first)[1],
+                                         adjusted = "age, sex, hospital, comorbidities (sum), first_wave", 
+                                         test_stat = anova(m1_first,m0_first,test='Chisq')[2,2],
+                                         df = anova(m1_first,m0_first,test='Chisq')[2,3],
+                                         p = anova(m1_first,m0_first,test='Chisq')[2,4],
+                                         ci_low = confint(m1_first)[1,1],
+                                         ci_high = confint(m1_first)[1,2]),
+  frequentist_hypothesis_res_from_coxph1(hypotheses$hcq_hospital, 
+                                         point_estimate = -coef(mt1_first)[1],
+                                         adjusted = "age, sex, hospital, comorbidities (sum), first_wave", 
+                                         test_stat = anova(mt1_first,mt0_first,test='Chisq')[2,2],
+                                         df = anova(mt1_first,mt0_first,test='Chisq')[2,3],
+                                         p = anova(mt1_first,mt0_first,test='Chisq')[2,4],
+                                         ci_low = -confint(mt1_first)[1,2],
+                                         ci_high = -confint(mt1_first)[1,1])
+  )
+
+
+hypothesis_res_list[["competing_hcq_comorbidities_sum_fw"]] %>% select(hypothesis, point_estimate, p_value, ci_low, ci_high)
+
+```
 
 
 ```{r}

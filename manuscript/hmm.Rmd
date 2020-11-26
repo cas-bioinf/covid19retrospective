@@ -8,7 +8,7 @@ bibliography: "Covid19.json"
 
 # Hidden Markov Models
 
-```{r setup_hmm, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
+```{r setup_hmm, echo=FALSE, message=FALSE, warning = FALSE, results = "hide",cache=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 
 devtools::load_all()
@@ -46,7 +46,7 @@ registerS3method("stan_log_lik", class = "rate_hmm", method = stan_log_lik.rate_
 
 To complement the more traditionally used proportional hazards models we also use several variants of hidden Markov models (HMMs). A discrete random process $X_1, X_2, X_3, ...$  satisfies the Markov property whenever for all states $x$ and times $t$ we have $P(X_{t + 1} = x | X_1 = x_1, X_2 = x_2, ..., X_t = x_t) = P(X_{t+1} = x | X_t = x_t)$, i.e. when the process is "memoryless". If this process is unobservable, but we can observe another process $Y$ such that $P(Y_{t} = y | X_1 = x_1, X_2 = x_2, ..., X_n = x_n) = P(Y_{t} = y | X_t = x_t)$ we call the pair $(X, Y)$ a hidden Markov process.
 
-We treat the breathing support required as a Markov process, either with states directly corresponding to the breathing support and directly observable (Fig. \@ref(fig:hmmstates)a), or with the states carrying an unobserved binary improving/worsening component which is unobservable (Fig. \@ref(fig:hmmstates)b) while the breathing support dimension still being completely observable. The former completely observable model is called _simple_ in the following text while the latter is called _complex_. This is unlike many uses of HMMs where the observation process is described by a general observation matrix. The reason is that the breathing support actually used is very likely to correspond to the breathing support needed by the patient. In initial versions of our models we also tested models that treated the breathing support observed as a noisy realisation of the actual state, but the fitted probabilities of such imprecise observations were always very low, so we ended up not using them.
+We treat the breathing support required as a Markov process, either with states directly corresponding to the breathing support and directly observable (Fig. \@ref(fig:hmmstates)a), or with the states carrying a binary improving/worsening component which is unobservable (Fig. \@ref(fig:hmmstates)b) while the breathing support dimension still being completely observable. The former completely observable model is called _simple_ in the following text while the latter is called _complex_. This results in a very restricted observation matrix. The reason is that the breathing support actually used is very likely to correspond to the breathing support needed by the patient. In initial versions of our models we also tested models that treated the breathing support observed as a noisy realisation of the actual state, but the fitted probabilities of such imprecise observations were always very low, so we ended up not using them.
 
 Directly modeling the full transition matrix of the Markov process would not make best use of the data as we know there is additional structure expressed in the ordering of states, e.g. that the probability of being discharged from the "AA" state is higher than from the "Oxygen" state, or that transitioning to "Ventilated" is more likely from the "Oxygen" state than from the "AA" state. To incorporate this structure, we follow the approach outlined in [@http://zotero.org/users/5567156/items/F9K2L5Q8].
 
@@ -79,7 +79,7 @@ As an additional structure, we consider _rate groups_ which are: "Improving" (fr
 
 Below we use three types of models: simple with predictors acting on rate groups (i.e. assuming that any predictor has the same multiplicative effect on all rates in a group), simple with predictors acting on rates directly (i.e. a predictor can have different effect on each rate) and complex with predictors acting on rate groups.
 
-Models will be presented in a unified structure that we explain with the first model and won't be repeated 
+Models will be presented in a unified structure that we explain with the first model and will not be repeated 
 
 ```{r}
 transform_serie_data <- function(raw_serie_data) {
@@ -194,13 +194,13 @@ trt_group_m1_formula <- ~ 0 + .rate_id +  (0 + best_supportive_care + took_hcq +
 ```
 
 
-For this model, the $\log(R_{i,j})$ elements are then modeled via the `brms` formula
+For this model, the $\log(R_{i,j})$ elements are modeled via the `brms` formula
 
 ```{r}
 trt_group_m1_formula
 ```
 
-Our code is setup so that the formula can combine predictors drawn from the description of rates (see Table \@ref(tab:statessimple)) and those taken from patient's data (both the fixed baseline characteristics and time-varying values). There is a separate coefficient for each rate and then the other predictors act uniformly on each rate group. The `took_XXX` variables are boolean predictors that are set to true for all days since the first dose of the treatment was given - i.e. we assume the treatment alters the overall disease progression irreversibly.
+Our code is setup so that the formula can combine predictors drawn from the description of rates (see Table \@ref(tab:ratessimple)) and those taken from patient's data (both the fixed baseline characteristics and time-varying values). There is a separate coefficient for each rate and then the other predictors act uniformly on each rate group. The `took_XXX` variables are boolean predictors that are set to true for all days since the first dose of the treatment was given - i.e. we assume the treatment alters the overall disease progression irreversibly.
 
 This is the summary of the fitted coefficients. `Q2.5` and `Q97.5` are the boundaries of the central 95% credible interval.
 
@@ -339,7 +339,7 @@ trt_group_m3_fw_fit <- brmhmm(trt_group_m3_fw, cache_file = paste0(cache_dir,"/t
 print_hmm_fit_summary(trt_group_m3_fw_fit)
 ```
 
-And the resulting log ORs:
+And the resulting log ORs/log duration ratios:
 
 ```{r}
 serie_data_28_fw = serie_data_28 %>% filter(first_wave)
@@ -366,6 +366,7 @@ For this model, the sum of comorbidities is added as a continuous predictor, res
 trt_group_m4_formula <-  update.formula(trt_group_m3_formula,  ~ . + (comorbidities_sum || rate_group)) 
 trt_group_m4_formula
 ```
+Where `comorbidities_sum` is a comorbidity score as described in Section \@ref(comorbiditiessum).
 
 Below is the summary of the coefficients:
 
@@ -589,6 +590,7 @@ Adding comorbidities, the complete formula:
 trt_rate_m4_formula <-  update.formula(trt_rate_m3_formula, ~ . + (comorbidities_sum || .rate_id))
 trt_rate_m4_formula
 ```
+Where `comorbidities_sum` is a comorbidity score as described in Section \@ref(comorbiditiessum).
 
 Coefficient estimates - note the divergent transitions, indicating the results are not completely trustworthy:
 
@@ -690,6 +692,7 @@ Including comorbidites in the model gives the formula:
 d_dimer_m2_formula <-  update.formula(d_dimer_m1_formula, ~ . + (0 + age_norm + is_male || rate_group))
 d_dimer_m2_formula
 ```
+Where `comorbidities_sum` is a comorbidity score as described in Section \@ref(comorbiditiessum).
 
 And here are the coefficient estimates - note the divergent transitions, indicating the results are not completely trustworthy:
 
@@ -787,6 +790,7 @@ And finally adding comorbidities with the formula:
 IL_6_m2_formula <-  update.formula(IL_6_m1_formula, ~ . + (0 + age_norm + is_male || rate_group))
 IL_6_m2_formula
 ```
+Where `comorbidities_sum` is a comorbidity score as described in Section \@ref(comorbiditiessum).
 
 Gives us those estimates - note the divergent transitions, indicating the results are not completely trustworthy:
 
@@ -1023,6 +1027,7 @@ Adding comorbidities with the formula:
 ```{r}
 trt_group_m4_formula
 ```
+Where `comorbidities_sum` is a comorbidity score as described in Section \@ref(comorbiditiessum).
 
 Fitted coefficients - note the divergent transitions, indicating the results are not completely trustworthy:
 

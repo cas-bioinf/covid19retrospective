@@ -1,9 +1,8 @@
 ---
 title: "Analysis of Retrospective COVID-19 data"
 author: "Paul Bürkner"
-output:
-  html_document:
-    theme: default
+output: bookdown::pdf_document2
+
 encoding: UTF-8
 #editor_options: 
 #  chunk_output_type: console
@@ -23,11 +22,11 @@ pre code {
 
 # Bayesian models with brms
 
-```{r setup, include=FALSE, cache=FALSE}
-knitr::opts_chunk$set(cache = TRUE, fig.width = 10)
+```{r setup_brms, include=FALSE, cache=FALSE}
+knitr::opts_chunk$set(cache = TRUE, echo=FALSE, fig.width = 10)
 ```
 
-```{r general_options, cache=FALSE}
+```{r general_options, cache=FALSE, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
 devtools::load_all()
 library(tidyverse)
 library(tidybayes)
@@ -35,7 +34,7 @@ library(brms)
 options(width = 160)
 options(brms.backend = "cmdstanr")
 options(mc.cores = 4)
-theme_set(bayesplot::theme_default())
+#theme_set(bayesplot::theme_default())
 
 cache_dir <- here::here("local_temp_data", "analysis_brms")
 if (!dir.exists(cache_dir)) {
@@ -76,7 +75,30 @@ dummy_coding <- function(x, lvls = levels(x)) {
 default_control <- list(adapt_delta = 0.95)
 ```
 
-## Data preparation
+
+
+Here we use a set of Bayesian linear models using the `brms` package. There are several classes of model:
+
+- Binary survival models - logistic regression with survival as the outcome.
+- Survival time models - Bayesian version of the single-outcome Cox proportional hazards model for the "Death" event.
+- Binary discharged models - logistic regression with discharged as the outcome (differs from binary survival in the handling of censored patients)
+- Discharged time models - Bayesian version of the single-outcome Cox proportional hazards model for the "Discharged" event
+- Categorical models - categorical (multinomial) regression of the "Discharged"/"Hospitalized"/"Death" outcome.
+
+For the final outcome models (binary and categorical) we use three variants of dealing with censoring:
+
+- All: Remove censored patients and keep only those that have data until final outcome
+- 7 days: Remove patients with less than 7 days of data and treat the state at day 7 post admission as the outcome
+- 28 days: Same as 7 days, but with a longer time frame
+
+The 7 and 28 days models should be somewhat less biased as censored patients are more likely those that spent longer time in hospital and thus have likely more severe disease. We marked the "All" models as "Suspicious" for the purpose of the multiverse analysis.
+
+
+For each model we show the `brms` formula used, summary of fitted coefficients. See the `brms` manual for detailed explanation of each model. Additionally we show some _posterior predictive checks_ [@http://zotero.org/users/5567156/items/42DSAQX9; @http://zotero.org/users/5567156/items/ZKWU8INU] to verify that models represent the data well. Consult the `bayesplot` package manual for details on the checks used. As another way to check for potential overfitting we use the `loo` package [@http://zotero.org/users/5567156/items/88ANHBVF] and its Pareto-k diagnostic.
+
+All hypotheses are evaluated via model coefficients of predictors representing treatments, except for sign corrections (e.g. in  binary survival models positive effects represent increased survival while for the main analysis we take positive effect as increased mortality, so we flip the sign).
+
+Some derived predictors are used `age_norm` (age, normalized to have roughly mean 0 and standard deviation of 1), `ever_az`, `ever_hcq`, `ever_favipiravir` (whether the patient took the respective medications at any time) and `comorbidities_sum` - the sum of comorbidities as described in Section \@ref(comorbiditiessum).
 
 ```{r}
 data <- read_data_for_analysis()
@@ -141,26 +163,31 @@ data$surv_data_28 <- surv_data_at_day(data$surv_data, 28)
 hypothesis_res_list <- list()
 ```
 
-### Notes:
 
-- days_from_symptom_onset. Days from symptom onset until hospitalization. 
-Uncertain marker but contains some information. 
-Required for anti viral (< 7 days) hypothesis.
-- first_day_*: time from day 0 (arrived at hospital) to getting antivirals
-- some sites only support patients with mild disease and some only with
-strong disease symptoms
 
-## Analysis: Survival 
+## Binary survival models 
 
-### Basic binary model
+All variants of the model use the same `brms` formula, with family `bernoulli("logit")`.
 
-```{r, results="hide"}
+```{r}
 form_survival_base <- bf(
   survival ~ sex + age_norm + 
     smoking + mo(obesity) + ever_hcq + ever_az + ever_favipiravir +
     (1 | hospital_id),
   family = bernoulli("logit")
 )
+
+print_formula(form_survival_base)
+```
+
+
+### Basic binary model
+
+
+
+
+```{r, results="hide"}
+
 
 prior_survival_base <- 
   prior(normal(0, 5), class = "b") +
@@ -176,16 +203,24 @@ fit_survival_base <- brm(
 fit_survival_base <- add_criterion(fit_survival_base, "loo")
 ```
 
-```{r}
-summary(fit_survival_base)
-pp_check(fit_survival_base, "error_binned")
-loo(fit_survival_base)
-# ce <- conditional_effects(fit_survival_base)
-# plot(ce, ask = FALSE)
-```
+The fitted coefficients:
+
 
 ```{r}
-#Marking the results as suspicious because there was a divergence...
+summary(fit_survival_base)
+invisible(loo(fit_survival_base)) #loo used primarily for checks not for the actual values
+```
+
+The `error_binned` posterior predictive check - showing the distribution of errors per predicted probability bin.
+
+```{r}
+pp_check(fit_survival_base, "error_binned", nsamples = 20)
+
+```
+
+
+```{r}
+#Marking the results as suspicious because of the potential bias
 draws <- tidy_draws(fit_survival_base)
 hypothesis_res_list[["hcq_az_survival_base"]] <- rbind(
   bayesian_hypothesis_res_from_draws(
@@ -213,6 +248,7 @@ hypothesis_res_list[["hcq_az_survival_base"]] <- rbind(
     model_check = "Suspicious"
   )
 )
+
 ```
 
 
@@ -229,12 +265,20 @@ fit_survival_base_7 <- brm(
 fit_survival_base_7 <- add_criterion(fit_survival_base_7, "loo")
 ```
 
+The fitted coefficients:
+
 ```{r}
 summary(fit_survival_base_7)
-pp_check(fit_survival_base_7, "error_binned")
-loo(fit_survival_base_7)
+
 # ce <- conditional_effects(fit_survival_base_7)
 # plot(ce, ask = FALSE)
+```
+
+The `error_binned` check:
+
+```{r}
+pp_check(fit_survival_base_7, "error_binned", nsamples = 20)
+invisible(loo(fit_survival_base_7))
 ```
 
 ```{r}
@@ -281,13 +325,23 @@ fit_survival_base_28 <- brm(
 fit_survival_base_28 <- add_criterion(fit_survival_base_28, "loo")
 ```
 
+The fitted coefficients:
+
 ```{r}
 summary(fit_survival_base_28)
-pp_check(fit_survival_base_28, "error_binned")
-loo(fit_survival_base_28)
+
 # ce <- conditional_effects(fit_survival_base_28)
 # plot(ce, ask = FALSE)
 ```
+Note that there is a divergent transition indicating potential computational problems, we will mark the model as "Suspicious".
+
+The `error_binned` check:
+
+```{r}
+pp_check(fit_survival_base_28, "error_binned", nsamples = 20)
+invisible(loo(fit_survival_base_28))
+```
+
 
 ```{r}
 draws <- tidy_draws(fit_survival_base_28)
@@ -319,7 +373,9 @@ hypothesis_res_list[["hcq_az_survival_base_28"]] <- rbind(
 )
 ```
 
-## Analysis: Survival time
+## Survival time models
+
+
 
 ```{r, results="hide"}
 
@@ -331,12 +387,22 @@ prior_survival_time <-
 
 ### Fewer adjustments
 
+Those models are described by the `brms` formula with family `brmsfamily("cox", "log")`:
+
+
 ```{r}
 form_survival_time_small <- bf(
   day | cens(censored) ~ sex + age_norm  + ever_hcq + ever_az + ever_favipiravir +
     (1 | hospital_id),
   family = brmsfamily("cox", "log")
 )
+print_formula(form_survival_time_small)
+
+```
+
+
+
+```{r}
 
 
 fit_survival_time_small <- brm(
@@ -351,10 +417,11 @@ fit_survival_time_small <- add_criterion(fit_survival_time_small, "loo")
 
 ```
 
+Here are the fitted coefficients:
 
 ```{r}
 summary(fit_survival_time_small)
-loo(fit_survival_time_small)
+invisible(loo(fit_survival_time_small))
 ```
 
 ```{r}
@@ -388,6 +455,8 @@ hypothesis_res_list[["hcq_az_survival_time_small"]] <- rbind(
 ```
 
 ### Fewer adjustments - First wave only
+
+The same model as above, but using data from the first wave only. Here is the summary of the fit:
 
 ```{r}
 
@@ -441,6 +510,8 @@ hypothesis_res_list[["hcq_az_survival_time_small_fw"]] <- rbind(
 
 ### More adjustments
 
+For those models the formula changes to:
+
 ```{r}
 form_survival_time <- bf(
   day | cens(censored) ~ sex + age_norm + 
@@ -448,6 +519,11 @@ form_survival_time <- bf(
     (1 | hospital_id),
   family = brmsfamily("cox", "log")
 )
+print_formula(form_survival_time)
+```
+
+
+```{r}
 
 
 fit_survival_time <- brm(
@@ -463,11 +539,21 @@ fit_survival_time <- add_criterion(fit_survival_time, "loo")
 ```
 
 
+Here are the fitted coefficients - there is a divergent transition so we are possibly fitting an overparemtrized model and we will mark it as "Suspicious":
+
 ```{r}
 summary(fit_survival_time)
-loo(fit_survival_time)
 ```
-There were some very influential observations.
+
+In addition, the LOO diagnostics warn us that there were some very influential observations, indicating possible overfitting.
+
+
+```{r}
+loo(fit_survival_time)
+
+```
+
+
 
 ```{r}
 draws <- tidy_draws(fit_survival_time)
@@ -502,6 +588,8 @@ hypothesis_res_list[["hcq_az_survival_time"]] <- rbind(
 
 ### More adjustments - First wave only
 
+The same model as above, but fitting only to patients from first wave. Here are the fitted model coefficients: 
+
 ```{r, results="hide"}
 fit_survival_time_fw <- brm(
   formula = form_survival_time,
@@ -516,10 +604,13 @@ fit_survival_time_fw <- add_criterion(fit_survival_time_fw, "loo")
 
 ```{r}
 summary(fit_survival_time_fw)
+```
+ 
+ We do not see divergent transitions, but some overly influential observations (according to `loo`) remain, the model will be marked as "Suspicious".
+
+```{r}
 loo(fit_survival_time_fw)
 ```
-
-There were some very influential observations.
 
 ```{r}
 draws <- tidy_draws(fit_survival_time_fw)
@@ -551,17 +642,26 @@ hypothesis_res_list[["hcq_az_survival_time_fw"]] <- rbind(
 )
 ```
 
-## Analysis: Discharged
+## Binary discharged models
 
-### Basic binary model
+All the models in this section use the `bernoulli("logit")` family (i.e. logistic regression) and follow the `brms` formula
 
-```{r, results="hide"}
+```{r}
 form_discharged_base <- bf(
   discharged ~ sex + age_norm + 
     smoking + mo(obesity) + ever_hcq + ever_az + ever_favipiravir +
     (1 | hospital_id),
   family = bernoulli("logit")
 )
+
+print_formula(form_discharged_base)
+```
+
+
+### Basic binary model
+
+```{r, results="hide"}
+
 
 prior_discharged_base <- 
   prior(normal(0, 5), class = "b") +
@@ -577,13 +677,21 @@ fit_discharged_base <- brm(
 fit_discharged_base <- add_criterion(fit_discharged_base, "loo")
 ```
 
+Here is the summary of the fitted coefficients
+
 ```{r}
 summary(fit_discharged_base)
-pp_check(fit_discharged_base, "error_binned")
-loo(fit_discharged_base)
+invisible(loo(fit_discharged_base))
 # ce <- conditional_effects(fit_discharged_base)
 # plot(ce, ask = FALSE)
 ```
+And the `error_binned` check:
+
+```{r}
+pp_check(fit_discharged_base, "error_binned", nsamples = 20)
+
+```
+
 
 ```{r}
 draws <- tidy_draws(fit_discharged_base)
@@ -629,13 +737,22 @@ fit_discharged_base_7 <- brm(
 fit_discharged_base_7 <- add_criterion(fit_discharged_base_7, "loo")
 ```
 
+Here is the summary of the fitted coefficients:
+
 ```{r}
 summary(fit_discharged_base_7)
-pp_check(fit_discharged_base_7, "error_binned")
-loo(fit_discharged_base_7)
+invisible(loo(fit_discharged_base_7))
 # ce <- conditional_effects(fit_discharged_base_7)
 # plot(ce, ask = FALSE)
 ```
+
+And the `error_binned` check.
+
+```{r}
+pp_check(fit_discharged_base_7, "error_binned", nsamples = 20)
+
+```
+
 
 ```{r}
 draws <- tidy_draws(fit_discharged_base_7)
@@ -680,13 +797,22 @@ fit_discharged_base_28 <- brm(
 fit_discharged_base_28 <- add_criterion(fit_discharged_base_28, "loo")
 ```
 
+Here are the fitted coefficients:
+
 ```{r}
 summary(fit_discharged_base_28)
-pp_check(fit_discharged_base_28, "error_binned")
-loo(fit_discharged_base_28)
+invisible(loo(fit_discharged_base_28))
 # ce <- conditional_effects(fit_discharged_base_28)
 # plot(ce, ask = FALSE)
 ```
+
+And the `error_binned` check:
+
+```{r}
+pp_check(fit_discharged_base_28, "error_binned")
+
+```
+
 
 ```{r}
 draws <- tidy_draws(fit_discharged_base_28)
@@ -718,9 +844,11 @@ hypothesis_res_list[["hcq_az_discharged_base_28"]] <- rbind(
 )
 ```
 
-## Analysis: discharged time
+## Discharged time model
 
-```{r, results="hide"}
+The model uses the family `brmsfamily("cox", "log")` and the formula:
+
+```{r}
 form_discharged_time <- bf(
   day | cens(censored_discharged) ~ sex + age_norm + 
     smoking + mo(obesity) + ever_hcq + ever_az + ever_favipiravir +
@@ -728,6 +856,11 @@ form_discharged_time <- bf(
   family = brmsfamily("cox", "log")
 )
 
+print_formula(form_discharged_time)
+```
+
+
+```{r, results="hide"}
 prior_discharged_time <- 
   prior(normal(0, 5), class = "b") +
   prior(normal(0, 5), class = "sd")
@@ -743,12 +876,19 @@ fit_discharged_time <- brm(
 fit_discharged_time <- add_criterion(fit_discharged_time, "loo")
 ```
 
+The fitted coefficients are:
+
 ```{r}
 summary(fit_discharged_time)
+
+```
+
+The `loo` diagnostics warn us that there were some very influential observations. 
+
+```{r}
 loo(fit_discharged_time)
 ```
 
-There were some very influential observations
 
 ```{r}
 draws <- tidy_draws(fit_discharged_time)
@@ -780,17 +920,24 @@ hypothesis_res_list[["hcq_az_discharged_time"]] <- rbind(
 )
 ```
 
-## Analysis: Hospitalized vs. Discharged vs. Death
+## Categorical models
 
-### Basic Categorical model
+All the categorical models use the `categorical("logit")` family and the following formula:
 
-```{r, results="hide"}
+```{r}
 form_outcome_base <- bf(
   outcome3 ~ sex + age_norm + 
     smoking + mo(obesity) + ever_hcq + ever_az + ever_favipiravir +
     (1 | hospital_id),
   family = categorical("logit")
 )
+print_formula(form_outcome_base)
+```
+
+### Basic Categorical model
+
+```{r, results="hide"}
+
 
 prior_outcome_base <- 
   prior(normal(0, 5), class = "b", dpar = "muDeath") +
@@ -808,9 +955,11 @@ fit_outcome_base <- brm(
 fit_outcome_base <- add_criterion(fit_outcome_base, "loo")
 ```
 
+Fitted coefficients below:
+
 ```{r}
 summary(fit_outcome_base)
-loo(fit_outcome_base)
+invisible(loo(fit_outcome_base))
 # ce <- conditional_effects(fit_outcome_base)
 # plot(ce, ask = FALSE)
 ```
@@ -879,19 +1028,26 @@ fit_outcome_base_7 <- brm(
   formula = form_outcome_base,
   data = data$surv_data_7,
   prior = prior_outcome_base,
-  control = default_control,
+  control = list(adapt_delta = 0.98),
   file = paste0(cache_dir, "/fit_outcome_base_7")
 )
 fit_outcome_base_7 <- add_criterion(fit_outcome_base_7, "loo")
 ```
 
+Summary of model fit:
+
 ```{r}
 summary(fit_outcome_base_7)
-pp_check(fit_outcome_base_7)
-loo(fit_outcome_base_7)
+invisible(loo(fit_outcome_base_7))
 # ce <- conditional_effects(fit_outcome_base_7)
 # plot(ce, ask = FALSE)
 ```
+
+```{r, fig.width=4, fig.height=2.5}
+#pp_check(fit_outcome_base_7, type = "bars", nsamples = 200)
+
+```
+
 
 ```{r}
 draws <- tidy_draws(fit_outcome_base_7)
@@ -953,6 +1109,8 @@ hypothesis_res_list[["hcq_az_outcome_base_7"]] <- rbind(
 
 ### Basic Categorical model (7 Days), first wave only
 
+The same model as above, using only data from the first wave. Summary below:
+
 ```{r, results="hide"}
 fit_outcome_base_7_fw <- brm(
   formula = form_outcome_base,
@@ -964,12 +1122,18 @@ fit_outcome_base_7_fw <- brm(
 fit_outcome_base_7_fw <- add_criterion(fit_outcome_base_7_fw, "loo")
 ```
 
+
+
 ```{r}
 summary(fit_outcome_base_7_fw)
-pp_check(fit_outcome_base_7_fw)
-loo(fit_outcome_base_7_fw)
+invisible(loo(fit_outcome_base_7_fw))
 # ce <- conditional_effects(fit_outcome_base_7_fw)
 # plot(ce, ask = FALSE)
+```
+
+```{r, fig.width=4, fig.height=2.5}
+#pp_check(fit_outcome_base_7_fw, type = "bars", nsamples = 200)
+
 ```
 
 ```{r}
@@ -1041,12 +1205,12 @@ fit_outcome_base_28 <- brm(
 fit_outcome_bas_28 <- add_criterion(fit_outcome_base_28, "loo")
 ```
 
+Summary of the model is:
+
 ```{r}
 summary(fit_outcome_base_28)
-pp_check(fit_outcome_base_28)
-loo(fit_outcome_base_28)
-# ce <- conditional_effects(fit_outcome_base_28)
-# plot(ce, ask = FALSE)
+#pp_check(fit_outcome_base_28)
+invisible(loo(fit_outcome_base_28))
 ```
 
 ```{r}
@@ -1107,6 +1271,8 @@ hypothesis_res_list[["hcq_az_outcome_base_28"]] <- rbind(
 
 ### Basic Categorical model (28 Days), first wave only
 
+The same model, but only for patients from the first wave, summary of the fit:
+
 ```{r, results="hide"}
 fit_outcome_base_28_fw <- brm(
   formula = form_outcome_base,
@@ -1120,10 +1286,8 @@ fit_outcome_bas_28 <- add_criterion(fit_outcome_base_28_fw, "loo")
 
 ```{r}
 summary(fit_outcome_base_28_fw)
-pp_check(fit_outcome_base_28_fw)
-loo(fit_outcome_base_28_fw)
-# ce <- conditional_effects(fit_outcome_base_28_fw)
-# plot(ce, ask = FALSE)
+#pp_check(fit_outcome_base_28_fw)
+invisible(loo(fit_outcome_base_28_fw))
 ```
 
 ```{r}
@@ -1182,9 +1346,9 @@ hypothesis_res_list[["hcq_az_outcome_base_28_fw"]] <- rbind(
 )
 ```
 
-## Analysis: Worst Breathing {.tabset}
+## Worst Breathing {.tabset}
 
-### Basic ordinal model
+Not reported in the main manuscript but we also experimented with ordinal (stopping ratio) models for the worst breathing level experienced by a patient.
 
 ```{r, results="hide"}
 form_worst_breathing_base <- bf(
@@ -1210,40 +1374,11 @@ fit_worst_breathing_base <- add_criterion(fit_worst_breathing_base, "loo")
 
 ```{r}
 summary(fit_worst_breathing_base)
-loo(fit_worst_breathing_base)
+invisible(loo(fit_worst_breathing_base))
 # ce <- conditional_effects(fit_worst_breathing_base, categorical = TRUE)
 # plot(ce, ask = FALSE)
 ```
 
-### Category-specific ordinal model
-
-```{r, results="hide"}
-# form_worst_breathing_cs <- bf(
-#   worst_breathing ~ cs(sex + age_norm + 
-#     smoking + mo(obesity) + ever_hcq + ever_az + ever_favipiravir) +
-#     (1 | hospital_id),
-#   family = sratio("logit")
-# )
-# 
-# prior_worst_breathing_cs <- 
-#   prior(normal(0, 5), class = "b") +
-#   prior(normal(0, 5), class = "sd")
-# 
-# fit_worst_breathing_cs <- brm(
-#   formula = form_worst_breathing_cs,
-#   data = data$patient_data,
-#   prior = prior_worst_breathing_cs,
-#   inits = 0,
-#   file = paste0(cache_dir, "/fit_worst_breathing_cs")
-# )
-# fit_worst_breathing_cs <- add_criterion(fit_worst_breathing_cs, "loo")
-```
-
-```{r}
-# summary(fit_worst_breathing_cs)
-# ce <- conditional_effects(fit_worst_breathing_cs, categorical = TRUE)
-# plot(ce, ask = FALSE)
-```
 
 
 ```{r store_hypothesis_brms}

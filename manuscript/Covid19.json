@@ -7665,5 +7665,175 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/42DSAQX9",
+		"type": "article-journal",
+		"container-title": "Journal of the Royal Statistical Society: Series A (Statistics in Society)",
+		"DOI": "10.1111/rssa.12378",
+		"ISSN": "0964-1998, 1467-985X",
+		"issue": "2",
+		"journalAbbreviation": "J. R. Stat. Soc. A",
+		"language": "en",
+		"page": "389-402",
+		"source": "DOI.org (Crossref)",
+		"title": "Visualization in Bayesian workflow",
+		"URL": "https://onlinelibrary.wiley.com/doi/abs/10.1111/rssa.12378",
+		"volume": "182",
+		"author": [
+			{
+				"family": "Gabry",
+				"given": "Jonah"
+			},
+			{
+				"family": "Simpson",
+				"given": "Daniel"
+			},
+			{
+				"family": "Vehtari",
+				"given": "Aki"
+			},
+			{
+				"family": "Betancourt",
+				"given": "Michael"
+			},
+			{
+				"family": "Gelman",
+				"given": "Andrew"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					11,
+					26
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2019",
+					2
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/ZKWU8INU",
+		"type": "article-journal",
+		"abstract": "The Bayesian approach to data analysis provides a powerful way to handle uncertainty in all observations, model parameters, and model structure using probability theory. Probabilistic programming languages make it easier to specify and fit Bayesian models, but this still leaves us with many options regarding constructing, evaluating, and using these models, along with many remaining challenges in computation. Using Bayesian inference to solve real-world problems requires not only statistical skills, subject matter knowledge, and programming, but also awareness of the decisions made in the process of data analysis. All of these aspects can be understood as part of a tangled workflow of applied Bayesian statistics. Beyond inference, the workflow also includes iterative model building, model checking, validation and troubleshooting of computational problems, model understanding, and model comparison. We review all these aspects of workflow in the context of several examples, keeping in mind that in practice we will be fitting many models for any given problem, even if only a subset of them will ultimately be relevant for our conclusions.",
+		"container-title": "arXiv:2011.01808 [stat]",
+		"note": "arXiv: 2011.01808",
+		"source": "arXiv.org",
+		"title": "Bayesian Workflow",
+		"URL": "http://arxiv.org/abs/2011.01808",
+		"author": [
+			{
+				"family": "Gelman",
+				"given": "Andrew"
+			},
+			{
+				"family": "Vehtari",
+				"given": "Aki"
+			},
+			{
+				"family": "Simpson",
+				"given": "Daniel"
+			},
+			{
+				"family": "Margossian",
+				"given": "Charles C."
+			},
+			{
+				"family": "Carpenter",
+				"given": "Bob"
+			},
+			{
+				"family": "Yao",
+				"given": "Yuling"
+			},
+			{
+				"family": "Kennedy",
+				"given": "Lauren"
+			},
+			{
+				"family": "Gabry",
+				"given": "Jonah"
+			},
+			{
+				"family": "Bürkner",
+				"given": "Paul-Christian"
+			},
+			{
+				"family": "Modrák",
+				"given": "Martin"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					11,
+					26
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					11,
+					3
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/88ANHBVF",
+		"type": "article-journal",
+		"container-title": "Statistics and Computing",
+		"DOI": "10.1007/s11222-016-9696-4",
+		"ISSN": "0960-3174, 1573-1375",
+		"issue": "5",
+		"journalAbbreviation": "Stat Comput",
+		"language": "en",
+		"page": "1413-1432",
+		"source": "DOI.org (Crossref)",
+		"title": "Practical Bayesian model evaluation using leave-one-out cross-validation and WAIC",
+		"URL": "http://link.springer.com/10.1007/s11222-016-9696-4",
+		"volume": "27",
+		"author": [
+			{
+				"family": "Vehtari",
+				"given": "Aki"
+			},
+			{
+				"family": "Gelman",
+				"given": "Andrew"
+			},
+			{
+				"family": "Gabry",
+				"given": "Jonah"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					11,
+					26
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2017",
+					9
+				]
+			]
+		}
 	}
 ]

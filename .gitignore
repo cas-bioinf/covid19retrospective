@@ -47,3 +47,4 @@ vignettes/*.pdf
 /manuscript/*_files
 
 *.docx
+*.log

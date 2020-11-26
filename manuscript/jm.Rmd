@@ -1,11 +1,25 @@
 ---
 title: "Joint modelling"
-output: html_document
+output: bookdown::pdf_document2
+bibliography: Covid19.json
 ---
 
 # Joint longitudinal and time-to-event models
 
-```{r setup}
+Joint models have two components: 
+
+- _longitudinal model_ describes the evolution of some quantity/quantities over time (in our case a biological marker)
+- _time-to-event model_ describes the risk of event over time assuming proportional hazards. This risk can be affected by the value of the marker.
+
+Modelling those two jointly means that the marker values are imputed between measurements according to the longitudinal model, but information also flows in the other direction. We use the implemention from the `rstanarm` package [@http://zotero.org/users/5567156/items/KHJGLQS5] - consult the reference for an introduction to this class of models.
+
+We use those models only for association between markers (IL-6 and D-dimer) and disease progression. Those analyses ended up not being reported in the main paper as the results are inconclusive.
+
+We evaluate the associations directly via the coefficient describing the association between the longitudinal and time-to-event component. We focus solely on the "Death" event.
+
+```{r setup_jm, cache=FALSE, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
+knitr::opts_chunk$set(cache = TRUE, echo=FALSE)
+
 devtools::load_all()
 library(tidyverse)
 library(survival)
@@ -42,6 +56,12 @@ data_surv <- wide %>%
 #TODO: impute the competing risk as censored long in the future
 ```
 
+## D-dimer
+
+### Age + sex
+
+The longitudinal formula is `log_d_dimer ~ day + (1  | patient_id)` and the time-to-event formula is `Surv(daym1, day, event_death) ~ age + sex`. The fitted coefficients are:
+
 ```{r}
 data_d_dimer <- data_surv %>%
   group_by(patient_id) %>%
@@ -53,8 +73,6 @@ data_d_dimer <- data_surv %>%
          d_dimer) %>%
   mutate(log_d_dimer = log(d_dimer + 1) - 4)
 
-#data_d_dimer %>% filter(d_dimer == 0)
-# data_d_dimer %>% group_by(sex, ever_hcq) %>% summarise(pts = length(unique(patient_id)), n_dimer = sum(!is.na(d_dimer)))
 fit_d_dimer_age_sex <- stan_jm_with_cache(formulaLong = log_d_dimer ~ day + (1  | patient_id),
               dataLong = data_d_dimer %>% filter(!is.na(d_dimer)),
               formulaEvent = Surv(daym1, day, event_death) ~ age + sex,
@@ -64,11 +82,6 @@ fit_d_dimer_age_sex <- stan_jm_with_cache(formulaLong = log_d_dimer ~ day + (1  
               cache_file = paste0(cache_dir, "/jm_d_dimer_age_sex.rds"))
 
 fit_d_dimer_age_sex
-
-#length(unique(data_d_dimer$patient_id))
-# to_pred <- data_d_dimer %>% group_by(patient_id) %>% summarise(n_d_dimer = sum(!is.na(d_dimer))) %>%
-#   filter(n_d_dimer > 1) %>% pull(patient_id)
-#data_d_dimer %>% filter(patient_id == unique(data_d_dimer$patient_id)[31])
 
 ```
 
@@ -81,8 +94,12 @@ jm_hypothesis_res_list[["d_dimer_age_sex"]] <-
     adjusted  = "age, sex",
     model_check = "Suspicious")
 
-jm_hypothesis_res_list[["d_dimer_age_sex"]]
+#jm_hypothesis_res_list[["d_dimer_age_sex"]]
 ```
+
+### Age + sex + hydroxychloroquine
+
+The time-to-event formula is expanded to `Surv(daym1, day, event_death) ~ age + sex + took_hcq`. The fitted coefficients are:
 
 ```{r}
 fit_d_dimer_age_sex_hcq <- stan_jm_with_cache(formulaLong = log_d_dimer ~ day + (1  | patient_id),
@@ -94,12 +111,6 @@ fit_d_dimer_age_sex_hcq <- stan_jm_with_cache(formulaLong = log_d_dimer ~ day + 
               cache_file = paste0(cache_dir, "/jm_d_dimer_age_sex_hcq.rds"))
 
 fit_d_dimer_age_sex_hcq
-
-#length(unique(data_d_dimer$patient_id))
-# to_pred <- data_d_dimer %>% group_by(patient_id) %>% summarise(n_d_dimer = sum(!is.na(d_dimer))) %>%
-#   filter(n_d_dimer > 1) %>% pull(patient_id)
-#data_d_dimer %>% filter(patient_id == unique(data_d_dimer$patient_id)[31])
-
 ```
 
 ```{r}
@@ -111,30 +122,21 @@ jm_hypothesis_res_list[["d_dimer_age_sex_hcq"]] <-
     adjusted  = "age, sex, hcq",
     model_check = "Problematic")
 
-jm_hypothesis_res_list[["d_dimer_age_sex_hcq"]]
+#jm_hypothesis_res_list[["d_dimer_age_sex_hcq"]]
 ```
 
+The problems in the model are visible when visualising the fitted longitudinal trajectories for some patients: there are very few measurements and thus huge uncertainties:
 
-```{r}
-# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[1:11])
-# plot(p1, plot_observed = TRUE)                     
-# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[12:14])
-# plot(p1, plot_observed = TRUE)                     
-# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[15:18])
-# plot(p1, plot_observed = TRUE)                     
-# 
-# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[19:20])
-# plot(p1, plot_observed = TRUE)                     
-# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[21:22])
-# plot(p1, plot_observed = TRUE)                     
-# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[22:26])
-# plot(p1, plot_observed = TRUE)
-# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[27:29])
-# plot(p1, plot_observed = TRUE)                     
-# p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[30:32])
-# plot(p1, plot_observed = TRUE)                     
+```{r, warning = FALSE, message = FALSE}
+ p1 <- posterior_traj(fit_d_dimer_age_sex_hcq, ids = unique(data_d_dimer$patient_id)[23:28])
+ plot(p1, plot_observed = TRUE)                     
 ```
 
+## IL-6
+
+### Age + sex
+
+The longitudinal formula is `log_IL_6 ~ day + (1 + day | patient_id)` and the time-to-event formula is `Surv(daym1, day, event_death) ~ age + sex`. The fitted coefficients are:
 
 ```{r}
 data_IL_6 <- data_surv %>%
@@ -167,9 +169,13 @@ jm_hypothesis_res_list[["IL_6_age_sex"]] <-
     adjusted  = "age, sex",
     model_check = "Suspicious")
 
-jm_hypothesis_res_list[["IL_6_age_sex"]]
+#jm_hypothesis_res_list[["IL_6_age_sex"]]
 
 ```
+
+### Age + sex + hydroxychloroquine 
+
+The time-to-event formula becomes `Surv(daym1, day, event_death) ~ age + sex + took_hcq`. The fitted model is:
 
 ```{r}
 fit_IL_6_age_sex_hcq <- stan_jm_with_cache(formulaLong = log_IL_6 ~ day + (1 + day | patient_id),
@@ -192,17 +198,15 @@ jm_hypothesis_res_list[["IL_6_age_sex_hcq"]] <-
     adjusted  = "age, sex, hcq",
     model_check = "Suspicious")
 
-jm_hypothesis_res_list[["IL_6_age_sex_hcq"]]
+#jm_hypothesis_res_list[["IL_6_age_sex_hcq"]]
 
 ```
 
+Similarly, we can explore the posterior trajectories, showing similar issues as before: too wide uncertainty.
 
-```{r}
-for(id in unique(data_IL_6$patient_id)) {
-  p1 <- posterior_traj(fit_IL_6_age_sex_hcq, ids = id)
-  print(plot(p1, plot_observed = TRUE)                     )
-}
-
+```{r, message = FALSE}
+ p1 <- posterior_traj(fit_IL_6_age_sex_hcq, ids = unique(data_IL_6$patient_id)[c(8,14,23,13,6,1)])
+ plot(p1, plot_observed = TRUE)                     
 ```
 
 ```{r}

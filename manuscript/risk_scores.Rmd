@@ -9,7 +9,7 @@ date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
 
 # Validating published prognostic models
 
-```{r setup, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
+```{r setup_risk_scores, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
 knitr::opts_chunk$set(echo = FALSE)
 
 devtools::load_all()

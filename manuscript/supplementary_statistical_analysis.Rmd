@@ -1,0 +1,88 @@
+---
+site: "bookdown::bookdown_site"
+title: "Supplementary statistical analysis for \"Detailed disease progression of 213 patients hospitalized with Covid-19 in the Czech Republic: An exploratory analysis\""
+output:
+  bookdown::pdf_document2:
+    toc_depth: 2
+bibliography: "Covid19.json"
+date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
+abstract: This documents describes additional details about the models and statistical analyses used in the paper, including fitted coefficient values. Additionally, details on the risk scores and how we evaluated them are provided. Chapters of the document correspond to individual model families we used, final chapter is devoted to risk scores evaluation. Overall description of the models and the outputs presented is given at the beginning of each chapter and is not repeated for each model. To avoid any ambiguities, complete code to compile this document and for all analyses is available at https://github.com/cas-bioinf/covid19retrospective/.
+---
+
+
+```{r setup, echo=FALSE, message = FALSE, warning=FALSE}
+knitr::opts_chunk$set(echo=FALSE, cache = TRUE, cache.lazy = FALSE)
+devtools::load_all()
+```
+
+# General remarks on models
+
+For all treatments under investigation, we try to quantify their association with both mortality and length of hospitalization. The exact ways those are represented differs between models.
+
+We sort models into 3 groups:
+
+- "Problematic" - model is almost certainly not useful, especially because of computational issues.
+- "Suspicious" - model has some problems representing the data or minor computational issues. It is likely the results are not completely trustworthy, but they are also unlikely to be completely useless. 
+- "OK" - we found no problems with the model.
+
+In the main text, we report only "OK" models, but supplementary figures show the multiverse analysis performed for all models we tried.
+
+To make sure our inferences are not skewed by including patients from both first and second waves of the pandemic, we run most analyses twice: once with those patients included and once without them.
+
+## Comorbidity score {#comorbiditiessum}
+
+Multiple models share the same comorbidity score that is computed as the count of the following 9 conditions that are met (missing data are treated as 0):
+
+- Heart problems (NYHA > 1 OR ischemic heart disease OR heart failur)
+- Hypertension (uses at least 1 hypertension drug)
+- Lung problems (COPD OR asthma OR other lung disease)
+- Diabetes
+- Renal disease
+- Liver disease
+- Smoking
+- Markers out of range (creatinine > 115 for males, creatinine > 97 for females OR PT INR > 1.2 OR albumin < 36)
+- Obesity (as ascertained by a clinician OR BMI > 30)
+
+All of those quantities were evaluated upon admission. See the protocol of the study for more details on the definitions. 
+
+
+
+\newpage
+
+```{r child_coxph_single, child = 'single_outcome_coxph.Rmd'}
+```
+
+\newpage
+
+```{r child_competing, child = 'competing_risks.Rmd'}
+```
+
+\newpage
+
+```{r child_brms, child = 'analysis_brms.Rmd'}
+```
+
+\newpage
+
+```{r child_hmm, child = 'hmm.Rmd'}
+```
+
+\newpage
+
+```{r child_jm, child = 'jm.Rmd'}
+```
+
+
+\newpage
+
+```{r child_risk_scores, child = 'risk_scores.Rmd'}
+```
+
+
+# Original computing environment
+
+```{r}
+sessionInfo()
+```
+
+# References
