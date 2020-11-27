@@ -97,32 +97,26 @@ m2.hi<-glm(ever_hcq~high_pt_inr,tmp2,family='binomial')
 m2.la<-glm(ever_hcq~low_albumin,tmp2,family='binomial')
 
 models<-list(m.ihd,m.hd,m.hf,m.copd,m.asthma,m.old,m.dia,m.rd,m.ld,m.s,m.ob,m.hc,m.hi,m.la)
-modelNames<-c('IHD','HD','HF','COPD','Asthma','LungD','Dia','RenalD','LiverD','Smoking','Obesity','HighCr','HighInr','LowAlb')
-ys<-c(0)
-for (m in models) {
-  ys<-c(min(min(ys),confint(m)[2,1]),max(max(ys),confint(m)[2,2]))
-}
 models2<-list(m2.ihd,m2.hd,m2.hf,m2.copd,m2.asthma,m2.old,m2.dia,m2.rd,m2.ld,m2.s,m2.ob,m2.hc,m2.hi,m2.la)
-modelNames2<-modelNames
-ys2<-c(0)
-for (m in models2) {
-  ys2<-c(min(min(ys2),confint(m)[2,1]),max(max(ys2),confint(m)[2,2]))
-}
-
-plot(ys,c(1,length(modelNames)),ty='n',yaxt='n',xlab='Log odds ratio',ylab='')
-abline(v=0,col='blue')
-col.hcq<-bfc()["Vermillion"]
-for (i in seq(along=models)) {
+modelNames<-c('IHD','HD','HF','COPD','Asthma','LungD','Dia','RenalD','LiverD','Smoking','Obesity','HighCr','HighInr','LowAlb')
+gtmp<-c()
+for (i in rev(seq(along=models))) {
   ii<-length(models)-i+1
   m<-models[[i]]
   m2<-models2[[i]]
-  lines(confint(m)[2,],rep(ii,2))
-  points(coef(m)[2],ii,pch=19)
-  lines(-confint(m2)[2,],rep(ii,2)-.3,col=col.hcq)
-  points(-coef(m2)[2],ii-.3,col=col.hcq,pch=19)
+  ci<-confint(m)[2,]
+  ci2<-confint(m2)[2,]
+  gtmp<-rbind(gtmp,data.frame(est=coef(m)[2],low=ci[1],high=ci[2],name=modelNames[i],type='outcome'))
+  gtmp<-rbind(gtmp,data.frame(est=-coef(m2)[2],low=-ci2[1],high=-ci2[2],name=modelNames[i],type='hcq'))
 }
-axis(2,length(modelNames):1,modelNames,las=2)
-legend('right',c('Death','No HCQ'),lty=1,col=c('black',col.hcq))
+ggplot(gtmp,aes(y=name,x=est,xmin=low,xmax=high,color=type))+
+  geom_vline(xintercept=0,color='blue')+
+  geom_point(position=position_dodge(width=0.5))+
+  geom_errorbarh(position=position_dodge(width=0.5),height= 0.5)+
+  scale_x_continuous('Log odds ratio')+
+  scale_y_discrete('')+
+  scale_color_manual('Model of:',values=c('black','red'),labels=c('Death','No ACQ'))+
+  theme(legend.background = element_rect(fill="gray95"),legend.position=c(.83,.7))
 ```
 
 
