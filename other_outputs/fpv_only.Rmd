@@ -1,0 +1,158 @@
+---
+title: "Favipiravir-only images"
+output: html_notebook
+---
+
+
+```{r setup, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
+knitr::opts_chunk$set(echo = FALSE, fig.width = 8)
+
+devtools::load_all()
+library(tidyverse)
+library(patchwork)
+theme_set(cowplot::theme_cowplot())
+data <- read_data_for_analysis()
+wide <- data$marker_data_wide
+
+```
+
+```{r}
+fpv_hospital_id <- wide %>% filter(took_favipiravir) %>% pull(hospital_id) %>% unique()
+
+data_fpv <- filter_complete_data(data, hospital_id == fpv_hospital_id)
+wide_fpv <- data_fpv$marker_data_wide
+```
+
+```{r, fig.width = 8, fig.height=4}
+my_paste <- function(x) {
+  paste0(as.integer(x), collapse = "")
+}
+
+
+
+data_for_fig_progression <- wide_fpv  %>% 
+  filter(!is.na(breathing), day >= 0) %>%
+  arrange(hospital_id, patient_id, day) %>%
+  mutate(patient_id = factor(patient_id), patient_id = fct_reorder(patient_id, breathing,  .fun = my_paste, .desc = FALSE)) %>%
+  mutate(
+         is_outcome =  breathing %in% c("Discharged", "Death"),
+         breathing = fct_recode(breathing, `Ambient air` = "AA")
+         ) %>% 
+  group_by(patient_id) %>%
+  mutate(group = if_else(any(took_favipiravir), "Favipiravir", "Other"))
+
+fpv_start <- wide_fpv %>% filter(took_favipiravir) %>%
+  group_by(patient_id) %>% 
+  summarise(min_day = min(day), group = "Favipiravir")
+ 
+fig_progression <- data_for_fig_progression %>% 
+  filter(!is_outcome) %>%
+  ggplot(aes(x = day, y = patient_id, fill = breathing)) + 
+  geom_tile(height = 0.7) + 
+  geom_point(data = data_for_fig_progression %>% filter(is_outcome) %>% mutate(outcome = factor(breathing, ordered = FALSE)),
+             inherit.aes = FALSE, aes(x = day, y = patient_id, shape = outcome), size = 2) +
+  geom_text(label = "I", data = fpv_start, size = 10,  hjust = 0.5, inherit.aes = FALSE, aes(x = min_day, y = patient_id) ) +
+  scale_fill_viridis_d("", direction = -1) +
+  scale_x_continuous("Days since hospitalization") +
+  scale_shape_manual("", values = c(1, 15), guide = guide_legend(override.aes = list(size = 4))) +
+  facet_wrap(~group, scales = "free_y") +
+  theme(axis.text.y = element_blank(),
+        legend.direction = "horizontal", legend.position = "bottom") +
+  theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.line.y = element_blank()) 
+
+fig_progression
+```
+
+```{r}
+ggsave(here::here("local_temp_data", "progression_fpv.png"), fig_progression, width = 8, height = 4, dpi = 300)
+```
+
+```{r, fig.width=8, fig.height=4}
+plot_marker_data <- function(markers, log_transform, smooth = FALSE, max_patients = NULL, max_day = NULL) {
+
+  if(length(markers) > 1) {
+    facet = facet_grid(marker ~ group, scales = "free_y")
+    scale_y_name = "Value"
+  } else {
+    facet = facet_wrap( ~ group, nrow = 1)
+    unit <- data$marker_data %>% filter(marker == names(markers)) %>% pull(unit) %>% unique()
+    scale_y_name <- markers
+  }
+  
+  data_for_plot <- data_fpv$marker_data %>% 
+    group_by(patient_id) %>%
+    mutate(group = if_else(any(marker == "favipiravir" & value > 0), "Favipiravir", "Other")) %>%
+    ungroup() %>%
+    filter(marker %in% names(markers), day >= 0) %>% 
+    group_by(marker, patient_id) %>%
+    filter(n() > 1) %>%
+    ungroup() %>%
+    mutate(marker = markers[marker]) 
+  
+  if(!is.null(max_patients)) {
+    patient_markers_to_use <- data_for_plot %>% 
+      select(marker, patient_id) %>%
+      distinct() %>%
+      group_by(marker) %>%
+      slice_sample(n = max_patients) 
+    
+    data_for_plot <- data_for_plot %>%
+      semi_join(patient_markers_to_use, by = c("patient_id", "marker"))
+  }
+  
+  if(log_transform) {
+    scale_y <- scale_y_log10(scale_y_name)
+    data_for_plot <- data_for_plot %>% 
+      group_by(marker) %>%
+      mutate(value = if_else(value == 0, min(value[value > 0]) / 2, value)) %>%
+      ungroup()
+  } else {
+    scale_y <- scale_y_continuous(scale_y_name)
+  }
+  
+  if(smooth) {
+    main_geom <- geom_smooth(aes(group = outcome))
+  } else {
+    main_geom <- geom_line(alpha = 0.5)
+  }
+  
+  if(!is.null(max_day)) {
+    expand <- expand_limits(x = max_day)
+  } else {
+    expand <- NULL
+  }
+  
+  data_for_plot %>%
+    inner_join(data_fpv$patient_data, by = c("hospital_id", "patient_id")) %>%
+    mutate(outcome = fct_relevel(fct_collapse(outcome, Hospitalized = c("Hospitalized", "Transferred")),
+            "Discharged", "Hospitalized", "Death"),
+           worst_breathing_s =fct_recode(worst_breathing_s, `Ambient Air` = "AA")) %>%
+    ggplot(aes(x = day, y = value,  group = patient_id)) + 
+    main_geom +
+    facet + 
+    expand +
+    #scale_color_brewer(type = "qual", palette = 2, guide = guide_legend(override.aes = list(alpha = 1, size = 2))) + 
+    scale_y +
+    scale_x_continuous("Days since hospitalization") 
+    #scale_color_viridis_d(guide = guide_legend(override.aes = list(alpha = 1, size = 2))) + scale_y
+}
+
+max_day <- data$marker_data_wide %>% filter(!is.na(CRP)) %>% pull(day) %>% max()
+hide_axis_theme <- theme(axis.text.x = element_blank(),
+                         axis.line.x = element_blank(),
+                         axis.title.x = element_blank(),
+                         axis.ticks.x = element_blank())
+hide_strip_theme <- theme(strip.background = element_blank(), strip.text = element_blank())
+title_theme <- theme(axis.title.y = element_text(size = 10))
+
+fig_markers <- ((plot_marker_data(c("CRP" = "CRP"), log_transform = TRUE, max_day = max_day) + hide_axis_theme + title_theme) /
+(plot_marker_data(c("d_dimer" = "D-dimer"), log_transform = TRUE, max_day = max_day) + hide_axis_theme + title_theme + hide_strip_theme) /
+(plot_marker_data(c("lymphocyte_count" = "Ly"), log_transform = TRUE, max_day = max_day) + hide_axis_theme + title_theme + hide_strip_theme) /
+(plot_marker_data(c("IL_6" = "IL-6"), log_transform = TRUE, max_day = max_day) + title_theme + hide_strip_theme)) 
+
+fig_markers
+```
+
+```{r}
+ggsave(here::here("local_temp_data", "markers_fpv.png"), fig_markers, width = 8, height = 4, dpi = 300)
+```

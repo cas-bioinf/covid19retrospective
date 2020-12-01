@@ -98,7 +98,7 @@ mt0
 ```
 
 
-And here are the resulting evaluation of individual hypotheses:
+And here are the resulting evaluation of individual hypotheses - note that we change sign of the coefficient for the "length of hospitalization" hypothesis (modeled here as the risk of discharge) to conform to the overall rule that negative coefficient implies better outcomes for treated patients:
 
 ```{r}
 hypothesis_res_list[["competing_hcq_comorbidities_sum"]] <-
