@@ -124,7 +124,10 @@ Complete code for all analyses is available at https://github.com/cas-bioinf/cov
 # Results
 
 
-In total, we were able to gather data for `r n_patients` patients, see Table \@ref(tab:summarytable) for the overall characteristics of the patient sample and several subgroups we used in the analysis, including treatments taken. The dataset includes 19 patients already reported in a study of inflammatory signatures of Covid-19 [@http://zotero.org/users/5567156/items/IA4FQCF3]. 
+In total, we were able to gather data for `r n_patients` patients, see Table \@ref(tab:summarytable) for the overall characteristics of the patient sample and several subgroups we used in the analysis, including treatments taken. 
+The exact treatment combinations are shown in Supplementary Table TODO1.
+Supplementary Table TODO2 gives overview of outcomes at different hospitals, demonstrating quite large hospital-specific differences, insinuating that further analyses should stratify on hospitals.
+The dataset includes 19 patients already reported in a study of inflammatory signatures of Covid-19 [@http://zotero.org/users/5567156/items/IA4FQCF3]. 
 
 
 ```{r summarytable, echo=FALSE}
