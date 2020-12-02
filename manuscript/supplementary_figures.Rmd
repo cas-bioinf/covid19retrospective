@@ -38,6 +38,45 @@ data_collection_period %>% ggplot(aes(xmin = first_admission, xmax = last_admiss
 
 
 
+# Table \@ref(tab:treatment_comb_table} gives overview of combinations of treatments used in individual patients.
+```{r treatment_comb_table, echo=FALSE}
+pd<-data$patient_data
+x<-sort(table(paste0(
+ as.numeric(pd$ever_hcq),
+ as.numeric(pd$ever_az),
+ as.numeric(pd$ever_convalescent_plasma),
+ as.numeric(pd$ever_favipiravir),
+ as.numeric(pd$ever_remdesivir),
+ as.numeric(pd$ever_dexamethasone),
+ as.numeric(pd$ever_antibiotics))),dec=TRUE)
+x2<-c()
+nms<-c('HCQ','AZ','Plasma','Favipiravir','Remdesivir','Dexamethasone','ATB')
+for (i in 1:length(x)) {
+ x3<-c()
+ for (i2 in 1:nchar(names(x)[i])) {
+   x3<-c(x3,ifelse(substring(names(x)[i],i2,i2)=='1',nms[i2],''))
+ }
+ x2<-rbind(x2,cbind(n=x[i],rbind(x3)))
+}
+rownames(x2)<-c()
+colnames(x2)<-c('N',nms)
+x2<-x2[,c(1,2,3,8,4:7)]
+knitr::kable(x2,caption = "Treatment combinations in individual patients.", booktabs = TRUE)
+```
+
+```{r outcome_by_hospital_prepare, echo=FALSE}
+tmp<-data$patient_data[,c('patient_id','hospital_id','outcome')]
+tmp$outcome[tmp$outcome=='Transferred']<-'Hospitalized'
+tmp$outcome<-dropLevels(tmp$outcome)
+tmp$hospital_id<-factor(tmp$hospital_id)
+levels(tmp$hospital_id)<-paste('H',1:length(levels(tmp$hospital_id)),sep='')
+```
+
+There were large differences between hospitals in the ratio of fatal outcomes 
+(P=`r round(fisher.test(with(tmp,table(outcome,hospital_id)),simulate.p.value=T)$p.value,5)`).
+```{r outcome_by_hospital, echo=FALSE}
+knitr::kable(with(tmp,table(outcome,hospital_id)),caption = "Overview of outcomes in different hospitals. Note that at H6, 9 out of 19 patients died, while at H9, no patient died out of 9 patients treated.", booktabs = TRUE)
+```
 
 ```{r hcqassoc, message=FALSE, fig.width=7, fig.height=4.5, fig.cap="The choice of treatment with hydroxychloroquine seemed to be associated with the status of patients upon hospitalization. Comorbidities were associated with both worse outcome (black) and lower chance of treatment with hydroxychloroquine (red). Dots and lines represent the estimates and the 95% confidence intervals of the log odds ratio of the respective outcome. HCQ: hydroxychloroquine, IHD: ischemic heart disease, HD: hypertension drugs, HF: heart failure history, COPD: chronic obstructive pulmonary disease, LungD: other lung disease, Dia: diabetes, RenalD: renal disease, LiverD: liver disease, HighCr: creatinin above 115 for males or above 97 for females, HighInr: Prothrombin time (Quick test) as International Normalized Ratio above 1.2, LowAlb: albumin in serum/plasma below 36 g/l."}
 
