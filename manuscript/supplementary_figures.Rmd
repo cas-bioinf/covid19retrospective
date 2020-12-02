@@ -37,22 +37,6 @@ data_collection_period %>% ggplot(aes(xmin = first_admission, xmax = last_admiss
 ```
 
 
-```{r initiation, fig.cap="Histogram of timing of first treatment relative to admission into one of the study sites. Two patients initiated treatment before admission, which is shown as the negative numbers.", fig.height=2}
-#data$marker_data %>% filter(marker == "favipiravir") %>% group_by(patient_id) %>% summarise(days = n(), .groups = "drop") %>% summarise(min_days = min(days), max_days = max(days))
-#data$marker_data %>% filter(marker == "az") %>% group_by(patient_id) %>% summarise(days = sum(!is.na(value) & value > 0), .groups = "drop") %>% filter(days > 0) %>% ggplot(aes(x = days)) + geom_histogram(binwidth = 1)
-#data$marker_data%>% filter(marker == "az") %>% group_by(value) %>% summarise(n())
-
-#Patients treated with convalescent plasma received 1-3 units of plasma over 1-2 days.
-
-marker_map <- c("az" = "Azithromycin", "hcq" = "Hydroxychloroquine", "favipiravir" = "Favipiravir", "convalescent_plasma" = "Conv. plasma")
-
-data$marker_data %>% 
-  filter(marker %in% c("az", "hcq", "favipiravir"), !is.na(value), value > 0) %>%
-  mutate(marker = marker_map[marker]) %>%
-  group_by(marker, patient_id) %>% 
-  summarise(first_day = min(day), .groups = "drop") %>% 
-  ggplot(aes(x = first_day)) + geom_histogram(binwidth = 1) + facet_wrap(~marker, scales = "free", nrow = 1) + scale_x_continuous("First day of treatment relative to admission")
-```
 
 
 ```{r hcqassoc, message=FALSE, fig.width=7, fig.height=4.5, fig.cap="The choice of treatment with hydroxychloroquine seemed to be associated with the status of patients upon hospitalization. Comorbidities were associated with both worse outcome (black) and lower chance of treatment with hydroxychloroquine (red). Dots and lines represent the estimates and the 95% confidence intervals of the log odds ratio of the respective outcome. HCQ: hydroxychloroquine, IHD: ischemic heart disease, HD: hypertension drugs, HF: heart failure history, COPD: chronic obstructive pulmonary disease, LungD: other lung disease, Dia: diabetes, RenalD: renal disease, LiverD: liver disease, HighCr: creatinin above 115 for males or above 97 for females, HighInr: Prothrombin time (Quick test) as International Normalized Ratio above 1.2, LowAlb: albumin in serum/plasma below 36 g/l."}
@@ -115,8 +99,25 @@ ggplot(gtmp,aes(y=name,x=est,xmin=low,xmax=high,color=type))+
   geom_errorbarh(position=position_dodge(width=0.5),height= 0.5)+
   scale_x_continuous('Log odds ratio')+
   scale_y_discrete('')+
-  scale_color_manual('Model of:',values=c('black','red'),labels=c('Death','No ACQ'))+
+  scale_color_manual('Model of:',values=c('black','red'),labels=c('Death','No HCQ'))+
   theme(legend.background = element_rect(fill="gray95"),legend.position=c(.83,.7))
+```
+
+```{r initiation, fig.cap="Histogram of timing of first treatment relative to admission into one of the study sites. Two patients initiated treatment before admission, which is shown as the negative numbers.", fig.height=2}
+#data$marker_data %>% filter(marker == "favipiravir") %>% group_by(patient_id) %>% summarise(days = n(), .groups = "drop") %>% summarise(min_days = min(days), max_days = max(days))
+#data$marker_data %>% filter(marker == "az") %>% group_by(patient_id) %>% summarise(days = sum(!is.na(value) & value > 0), .groups = "drop") %>% filter(days > 0) %>% ggplot(aes(x = days)) + geom_histogram(binwidth = 1)
+#data$marker_data%>% filter(marker == "az") %>% group_by(value) %>% summarise(n())
+
+#Patients treated with convalescent plasma received 1-3 units of plasma over 1-2 days.
+
+marker_map <- c("az" = "Azithromycin", "hcq" = "Hydroxychloroquine", "favipiravir" = "Favipiravir", "convalescent_plasma" = "Conv. plasma")
+
+data$marker_data %>% 
+  filter(marker %in% c("az", "hcq", "favipiravir"), !is.na(value), value > 0) %>%
+  mutate(marker = marker_map[marker]) %>%
+  group_by(marker, patient_id) %>% 
+  summarise(first_day = min(day), .groups = "drop") %>% 
+  ggplot(aes(x = first_day)) + geom_histogram(binwidth = 1) + facet_wrap(~marker, scales = "free", nrow = 1) + scale_x_continuous("First day of treatment relative to admission")
 ```
 
 
@@ -124,14 +125,17 @@ ggplot(gtmp,aes(y=name,x=est,xmin=low,xmax=high,color=type))+
 plot_multiverse(read_all_multiverse_res() %>% filter(grepl("hcq", hypothesis)), show_check = TRUE)
 ```
 
+
 ```{r allmultaz, fig.height=11, fig.cap = "Estimates of model coefficients for association between azithromycin and main outcomes. The \"Suspicious\" section shows models that were found to not fit the data well or have computational issues - see supplementary statistical analysis for details.  Each row represents a model - Categorical All/7/28 = Bayesian categorical regression for state at last observed day/day 7/day 28, Binary All/7/28 = Bayesian logistic regression for state at last observed day/day 7/day 28, Bayes Cox = Bayesian version of the Cox proportional hazards model with a binary outcome, Cox (single) = frequentist Cox model with a binary outcome, Cox (competing) = frequentist Cox model using competing risks (as in Figure 1a), HMM A = Bayesian hidden-Markov model as in Figure 1b with predictors for rate groups, HMM B = Bayesian hidden-markov model as in Figure 1b with predictors for individual rates, HMM C = Bayesian hidden-Markov model as in Figure 1c. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. The estimands are either log odds-ratio (Categorical, HMM) or log hazard ratio (Cox variants) or log ratio of mean duration of hospitalization (HMM duration). In all cases coefficient < 0 means better patient outcome in the treatment group. Vertical lines indicate zero (blue) and substantial increase or decrease with odds or hazard ratio of 3:2 or 2:3 (green). Additionally the factors the model adjusted for are listed - Site = the study site, admitted = Admitted for Covid-19, Supportive = best supportive care initiated, Comorb. = total number of comorbidities, AZ = took azithromycin, HCQ = took hydroxychloroquine, FPV = took favipiravir, C. plasma = received convalescent plasma, first wave = only patients admitted before September 1st were included. "}
 plot_multiverse(read_all_multiverse_res() %>% filter(grepl("az", hypothesis)), show_check = TRUE)
 ```
+
+
 ```{r allmultfpv, fig.height=11, fig.cap = "Estimates of model coefficients for association between favipiravir and main outcomes. The \"Suspicious\" section shows models that were found to not fit the data well or have computational issues - see supplementary statistical analysis for details.  Each row represents a model - Categorical All/7/28 = Bayesian categorical regression for state at last observed day/day 7/day 28, Binary All/7/28 = Bayesian logistic regression for state at last observed day/day 7/day 28, Bayes Cox = Bayesian version of the Cox proportional hazards model with a binary outcome, Cox (single) = frequentist Cox model with a binary outcome, Cox (competing) = frequentist Cox model using competing risks (as in Figure 1a), HMM A = Bayesian hidden-Markov model as in Figure 1b with predictors for rate groups, HMM B = Bayesian hidden-markov model as in Figure 1b with predictors for individual rates, HMM C = Bayesian hidden-Markov model as in Figure 1c. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. The estimands are either log odds-ratio (Categorical, HMM) or log hazard ratio (Cox variants) or log ratio of mean duration of hospitalization (HMM duration). In all cases coefficient < 0 means better patient outcome in the treatment group. Vertical lines indicate zero (blue) and substantial increase or decrease with odds or hazard ratio of 3:2 or 2:3 (green). Additionally the factors the model adjusted for are listed - Site = the study site, admitted = Admitted for Covid-19, Supportive = best supportive care initiated, Comorb. = total number of comorbidities, AZ = took azithromycin, HCQ = took hydroxychloroquine, FPV = took favipiravir, C. plasma = received convalescent plasma, first wave = only patients admitted before September 1st were included. "}
 plot_multiverse(read_all_multiverse_res() %>% filter(grepl("favipiravir", hypothesis), model_check != "Problematic"), show_check = TRUE)
 ```
 
-```{r multiverseresultsmarkers, fig.height=3.5, fig.width=8.5, fig.cap="Estimates of model coefficients (log hazard ratios) for association between markers and death. The \"Suspicious\" section shows models that were found to not fit the data well or have computational issues, \"Problematic\" section shows models that were completely broken - see supplementary statistical analysis for details. Each row represents a model - Cox (competing) =  frequentist Cox model using competing risks (as in Figure 1a), HMM A = Bayesian hidden-markov model as in Figure 1b with predictors for rate groups, JM = Bayesian joint longitudinal and time-to-event model. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. Additionally the factors the model adjusted for are listed - Site = the study site, Supportive = best supportive care initiated, HCQ = took Hydroxychloroquine. We show posterior mean and 95% credible interval."}
+```{r multiverseresultsmarkers, fig.height=5, fig.width=8.5, fig.cap="Estimates of model coefficients (log hazard ratios) for association between markers and death. The \"Suspicious\" section shows models that were found to not fit the data well or have computational issues, \"Problematic\" section shows models that were completely broken - see supplementary statistical analysis for details. Each row represents a model - Cox (competing) =  frequentist Cox model using competing risks (as in Figure 1a), HMM A = Bayesian hidden-markov model as in Figure 1b with predictors for rate groups, JM = Bayesian joint longitudinal and time-to-event model. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. Additionally the factors the model adjusted for are listed - Site = the study site, Supportive = best supportive care initiated, HCQ = took Hydroxychloroquine. We show posterior mean and 95% credible interval."}
 plot_multiverse(read_all_multiverse_res() %>% filter(group == "markers"), adjustments_to_hide = c("admitted", "smoking", "obesity", "comorbidities \\(sum\\)", "az", "favipiravir", "convalescent_plasma"), show_check = TRUE)
 
 ```

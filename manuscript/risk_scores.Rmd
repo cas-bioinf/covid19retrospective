@@ -487,7 +487,7 @@ plot_my_auc(alive_30 ~ age, at_admission)
 
 ## Summary
 
-```{r, fig.cap = "The AUC and it's 95% credible intervals for all of the scores considered so far. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison."}
+```{r, fig.cap = "The AUC and it's 95% credible intervals for all of the scores considered so far. The thick blue line marks AUC of 0.5, i.e. the point where reverting the score would yield better predictions. The thin gray dashed line marks the AUC from the original study for easier comparison.", fig.width = 8, fig.height=6}
 
 
 all_auc <- rbind(acp_auc, chen_liu_auc, shi_et_al_auc, caramelo_auc, bc_auc, age_auc)

@@ -103,10 +103,17 @@ compare_auc_to_orig <- function(orig_auc, our_auc, show_outcome = TRUE, ...) {
     data_for_plot_base <- all_auc
     all_orig <- all_auc %>% head(0) # Just to enforce correct columns
   }
-  data_for_plot <- data_for_plot_base %>%
+  data_for_plot <- data_for_plot_base  %>%
     mutate(
-      id = interaction(note, outcome, source),
            size = if_else(source == "orig", 2, 1))
+
+  if(show_outcome) {
+    data_for_plot <- data_for_plot %>% mutate(id = interaction(note, outcome, source))
+  } else {
+    data_for_plot <- data_for_plot %>% group_by(score, source) %>%
+      mutate(id = if_else(source == source_factor("orig"), "O", LETTERS[1:n()])) %>%
+      ungroup()
+  }
 
   res <- data_for_plot %>% ggplot(aes(y = auc, ymin = auc_low, ymax = auc_high, x = id, color = source, shape = source)) +
     geom_hline(yintercept = 0.5, color = "darkblue", size = 2) +
@@ -114,13 +121,14 @@ compare_auc_to_orig <- function(orig_auc, our_auc, show_outcome = TRUE, ...) {
     geom_errorbar(width = 0, na.rm = TRUE) + geom_point(aes(size = size)) +
     scale_size(range = c(2,4), guide = FALSE) +
     scale_y_continuous("AUC") +
+    scale_x_discrete("Score/outcome variant") +
     scale_shape_discrete("Source") +
     scale_color_discrete("Source") +
-    facet_wrap(~score, scales = "free_x", ...) +
-    theme(axis.title.x = element_blank(), axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.2))
+    facet_wrap(~score, scales = "free_x", ...)
 
-  if(!show_outcome) {
-    res <- res + theme(axis.text.x = element_blank(), axis.ticks.x = element_blank())
+  if(show_outcome) {
+    res <- res +     theme(axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0.2))
+
   }
 
   res
