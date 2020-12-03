@@ -457,6 +457,10 @@ Additionally, our experience indicates that a substantial fraction of published 
 The authors declare that there is no conflict of interest.
 
 
+# Data availability
+
+The data that support the findings of this study are available on request from the corresponding author, if legal obligations under GDPR can be met. The data are not publicly available due to privacy restrictions. We will be happy to arrange to run any analytical code locally and share the results, provided the code and the results do not leak personal information.
+
 # Acknowledgements
 
 This work was supported by ELIXIR CZ research infrastructure project (MEYS Grant No: LM2018131) including access to computing and storage facilities.
