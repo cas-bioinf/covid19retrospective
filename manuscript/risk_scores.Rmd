@@ -334,10 +334,10 @@ shi_et_al_compare <- shi_et_al_data %>%
   inner_join(shi_et_al_reported, by = c("shi" = "score"))
 
 shi_et_al_compare %>%
-  transmute(score = shi, `Shi et al. (admission)` = shi_severe_admission, `Ventilated (admission)` = 1 - our_not_ventilated_admission, `Oxygen (admission)` = 1 - our_not_oxygen_admission, N = n_our_admission)
+  transmute(score = shi, `Shi et al. (admission)` = shi_severe_admission, `Ventilated (admission)` = 1 - our_not_ventilated_admission, `Oxygen (admission)` = 1 - our_not_oxygen_admission, N = n_our_admission) %>% knitr::kable(booktabs = TRUE)
 
 shi_et_al_compare %>%
-  transmute(score = shi, `Shi et al. (hospitalization)` = shi_severe_all, `Ventilated (hospitalization)` = 1 - our_not_ventilated_all, `Oxygen (hospitalization)` = 1 - our_not_oxygen_all, N = n_our_all)
+  transmute(score = shi, `Shi et al. (hospitalization)` = shi_severe_all, `Ventilated (hospitalization)` = 1 - our_not_ventilated_all, `Oxygen (hospitalization)` = 1 - our_not_oxygen_all, N = n_our_all) %>% knitr::kable(booktabs = TRUE)
 
 ```
 
@@ -474,7 +474,7 @@ age_auc <-rbind(
   my_auc_summary(alive_30 ~ age_decade, age_only_data, note = "decade"),
   my_auc_summary(alive_12 ~ age_decade, age_only_data, note = "decade")
 )
-age_auc
+age_auc %>% knitr::kable(booktabs = TRUE)
 
 # plot_my_auc(alive_12 ~ age, at_admission)
 
@@ -502,7 +502,7 @@ compare_auc_to_orig(all_auc_orig,
 
 ```
 
-We see that the "age only" baseline performs similarly to the best performing score (Caramelo et al.) all of the other scores - there is some uncertainty prohibiting us to be very sure about which works better. This holds even if we only take the decade of age. Note that the score by (Caramelo et al.) is actually heavily based on the decade of age. Table of the results is shown below as the small differences are not well visible in the plot.
+We see that the "age only" baseline performs similarly to the best performing score (Caramelo et al.) and likely better than all of the other scores - there is however some uncertainty prohibiting us to be very sure about the ordering. This holds even if we only take the decade of age. Note that the score by (Caramelo et al.) is actually heavily based on the decade of age. Table of the results is shown below as the small differences are not well visible in the plot.
 
 ```{r}
 all_auc %>% mutate(score = score_caption[score]) %>%

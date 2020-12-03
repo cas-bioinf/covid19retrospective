@@ -63,7 +63,7 @@ levels(tmp$hospital_id)<-paste('H',1:length(levels(tmp$hospital_id)),sep='')
 # knitr::kable(with(tmp,table(outcome,hospital_id)),caption = paste0( "Overview of outcomes in different hospitals. Note that at H6, 9 out of 19 patients died, while at H9, no patient died out of 9 patients treated. There were large differences between hospitals in the ratio of fatal outcomes (P=", round(fisher.test(with(tmp,table(outcome,hospital_id)),simulate.p.value=T)$p.value,5), ")"), booktabs = TRUE)
 ```
 
-```{r hospitaloutcomes,fig.cap="Number of patients and outcomes at the individual sites. The numbers above bars are the exact counts. Hospitalized = still hospitalized at the end of data collection at the site. Sites are anonymized to preserve patient privacy."}
+```{r hospitaloutcomes,fig.cap="Number of patients and outcomes at the individual sites. The numbers above bars are the exact counts. Hospitalized = still hospitalized at the end of data collection at the site or transferred to other site and lost to followup. Sites are anonymized to preserve patient privacy."}
 data$patient_data %>% mutate(
   hospital_label = factor(paste0("H", as.integer(factor(hospital_id))), levels = paste0("H", 1:10)),
   outcome = fct_collapse(outcome, Hospitalized = c("Hospitalized", "Transferred")) %>% fct_relevel("Death", "Hospitalized", "Discharged")
