@@ -34,7 +34,10 @@ n_hospitals <- length(unique(data$patient_data$hospital_id))
 
 # Introduction 
 
-The Covid-19 pandemic caused by severe acute respiratory syndrome coronavirus (SARS-CoV-2) has, as of November 2020, led to over 46 million cases and over 1.1 million deaths. Proposed treatments include antivirals approved for other indications (chloroquine, hydroxychloroquine, lopinavir/ritonavir, remdesivir, favipiravir, umifenovir), azithromycin, corticosteroids, immunoglobulins, tocilizumab and convalescent plasma [@http://zotero.org/users/5567156/items/8XWTUMUI; @http://zotero.org/users/5567156/items/6Q8Z8VJR]. As of this writing, the only treatment that exhibited positive effects in randomized trials is the corticosteroid dexamethasone for severe cases [@http://zotero.org/users/5567156/items/IW6VZ53Q; @http://zotero.org/users/5567156/items/5VAKEW58]. Remdesivir, previously designed and approved for Ebola, SARS and MERS, is currently the only antiviral against SARS-CoV-2 approved by the FDA. However, during spring and summer it was available only in limited amounts via compassionate use programme. Randomized clinical trials on remdesivir have provided  conflicting evidence [@http://zotero.org/users/5567156/items/MFS3IPPU; @http://zotero.org/users/5567156/items/KB5UDZH3]. Despite initial promise, hydroxychloroquine has failed to show benefit for hospitalized patients [@http://zotero.org/users/5567156/items/9X3UH8ZM; @http://zotero.org/users/5567156/items/KB5UDZH3], as an early treatment [@http://zotero.org/users/5567156/items/G6KZKVMI], as well as pre- and post-exposure prophylaxis [@http://zotero.org/users/5567156/items/7C23YCV5; @http://zotero.org/users/5567156/items/GMR9FX9Z; @http://zotero.org/users/5567156/items/H4CLJNUR]. Further, no improvement could be discerned when adding azithromycin to hydroxychloroquine therapy [@http://zotero.org/users/5567156/items/BQLRZGTQ]. Similarly, lopinavir/ritonavir did not show benefit [@http://zotero.org/users/5567156/items/6I6GAVWU]. No benefit was observed for convalescent plasma [@http://zotero.org/users/5567156/items/UEXLDJCB; @http://zotero.org/users/5567156/items/BHGT88US]. 
+The Covid-19 pandemic caused by severe acute respiratory syndrome coronavirus (SARS-CoV-2) has, as of November 2020, led to over 46 million cases and over 1.1 million deaths. Proposed treatments include antivirals approved for other indications (chloroquine, hydroxychloroquine, lopinavir/ritonavir, remdesivir, favipiravir, umifenovir), azithromycin, corticosteroids, immunoglobulins, tocilizumab and convalescent plasma [@http://zotero.org/users/5567156/items/8XWTUMUI; @http://zotero.org/users/5567156/items/6Q8Z8VJR]. 
+As of this writing, the only treatment that exhibited positive effects in published randomized trials is the corticosteroid dexamethasone for severe cases [@http://zotero.org/users/5567156/items/IW6VZ53Q; @http://zotero.org/users/5567156/items/5VAKEW58], Janus kinase inhibitor baricitinib for hospitalized patients[@http://zotero.org/users/5567156/items/PDEPFSAU] and the monoclonal antibody bamlanivimab for non-hospitalized patients [@http://zotero.org/users/5567156/items/TZFUM6JH]. 
+Other monoclonal antibodies have also announced, but not yet published positive results of randomized trials, including tocilizumab[@http://zotero.org/users/5567156/items/4SLQXUJM] and combination of casirivimab and imdevimab[@http://zotero.org/users/5567156/items/VTR54LI9].
+Remdesivir, previously designed and approved for Ebola, SARS and MERS, is currently the only antiviral against SARS-CoV-2 approved by the FDA. However, during spring and summer it was available only in limited amounts via compassionate use programme. Randomized clinical trials on remdesivir have provided  conflicting evidence [@http://zotero.org/users/5567156/items/MFS3IPPU; @http://zotero.org/users/5567156/items/KB5UDZH3]. Despite initial promise, hydroxychloroquine has failed to show benefit for hospitalized patients [@http://zotero.org/users/5567156/items/9X3UH8ZM; @http://zotero.org/users/5567156/items/KB5UDZH3], as an early treatment [@http://zotero.org/users/5567156/items/G6KZKVMI], as well as pre- and post-exposure prophylaxis [@http://zotero.org/users/5567156/items/7C23YCV5; @http://zotero.org/users/5567156/items/GMR9FX9Z; @http://zotero.org/users/5567156/items/H4CLJNUR]. Further, no improvement could be discerned when adding azithromycin to hydroxychloroquine therapy [@http://zotero.org/users/5567156/items/BQLRZGTQ]. Similarly, lopinavir/ritonavir did not show benefit [@http://zotero.org/users/5567156/items/6I6GAVWU]. No benefit was observed for convalescent plasma [@http://zotero.org/users/5567156/items/UEXLDJCB; @http://zotero.org/users/5567156/items/BHGT88US]. 
 
 Interestingly, in observational studies, hydroxychloroquine was often found to be associated with better outcomes [e. g., @http://zotero.org/users/5567156/items/WZPNBRYN; @http://zotero.org/users/5567156/items/4HR7MUJ6; @http://zotero.org/users/5567156/items/NXC9CDI9].
 
@@ -177,36 +180,24 @@ data_table_1 %>% group_by(group) %>%
 # Note that the 'Measured D-dimer' and 'Measured IL-6' are neither exclusive nor exhaustive.
 ```
 
-```{r treatment_comb_table, echo=FALSE}
-# Table \@ref(tab:treatment_comb_table} gives overview of combinations of treatments used in individual patients.
-# Currently not showing - almost all of this information is visible in the table above. Will put in supplement
-#pd<-data$patient_data
-# x<-sort(table(paste0(
-#   as.numeric(pd$ever_hcq),
-#   as.numeric(pd$ever_az),
-#   as.numeric(pd$ever_convalescent_plasma),
-#   as.numeric(pd$ever_favipiravir),
-#   as.numeric(pd$ever_remdesivir),
-#   as.numeric(pd$ever_dexamethasone),
-#   as.numeric(pd$ever_antibiotics))),dec=TRUE)
-# x2<-c()
-# nms<-c('HCQ','AZ','Plasma','Favipiravir','Remdesivir','Dexamethasone','ATB')
-# for (i in 1:length(x)) {
-#   x3<-c()
-#   for (i2 in 1:nchar(names(x)[i])) {
-#     x3<-c(x3,ifelse(substring(names(x)[i],i2,i2)=='1',nms[i2],''))
-#   }
-#   x2<-rbind(x2,cbind(n=x[i],rbind(x3)))
-# }
-# rownames(x2)<-c()
-# colnames(x2)<-c('N',nms)
-# x2<-x2[,c(1,2,3,8,4:7)]
-# knitr::kable(x2,caption = "Treatment combinations in individual patients.", booktabs = TRUE)
+
+```{r}
+median_ratios <-  data$marker_data %>% 
+  filter(marker %in% c("lymphocyte_count", "d_dimer", "CRP", "IL_6")) %>%
+  group_by(patient_id, marker) %>%
+  filter(n() > 2) %>%
+  summarise(ratio = max(value) / min(value), .groups = "drop") %>%
+  group_by(marker) %>%
+  summarise(med_ratio = median(ratio), .groups = "drop") %>%
+  column_to_rownames("marker") %>% as.matrix() %>% round(1)
 ```
 
-In Figure&nbsp;\@ref(fig:progression) we show the overall disease progression for all patients and in Figure&nbsp;\@ref(fig:selectedmarkers) we show the time-course of a subset of the markers we have measured. The data show some interesting patterns: patients with low Interleukin-6 or D-dimer values are overrepresented among patients with better outcomes, most patients had high CRP upon admission and for many the CRP levels stayed elevated over the whole hospitalization. However, the limited nature of the data does not allow for any statistically robust conclusions. We also see that the marker levels were not substantially stratified by study site.  Those patterns should however be interpreted with care due to systematic missingness of the data - in particular, patients that fared worse were probably more likely to have the markers measured. However we believe this kind of patient-level view is useful to appreciate the extent of both between-patient and within-patient variability.
 
-```{r progression, fig.cap="Disease progression for all patients included in the study as determined by breathing support required. Each horizontal strip is a single patient, the ordering on the vertical axis is by disease severity, the split into two panels is for visual purposes only. Ventilated = any form of ventilation (non-invasive positive-pressure ventilation, mechanical ventilation and extra-corporeal membrane oxygenation)."}
+In Figure&nbsp;\@ref(fig:progression) we show the overall disease progression for all patients and in Figure&nbsp;\@ref(fig:selectedmarkers) we show the time-course of a subset of the markers we have measured. The data show some interesting patterns: patients with low Interleukin-6 or D-dimer values are overrepresented among patients with better outcomes, most patients had high CRP upon admission and for many the CRP levels stayed elevated over the whole hospitalization. However, the limited nature of the data does not allow for any statistically robust conclusions. We also see that the marker levels were not substantially stratified by study site.  Those patterns should however be interpreted with care due to systematic missingness of the data - in particular, patients that fared worse were probably more likely to have the markers measured. However we believe this kind of patient-level view is useful to appreciate the extent of both between-patient and within-patient variability. 
+
+The between-patient variability is notable even across outcomes - when ordering the patients by the highest CRP levels experienced throughout the hospital stay, the top 20% of patients that breathed ambient air for the whole hospitalization experienced higher levels than the bottom 20% of patients that required ventilation or died. This overlap is even larger when comparing only against the patients that died and D-dimer, Interleukin-6 and lymphocyte count also show a notably larger overlap than CRP (Supplementary Figure 4). 
+
+```{r progression, fig.cap="Disease progression for all patients included in the study as determined by breathing support required. Each vertical strip is a single patient, the ordering on the horizontal axis is by disease severity. Ventilated = any form of ventilation (non-invasive positive-pressure ventilation, mechanical ventilation and extra-corporeal membrane oxygenation)."}
 my_paste <- function(x) {
   paste0(as.integer(x), collapse = "")
 }
@@ -223,22 +214,24 @@ data_for_fig_progression <- wide  %>%
          ) 
 
 fig_progression <- data_for_fig_progression %>% 
+  mutate(patient_id = fct_reorder(patient_id, breathing_s,  .fun = my_paste, .desc = TRUE)) %>%
   filter(!is_outcome) %>%
-  ggplot(aes(x = day, y = patient_id, fill = breathing_s)) + 
-  geom_tile(height = 0.7) + 
+  ggplot(aes(x = patient_id, y = day, fill = breathing_s)) + 
+  geom_tile(width = 0.7) + 
   geom_point(data = data_for_fig_progression %>% filter(is_outcome) %>% mutate(outcome = factor(breathing_s, ordered = FALSE)),
-             inherit.aes = FALSE, aes(x = day, y = patient_id, shape = outcome), size = 0.9) +
+             inherit.aes = FALSE, aes(x = patient_id, y = day, shape = outcome), size = 0.9) +
   scale_fill_viridis_d("", direction = -1) +
-  scale_x_continuous("Days since hospitalization") +
+  scale_y_continuous("Days since hospitalization") +
   # scale_color_manual("", values = c("black", "darkred"))+
   scale_shape_manual("", values = c(1, 15), guide = guide_legend(override.aes = list(size = 4))) +
-  facet_wrap(~first_half, scales = "free_y") +
-  theme(axis.text.y = element_blank(), strip.background = element_blank(), strip.text = element_blank(),
+  theme(axis.text.x = element_blank(), strip.background = element_blank(), strip.text = element_blank(),
         legend.direction = "horizontal", legend.position = "bottom") +
-  theme(axis.title.y = element_blank(), axis.ticks.y = element_blank(), axis.line.y = element_blank()) 
+  theme(axis.title.x = element_blank(), axis.ticks.x = element_blank(), axis.line.x = element_blank())
 
 fig_progression
 ```
+
+
 
 ```{r selectedmarkers, fig.cap = "Values of selected markers over the course of the disease. Each line represents a patient, stratified by the worst breathing support required over the hospitalization. Color indicates study sites. The vertical scale is logarithmic. Ventilated = any form of ventilation (non-invasive positive-pressure ventilation, mechanical ventilation and extra-corporeal membrane oxygenation), CRP = C-reactive protein [mg/l], D-dimer [ng/ml DDU], Ly = lymphocyte count [10^9/l], IL-6 = Interleukin 6 [ng/l]."}
 #data$marker_data %>%
@@ -334,11 +327,74 @@ fig_markers
 ```
 
 
-
-
 ## Association between patients' characteristics and treatments
 
-As noted above, the nature of the convenience sample did not enforce random assignment of treatments to patients. In fact, patients with worse baseline characteristics, which lead to worse outcomes, were less likely to receive hydroxychloroquine (see Supplementary Figure 4). This clearly creates a bias towards a positive effect of hydroxychloroquine on the outcome (and potentially for other treatments as well - most were used in combination with hydroxychloroquine), which, however, could be false. 
+As noted above, the nature of the convenience sample did not enforce random assignment of treatments to patients. In fact, patients with worse baseline characteristics, which lead to worse outcomes, were less likely to receive hydroxychloroquine (see Figure&nbsp;\@ref(fig:hcqassoc)). This clearly creates a bias towards a positive effect of hydroxychloroquine on the outcome (and potentially for other treatments as well - most were used in combination with hydroxychloroquine), which, however, could be false. 
+
+
+```{r hcqassoc, message=FALSE, fig.width=7, fig.height=4.5, fig.cap="The choice of treatment with hydroxychloroquine seemed to be associated with the status of patients upon hospitalization. Comorbidities were associated with both worse outcome (black) and lower chance of treatment with hydroxychloroquine (red). Dots and lines represent the estimates and the 95% confidence intervals of the log odds ratio of the respective outcome. HCQ: hydroxychloroquine, IHD: ischemic heart disease, HD: hypertension drugs, HF: heart failure history, COPD: chronic obstructive pulmonary disease, LungD: other lung disease, Dia: diabetes, RenalD: renal disease, LiverD: liver disease, HighCr: creatinin above 115 for males or above 97 for females, HighInr: Prothrombin time (Quick test) as International Normalized Ratio above 1.2, LowAlb: albumin in serum/plasma below 36 g/l."}
+
+tmp<-data$patient_data[,c('age','sex','days_from_symptom_onset','admitted_for_covid','ischemic_heart_disease','has_hypertension_drugs','heart_failure',
+  'COPD','asthma','other_lung_disease','diabetes','renal_disease','liver_disease','smoking','BMI','obesity','last_record','high_creatinin','high_pt_inr','low_albumin',
+  'heart_problems','outcome','ever_hcq','ever_az','worst_breathing','had_invasive'),]
+tmp$outcome[tmp$outcome=='Transferred']<-'Hospitalized'
+tmp$outcome<-dropLevels(tmp$outcome)
+tmp2<-tmp[tmp$outcome%in%c('Death','Discharged'),]
+tmp2$outcome<-dropLevels(tmp2$outcome)
+tmp2$outcome<-tmp2$outcome=='Death'
+
+m.ihd<-glm(outcome~ischemic_heart_disease,tmp2,family='binomial')
+m.hd<-glm(outcome~has_hypertension_drugs,tmp2,family='binomial')
+m.hf<-glm(outcome~heart_failure,tmp2,family='binomial')
+m.copd<-glm(outcome~COPD,tmp2,family='binomial')
+m.asthma<-glm(outcome~asthma,tmp2,family='binomial')
+m.old<-glm(outcome~other_lung_disease,tmp2,family='binomial')
+m.dia<-glm(outcome~diabetes,tmp2,family='binomial')
+m.rd<-glm(outcome~renal_disease,tmp2,family='binomial')
+m.ld<-glm(outcome~liver_disease,tmp2,family='binomial')
+m.s<-glm(outcome~smoking,tmp2,family='binomial')
+m.ob<-glm(outcome~obesity,tmp2,family='binomial')
+m.hc<-glm(outcome~high_creatinin,tmp2,family='binomial')
+m.hi<-glm(outcome~high_pt_inr,tmp2,family='binomial')
+m.la<-glm(outcome~low_albumin,tmp2,family='binomial')
+
+m2.ihd<-glm(ever_hcq~ischemic_heart_disease,tmp2,family='binomial')
+m2.hd<-glm(ever_hcq~has_hypertension_drugs,tmp2,family='binomial')
+m2.hf<-glm(ever_hcq~heart_failure,tmp2,family='binomial')
+m2.copd<-glm(ever_hcq~COPD,tmp2,family='binomial')
+m2.asthma<-glm(ever_hcq~asthma,tmp2,family='binomial')
+m2.old<-glm(ever_hcq~other_lung_disease,tmp2,family='binomial')
+m2.dia<-glm(ever_hcq~diabetes,tmp2,family='binomial')
+m2.rd<-glm(ever_hcq~renal_disease,tmp2,family='binomial')
+m2.ld<-glm(ever_hcq~liver_disease,tmp2,family='binomial')
+m2.s<-glm(ever_hcq~smoking,tmp2,family='binomial')
+m2.ob<-glm(outcome~obesity,tmp2,family='binomial')
+m2.hc<-glm(ever_hcq~high_creatinin,tmp2,family='binomial')
+m2.hi<-glm(ever_hcq~high_pt_inr,tmp2,family='binomial')
+m2.la<-glm(ever_hcq~low_albumin,tmp2,family='binomial')
+
+models<-list(m.ihd,m.hd,m.hf,m.copd,m.asthma,m.old,m.dia,m.rd,m.ld,m.s,m.ob,m.hc,m.hi,m.la)
+models2<-list(m2.ihd,m2.hd,m2.hf,m2.copd,m2.asthma,m2.old,m2.dia,m2.rd,m2.ld,m2.s,m2.ob,m2.hc,m2.hi,m2.la)
+modelNames<-c('IHD','HD','HF','COPD','Asthma','LungD','Dia','RenalD','LiverD','Smoking','Obesity','HighCr','HighInr','LowAlb')
+gtmp<-c()
+for (i in rev(seq(along=models))) {
+  ii<-length(models)-i+1
+  m<-models[[i]]
+  m2<-models2[[i]]
+  ci<-confint(m)[2,]
+  ci2<-confint(m2)[2,]
+  gtmp<-rbind(gtmp,data.frame(est=coef(m)[2],low=ci[1],high=ci[2],name=modelNames[i],type='outcome'))
+  gtmp<-rbind(gtmp,data.frame(est=-coef(m2)[2],low=-ci2[1],high=-ci2[2],name=modelNames[i],type='hcq'))
+}
+ggplot(gtmp,aes(y=name,x=est,xmin=low,xmax=high,color=type))+
+  geom_vline(xintercept=0,color='blue')+
+  geom_point(position=position_dodge(width=0.5))+
+  geom_errorbarh(position=position_dodge(width=0.5),height= 0.5)+
+  scale_x_continuous('Log odds ratio')+
+  scale_y_discrete('')+
+  scale_color_manual('Model of:',values=c('black','red'),labels=c('Death','No HCQ'))+
+  theme(legend.background = element_rect(fill="gray95"),legend.position=c(.83,.7))
+```
 
 ```{r}
 # condition on the sum of comorbidities

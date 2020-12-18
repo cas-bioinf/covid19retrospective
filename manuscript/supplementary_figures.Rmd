@@ -38,7 +38,7 @@ data_collection_period %>% ggplot(aes(xmin = first_admission, xmax = last_admiss
 ```
 
 
-```{r upsettreatment, fig.cap = "Upset plot of treatment combinations - each vertical bar displays the number of patients that received the combination indicated by filled dots in the matrix. Horizontal bars show the total number of patients receiveing the given treatment.", fig.width=8, fig.height=6 }
+```{r upsettreatment, fig.cap = "Upset plot of treatment combinations - each vertical bar displays the number of patients that received the combination indicated by filled dots in the matrix. Horizontal bars show the total number of patients receiveing the given treatment.", fig.width=8, fig.height=5.8 }
 upset_data <- data$patient_data %>% select(starts_with("ever")) %>% mutate(across(starts_with("ever"), as.integer)) %>% as.data.frame()
 
 names(upset_data) <- gsub("ever_", "", names(upset_data)) %>% gsub("_", " ", .) %>% gsub("hcq", "hydroxychloroquine", .) %>% gsub("az", "azithromycin", .)
@@ -63,7 +63,7 @@ levels(tmp$hospital_id)<-paste('H',1:length(levels(tmp$hospital_id)),sep='')
 # knitr::kable(with(tmp,table(outcome,hospital_id)),caption = paste0( "Overview of outcomes in different hospitals. Note that at H6, 9 out of 19 patients died, while at H9, no patient died out of 9 patients treated. There were large differences between hospitals in the ratio of fatal outcomes (P=", round(fisher.test(with(tmp,table(outcome,hospital_id)),simulate.p.value=T)$p.value,5), ")"), booktabs = TRUE)
 ```
 
-```{r hospitaloutcomes,fig.cap="Number of patients and outcomes at the individual sites. The numbers above bars are the exact counts. Hospitalized = still hospitalized at the end of data collection at the site or transferred to other site and lost to followup. Sites are anonymized to preserve patient privacy."}
+```{r hospitaloutcomes,fig.cap="Number of patients and outcomes at the individual sites. The numbers above bars are the exact counts. Hospitalized = still hospitalized at the end of data collection at the site or transferred to other site and lost to followup. Sites are anonymized to preserve patient privacy.", fig.height=3.5}
 data$patient_data %>% mutate(
   hospital_label = factor(paste0("H", as.integer(factor(hospital_id))), levels = paste0("H", 1:10)),
   outcome = fct_collapse(outcome, Hospitalized = c("Hospitalized", "Transferred")) %>% fct_relevel("Death", "Hospitalized", "Discharged")
@@ -77,70 +77,54 @@ data$patient_data %>% mutate(
   expand_limits(y = 36)
 ```
 
+```{r markeroverlaps, fig.cap = "Density plots of worst marker values per patient, stratified by worst condition experienced by the patient.", fig.height=6}
+frac <- 0.2
+data$marker_data %>% filter(marker %in% c("lymphocyte_count", "d_dimer", "CRP", "IL_6")) %>%
+  inner_join(data$patient_data, by = c("hospital_id", "patient_id")) %>%
+  #filter(worst_breathing %in% c("AA", "Death")) %>%
+  group_by(marker, patient_id, worst_breathing_s) %>%
+  summarise(worst_value = case_when(marker == "lymphocyte_count" ~ min(log10(value)),
+                                    marker == "IL_6" ~ max(log10(value)),
+                                    TRUE ~ max(value)),
+            .groups = "drop") %>% 
+  filter(!is.infinite(worst_value)) %>%
+  mutate(marker = factor(marker, levels = c("lymphocyte_count", "d_dimer", "CRP", "IL_6"),
+         labels = c("Lowest Log10(lymphocyte count)", "Highest D-dimer", "Highest CRP", "Highest Log10(IL_6)"))) %>%
+  ggplot(aes(x = worst_value, color = worst_breathing_s, fill = worst_breathing_s, group = worst_breathing_s)) +
+  geom_density(adjust = 2, alpha = 0.3) +
+  scale_color_viridis_d("Worst condition") +
+  scale_fill_viridis_d("Worst condition") +
+  scale_x_continuous("Marker value") +
+  facet_wrap(~marker, scales = "free", ncol = 1)
 
-```{r hcqassoc, message=FALSE, fig.width=7, fig.height=4.5, fig.cap="The choice of treatment with hydroxychloroquine seemed to be associated with the status of patients upon hospitalization. Comorbidities were associated with both worse outcome (black) and lower chance of treatment with hydroxychloroquine (red). Dots and lines represent the estimates and the 95% confidence intervals of the log odds ratio of the respective outcome. HCQ: hydroxychloroquine, IHD: ischemic heart disease, HD: hypertension drugs, HF: heart failure history, COPD: chronic obstructive pulmonary disease, LungD: other lung disease, Dia: diabetes, RenalD: renal disease, LiverD: liver disease, HighCr: creatinin above 115 for males or above 97 for females, HighInr: Prothrombin time (Quick test) as International Normalized Ratio above 1.2, LowAlb: albumin in serum/plasma below 36 g/l."}
 
-tmp<-data$patient_data[,c('age','sex','days_from_symptom_onset','admitted_for_covid','ischemic_heart_disease','has_hypertension_drugs','heart_failure',
-  'COPD','asthma','other_lung_disease','diabetes','renal_disease','liver_disease','smoking','BMI','obesity','last_record','high_creatinin','high_pt_inr','low_albumin',
-  'heart_problems','outcome','ever_hcq','ever_az','worst_breathing','had_invasive'),]
-tmp$outcome[tmp$outcome=='Transferred']<-'Hospitalized'
-tmp$outcome<-dropLevels(tmp$outcome)
-tmp2<-tmp[tmp$outcome%in%c('Death','Discharged'),]
-tmp2$outcome<-dropLevels(tmp2$outcome)
-tmp2$outcome<-tmp2$outcome=='Death'
+#Validating the claim about overlapping proportions
+# frac <- 0.2
+# data$marker_data %>% filter(marker %in% c("lymphocyte_count", "d_dimer", "CRP")) %>%
+#   inner_join(data$patient_data, by = c("hospital_id", "patient_id")) %>%
+#   filter(worst_breathing_s != "Oxygen") %>%
+#   mutate(worst_breathing_s = fct_collapse(worst_breathing_s, "Ventilated or Death" = c("Ventilated", "Death"))) %>%
+#   group_by(marker, patient_id, worst_breathing_s) %>%
+#   summarise(min_value = min(value), max_value = max(value), .groups = "drop") %>%
+#   group_by(marker, worst_breathing_s) %>%
+#   summarise(qlowmin = quantile(min_value, frac), qhigh_min = quantile(min_value, 1 - frac), qlow_max = quantile(max_value, frac), qhigh_max = quantile(max_value, 1 - frac), .groups = "drop")
 
-m.ihd<-glm(outcome~ischemic_heart_disease,tmp2,family='binomial')
-m.hd<-glm(outcome~has_hypertension_drugs,tmp2,family='binomial')
-m.hf<-glm(outcome~heart_failure,tmp2,family='binomial')
-m.copd<-glm(outcome~COPD,tmp2,family='binomial')
-m.asthma<-glm(outcome~asthma,tmp2,family='binomial')
-m.old<-glm(outcome~other_lung_disease,tmp2,family='binomial')
-m.dia<-glm(outcome~diabetes,tmp2,family='binomial')
-m.rd<-glm(outcome~renal_disease,tmp2,family='binomial')
-m.ld<-glm(outcome~liver_disease,tmp2,family='binomial')
-m.s<-glm(outcome~smoking,tmp2,family='binomial')
-m.ob<-glm(outcome~obesity,tmp2,family='binomial')
-m.hc<-glm(outcome~high_creatinin,tmp2,family='binomial')
-m.hi<-glm(outcome~high_pt_inr,tmp2,family='binomial')
-m.la<-glm(outcome~low_albumin,tmp2,family='binomial')
-
-m2.ihd<-glm(ever_hcq~ischemic_heart_disease,tmp2,family='binomial')
-m2.hd<-glm(ever_hcq~has_hypertension_drugs,tmp2,family='binomial')
-m2.hf<-glm(ever_hcq~heart_failure,tmp2,family='binomial')
-m2.copd<-glm(ever_hcq~COPD,tmp2,family='binomial')
-m2.asthma<-glm(ever_hcq~asthma,tmp2,family='binomial')
-m2.old<-glm(ever_hcq~other_lung_disease,tmp2,family='binomial')
-m2.dia<-glm(ever_hcq~diabetes,tmp2,family='binomial')
-m2.rd<-glm(ever_hcq~renal_disease,tmp2,family='binomial')
-m2.ld<-glm(ever_hcq~liver_disease,tmp2,family='binomial')
-m2.s<-glm(ever_hcq~smoking,tmp2,family='binomial')
-m2.ob<-glm(outcome~obesity,tmp2,family='binomial')
-m2.hc<-glm(ever_hcq~high_creatinin,tmp2,family='binomial')
-m2.hi<-glm(ever_hcq~high_pt_inr,tmp2,family='binomial')
-m2.la<-glm(ever_hcq~low_albumin,tmp2,family='binomial')
-
-models<-list(m.ihd,m.hd,m.hf,m.copd,m.asthma,m.old,m.dia,m.rd,m.ld,m.s,m.ob,m.hc,m.hi,m.la)
-models2<-list(m2.ihd,m2.hd,m2.hf,m2.copd,m2.asthma,m2.old,m2.dia,m2.rd,m2.ld,m2.s,m2.ob,m2.hc,m2.hi,m2.la)
-modelNames<-c('IHD','HD','HF','COPD','Asthma','LungD','Dia','RenalD','LiverD','Smoking','Obesity','HighCr','HighInr','LowAlb')
-gtmp<-c()
-for (i in rev(seq(along=models))) {
-  ii<-length(models)-i+1
-  m<-models[[i]]
-  m2<-models2[[i]]
-  ci<-confint(m)[2,]
-  ci2<-confint(m2)[2,]
-  gtmp<-rbind(gtmp,data.frame(est=coef(m)[2],low=ci[1],high=ci[2],name=modelNames[i],type='outcome'))
-  gtmp<-rbind(gtmp,data.frame(est=-coef(m2)[2],low=-ci2[1],high=-ci2[2],name=modelNames[i],type='hcq'))
-}
-ggplot(gtmp,aes(y=name,x=est,xmin=low,xmax=high,color=type))+
-  geom_vline(xintercept=0,color='blue')+
-  geom_point(position=position_dodge(width=0.5))+
-  geom_errorbarh(position=position_dodge(width=0.5),height= 0.5)+
-  scale_x_continuous('Log odds ratio')+
-  scale_y_discrete('')+
-  scale_color_manual('Model of:',values=c('black','red'),labels=c('Death','No HCQ'))+
-  theme(legend.background = element_rect(fill="gray95"),legend.position=c(.83,.7))
 ```
+```{r}
+# data$marker_data %>% 
+#   filter(marker %in% c("lymphocyte_count", "CRP", "d_dimer","IL_6"), value > 0, day >=0) %>%
+#   inner_join(data$breathing_data, by = c("hospital_id", "patient_id", "day")) %>%
+#   filter(breathing_s != "Death") %>%
+#   ggplot(aes(x = day, y = value, color = breathing_s, group = patient_id)) +
+#     geom_line(alpha = 0.8, position = position_jitter(width = 0.2, height = 0)) +
+#    # geom_point(, alpha = 0.5, position = position_jitter(width = 0.2, height = 0)) +
+#   scale_y_log10() + 
+#   scale_color_manual("Breathing", values = c(Ventilated = as.character(bfc()["Black"]), Oxygen = as.character(bfc()["Bluish green"]), AA = as.character(bfc()["Orange"]))) + #scale_color_brewer(type = "qual") +
+#   # scale_color_viridis_d(guide = guide_legend(override.aes = list(alpha = 1)), direction = -1, end = 0.9) +
+#   facet_wrap(~marker, scales = "free_y")
+#   
+```
+
 
 ```{r initiation, fig.cap="Histogram of timing of first treatment relative to admission into one of the study sites. Two patients initiated treatment before admission, which is shown as the negative numbers.", fig.height=2}
 #data$marker_data %>% filter(marker == "favipiravir") %>% group_by(patient_id) %>% summarise(days = n(), .groups = "drop") %>% summarise(min_days = min(days), max_days = max(days))

@@ -7835,5 +7835,446 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/PDEPFSAU",
+		"type": "article-journal",
+		"container-title": "New England Journal of Medicine",
+		"DOI": "10.1056/NEJMoa2031994",
+		"ISSN": "0028-4793, 1533-4406",
+		"journalAbbreviation": "N Engl J Med",
+		"language": "en",
+		"page": "NEJMoa2031994",
+		"source": "DOI.org (Crossref)",
+		"title": "Baricitinib plus Remdesivir for Hospitalized Adults with Covid-19",
+		"URL": "http://www.nejm.org/doi/10.1056/NEJMoa2031994",
+		"author": [
+			{
+				"family": "Kalil",
+				"given": "Andre C."
+			},
+			{
+				"family": "Patterson",
+				"given": "Thomas F."
+			},
+			{
+				"family": "Mehta",
+				"given": "Aneesh K."
+			},
+			{
+				"family": "Tomashek",
+				"given": "Kay M."
+			},
+			{
+				"family": "Wolfe",
+				"given": "Cameron R."
+			},
+			{
+				"family": "Ghazaryan",
+				"given": "Varduhi"
+			},
+			{
+				"family": "Marconi",
+				"given": "Vincent C."
+			},
+			{
+				"family": "Ruiz-Palacios",
+				"given": "Guillermo M."
+			},
+			{
+				"family": "Hsieh",
+				"given": "Lanny"
+			},
+			{
+				"family": "Kline",
+				"given": "Susan"
+			},
+			{
+				"family": "Tapson",
+				"given": "Victor"
+			},
+			{
+				"family": "Iovine",
+				"given": "Nicole M."
+			},
+			{
+				"family": "Jain",
+				"given": "Mamta K."
+			},
+			{
+				"family": "Sweeney",
+				"given": "Daniel A."
+			},
+			{
+				"family": "El Sahly",
+				"given": "Hana M."
+			},
+			{
+				"family": "Branche",
+				"given": "Angela R."
+			},
+			{
+				"family": "Regalado Pineda",
+				"given": "Justino"
+			},
+			{
+				"family": "Lye",
+				"given": "David C."
+			},
+			{
+				"family": "Sandkovsky",
+				"given": "Uriel"
+			},
+			{
+				"family": "Luetkemeyer",
+				"given": "Anne F."
+			},
+			{
+				"family": "Cohen",
+				"given": "Stuart H."
+			},
+			{
+				"family": "Finberg",
+				"given": "Robert W."
+			},
+			{
+				"family": "Jackson",
+				"given": "Patrick E.H."
+			},
+			{
+				"family": "Taiwo",
+				"given": "Babafemi"
+			},
+			{
+				"family": "Paules",
+				"given": "Catherine I."
+			},
+			{
+				"family": "Arguinchona",
+				"given": "Henry"
+			},
+			{
+				"family": "Goepfert",
+				"given": "Paul"
+			},
+			{
+				"family": "Ahuja",
+				"given": "Neera"
+			},
+			{
+				"family": "Frank",
+				"given": "Maria"
+			},
+			{
+				"family": "Oh",
+				"given": "Myoung-don"
+			},
+			{
+				"family": "Kim",
+				"given": "Eu S."
+			},
+			{
+				"family": "Tan",
+				"given": "Seow Y."
+			},
+			{
+				"family": "Mularski",
+				"given": "Richard A."
+			},
+			{
+				"family": "Nielsen",
+				"given": "Henrik"
+			},
+			{
+				"family": "Ponce",
+				"given": "Philip O."
+			},
+			{
+				"family": "Taylor",
+				"given": "Barbara S."
+			},
+			{
+				"family": "Larson",
+				"given": "LuAnn"
+			},
+			{
+				"family": "Rouphael",
+				"given": "Nadine G."
+			},
+			{
+				"family": "Saklawi",
+				"given": "Youssef"
+			},
+			{
+				"family": "Cantos",
+				"given": "Valeria D."
+			},
+			{
+				"family": "Ko",
+				"given": "Emily R."
+			},
+			{
+				"family": "Engemann",
+				"given": "John J."
+			},
+			{
+				"family": "Amin",
+				"given": "Alpesh N."
+			},
+			{
+				"family": "Watanabe",
+				"given": "Miki"
+			},
+			{
+				"family": "Billings",
+				"given": "Joanne"
+			},
+			{
+				"family": "Elie",
+				"given": "Marie-Carmelle"
+			},
+			{
+				"family": "Davey",
+				"given": "Richard T."
+			},
+			{
+				"family": "Burgess",
+				"given": "Timothy H."
+			},
+			{
+				"family": "Ferreira",
+				"given": "Jennifer"
+			},
+			{
+				"family": "Green",
+				"given": "Michelle"
+			},
+			{
+				"family": "Makowski",
+				"given": "Mat"
+			},
+			{
+				"family": "Cardoso",
+				"given": "Anabela"
+			},
+			{
+				"family": "Bono",
+				"given": "Stephanie",
+				"non-dropping-particle": "de"
+			},
+			{
+				"family": "Bonnett",
+				"given": "Tyler"
+			},
+			{
+				"family": "Proschan",
+				"given": "Michael"
+			},
+			{
+				"family": "Deye",
+				"given": "Gregory A."
+			},
+			{
+				"family": "Dempsey",
+				"given": "Walla"
+			},
+			{
+				"family": "Nayak",
+				"given": "Seema U."
+			},
+			{
+				"family": "Dodd",
+				"given": "Lori E."
+			},
+			{
+				"family": "Beigel",
+				"given": "John H."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					12,
+					17
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					12,
+					11
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/TZFUM6JH",
+		"type": "article-journal",
+		"container-title": "New England Journal of Medicine",
+		"DOI": "10.1056/NEJMoa2029849",
+		"ISSN": "0028-4793, 1533-4406",
+		"journalAbbreviation": "N Engl J Med",
+		"language": "en",
+		"page": "NEJMoa2029849",
+		"source": "DOI.org (Crossref)",
+		"title": "SARS-CoV-2 Neutralizing Antibody LY-CoV555 in Outpatients with Covid-19",
+		"URL": "http://www.nejm.org/doi/10.1056/NEJMoa2029849",
+		"author": [
+			{
+				"family": "Chen",
+				"given": "Peter"
+			},
+			{
+				"family": "Nirula",
+				"given": "Ajay"
+			},
+			{
+				"family": "Heller",
+				"given": "Barry"
+			},
+			{
+				"family": "Gottlieb",
+				"given": "Robert L."
+			},
+			{
+				"family": "Boscia",
+				"given": "Joseph"
+			},
+			{
+				"family": "Morris",
+				"given": "Jason"
+			},
+			{
+				"family": "Huhn",
+				"given": "Gregory"
+			},
+			{
+				"family": "Cardona",
+				"given": "Jose"
+			},
+			{
+				"family": "Mocherla",
+				"given": "Bharat"
+			},
+			{
+				"family": "Stosor",
+				"given": "Valentina"
+			},
+			{
+				"family": "Shawa",
+				"given": "Imad"
+			},
+			{
+				"family": "Adams",
+				"given": "Andrew C."
+			},
+			{
+				"family": "Van Naarden",
+				"given": "Jacob"
+			},
+			{
+				"family": "Custer",
+				"given": "Kenneth L."
+			},
+			{
+				"family": "Shen",
+				"given": "Lei"
+			},
+			{
+				"family": "Durante",
+				"given": "Michael"
+			},
+			{
+				"family": "Oakley",
+				"given": "Gerard"
+			},
+			{
+				"family": "Schade",
+				"given": "Andrew E."
+			},
+			{
+				"family": "Sabo",
+				"given": "Janelle"
+			},
+			{
+				"family": "Patel",
+				"given": "Dipak R."
+			},
+			{
+				"family": "Klekotka",
+				"given": "Paul"
+			},
+			{
+				"family": "Skovronsky",
+				"given": "Daniel M."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					12,
+					17
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					10,
+					28
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/VTR54LI9",
+		"type": "webpage",
+		"language": "en",
+		"title": "Regeneron's COVID-19 Outpatient Trial Prospectively Demonstrates that REGN-COV2 Antibody Cocktail Significantly Reduced Virus Levels and Need for Further Medical Attention",
+		"URL": "https://investor.regeneron.com/news-releases/news-release-details/regenerons-covid-19-outpatient-trial-prospectively-demonstrates/",
+		"author": [
+			{
+				"family": "Regeneron Pharmaceuticals Inc.",
+				"given": ""
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					12,
+					17
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/4SLQXUJM",
+		"type": "webpage",
+		"abstract": "On the recommendation of the data safety and monitoring board, @REMAP_CAP is declaring efficacy of #tocilizumab with an OR of 1.87 for benefit on a combination of survival and length of time patients received organ support in ICU, compared with standard care [...]",
+		"container-title": "Twitter",
+		"language": "cs",
+		"title": "Tocilizumab announcement",
+		"URL": "https://twitter.com/remap_cap/status/1329391734174826496",
+		"author": [
+			{
+				"family": "REMAP CAP",
+				"given": ""
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					12,
+					17
+				]
+			]
+		}
 	}
 ]
