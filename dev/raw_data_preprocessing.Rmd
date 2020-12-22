@@ -142,7 +142,6 @@ for(i in 1:(length(hospital_data) - 1)) {
 
 
 ```{r}
-typeof(patients_to_merge$patient_id1)
 complete_data_merged_1 <- merge_patients(complete_data, patients_to_merge)
 ```
 

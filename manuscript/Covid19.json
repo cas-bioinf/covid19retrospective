@@ -8276,5 +8276,72 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/5ZW5JM8R",
+		"type": "article-journal",
+		"abstract": "Abstract\n            The novel coronavirus disease, 2019 (COVID – 19) evolved as an unprecedented pandemic. The severe acute respiratory syndrome-corona virus-2 (SARS-CoV-2) infection has been associated with significantly deranged coagulation parameters and increased incidence of thrombotic events. Deranged coagulation parameters, such as D-dimers and fibrin degradation products, can indicate a poor prognosis, and their measurement will help stratify the patients according to the disease severity, need of intensive care unit admission, and prediction of the clinical course. Gaps in understanding the natural history of the disease cause difficulties in tailoring therapies and optimizing the management of patients. Lack of specific treatment further complicates this situation. While thrombotic events can cause significant morbidity and mortality in patients, a focused approach to the prevention and treatment of venous thromboembolism (VTE) can, to a great extent, decrease the disease burden caused by thrombotic diseases. Pharmacological prophylactic anticoagulants and mechanical therapies such as pneumatic compression devices can help prevent venous thromboembolism and other thrombotic events. Thrombotic events due to COVID-19, their prevention and management, are the focus of this paper, with the prospect of providing insights into this relatively unexplored area.",
+		"container-title": "The Journal of Critical Care Medicine",
+		"DOI": "10.2478/jccm-2020-0033",
+		"ISSN": "2393-1817",
+		"issue": "4",
+		"page": "217-223",
+		"source": "DOI.org (Crossref)",
+		"title": "Anticoagulation in COVID – 19: An Update",
+		"title-short": "Anticoagulation in COVID – 19",
+		"URL": "https://content.sciendo.com/view/journals/jccm/6/4/article-p217.xml",
+		"volume": "6",
+		"author": [
+			{
+				"family": "Tiwari",
+				"given": "Nishant R"
+			},
+			{
+				"family": "Khatib",
+				"given": "Khalid I"
+			},
+			{
+				"family": "Dixit",
+				"given": "Subhal B"
+			},
+			{
+				"family": "Rathore",
+				"given": "Prajay K"
+			},
+			{
+				"family": "Melinkeri",
+				"given": "Sameer"
+			},
+			{
+				"family": "Ganapule",
+				"given": "Abhijeet"
+			},
+			{
+				"family": "Borawake",
+				"given": "Kapil S"
+			},
+			{
+				"family": "Mhatre",
+				"given": "Ujwala"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2020",
+					12,
+					22
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					11,
+					7
+				]
+			]
+		}
 	}
 ]

@@ -43,7 +43,7 @@ Interestingly, in observational studies, hydroxychloroquine was often found to b
 
 
 Favipiravir is one of the less explored experimental treatments, previously used for influenza including avian types, with only one larger RCT in Covid- 19 known to us [@http://zotero.org/users/5567156/items/ISLSL7UC], the study however has many potentially severe problems [@http://zotero.org/users/5567156/items/7HDXLWEA]. Other studies are scarce - even when considering very small studies and case series [@http://zotero.org/users/5567156/items/F3VNTQ92; @http://zotero.org/users/5567156/items/FSUQMUP8; @http://zotero.org/users/5567156/items/894H9N9B]. None of the results allow strong conclusions about benefits or harms of favipiravir, although a  metaanalysis of all available small studies showed an effect of favipiravir on clinical improvement in mild and moderate disease [@http://zotero.org/users/5567156/items/7595KBWR].
-For additional summary of treatments under investigation see Siemieniuk et al. [@http://zotero.org/users/5567156/items/YP62P6XJ]
+For additional summary of treatments under investigation see Siemieniuk et al. [@http://zotero.org/users/5567156/items/YP62P6XJ]. There is also an emerging consensus on the importance of prophylactic anticoagulation therapy in managing hospitalized patients with Covid-19, although clinical trials to validate this approach are still ongoing[@http://zotero.org/users/5567156/items/5ZW5JM8R].
 
 
 High IL-6, D-dimer values were observed to be associated with worse outcome and increased disease severity [@http://zotero.org/users/5567156/items/K3N3VG2X].

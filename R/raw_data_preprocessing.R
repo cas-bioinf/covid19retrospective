@@ -723,7 +723,13 @@ merge_patients <- function(complete_data, patients_to_merge) {
       complete_data <- complete_data %>%
         filter_complete_data(!(hospital_id  == row$hospital_id1 & patient_id == row$patient_id1))
     } else if(row$resolution == "merge_to_1") {
-      # Remove patient row
+      patient_row_2 <- complete_data$patient_data %>%
+        filter((hospital_id  == row$hospital_id2 & patient_id == row$patient_id2))
+      if(nrow(patient_row_2) != 1) {
+        stop("Problems in merge")
+      }
+
+      # Remove patient row 2
       complete_data$patient_data <- complete_data$patient_data %>%
         filter(!(hospital_id  == row$hospital_id2 & patient_id == row$patient_id2))
       # Merge marker rows
@@ -752,7 +758,12 @@ merge_patients <- function(complete_data, patients_to_merge) {
         filter(!(should_change & day == row$shift)) %>%
         select(-should_change)
 
-        stop("TODO 8PGr47dGTx needs to change outcome and last_recrod when merging")
+      # Update outcome and last record
+      complete_data$patient_data <- complete_data$patient_data %>%
+        mutate(should_change = hospital_id == row$hospital_id1 & patient_id == row$patient_id1,
+               last_record = if_else(should_change, last_record + patient_row_2$last_record, last_record),
+               outcome = if_else(should_change, patient_row_2$outcome, outcome)) %>%
+        select(-should_change)
     } else {
       stop(paste0("Unknown resolution: ", row$resolution))
     }
