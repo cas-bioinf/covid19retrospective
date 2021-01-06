@@ -1,5 +1,5 @@
 dummy_markers <- c("Drugs", "Other marker (optional)", "Other Covid drug", "Yet another drug",
-                   "RTG S+P", "Rosuvastatin","Rtg S+P")
+                   "Rosuvastatin")
 
 
 marker_map <- c(
@@ -24,6 +24,8 @@ marker_map <- c(
         "creatinine" = "creatinine",
         "urea" = "urea",
         "IgG" = "IgG",
+        "RTG S+P" = "rtg",
+        "Rtg S+P" = "rtg",
       ## Covid-specific drugs
         "Hydroxychloroquine" = "hcq",
         "Kaletra" = "kaletra",
@@ -96,7 +98,7 @@ marker_map <- c(
         "Amphotericin B" = "amphotericin_b",
         "Voricoazol" = "voriconazole",
         "Aciclovir" = "aciclovir",
-        "Isoprinosine" = "isoprinosine",
+        "Isoprinosine" = "isoprinosin",
         "Tamiflu" = "tamiflu",
         "Lexaurin" = "lexaurin",
         "Isoprinosin" = "isoprinosin"
@@ -124,7 +126,8 @@ all_antibiotics <- c(
   "doxycycline",
   "penicilin",
   "nitrofurantoin",
-  "cefprozil"
+  "cefprozil",
+  "clindamycin"
 )
 
 antibiotics_not_for_pneumonia <- c(
@@ -133,6 +136,9 @@ antibiotics_not_for_pneumonia <- c(
 )
 
 all_macrolides <- c("az", "clarithromycin")
+
+other_drugs <- c("fluconazol", "zinc", "anidulafungin","amphotericin_b","voriconazole",
+        "aciclovir", "isoprinosin", "tamiflu", "lexaurin")
 
 pcr_values_positive <- c("pos","neg", "neg and pos", "susp.", "susp", "poz", "nejasn\u00fd", "nejsan\u00fd")
 pcr_value_negative <- "neg"

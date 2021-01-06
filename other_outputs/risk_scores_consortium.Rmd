@@ -1,0 +1,288 @@
+---
+title: "Validating risk scores - Czech data"
+output: html_notebook
+---
+
+
+# Prepare data
+
+```{r setup}
+
+devtools::load_all()
+library(tidyverse)
+
+library(mice)
+library(pROC)
+library(metamisc)
+
+data <- read_data_for_analysis()
+```
+
+```{r}
+first_non_NA <- function(x) {
+  if(length(x) > 2) {
+    stop("Wrong length")
+  } else if(length(x) == 1) {
+    x
+  } else {
+    if(is.na(x[1])) {
+      x[2]
+    } else {
+      x[1]
+    }
+  }
+  
+} 
+
+marker_data_admission_all <- data$marker_data_wide %>% 
+  filter(day == 0 | day == 1) %>%
+  arrange(hospital_id, patient_id,  day) %>%
+  group_by(patient_id, hospital_id) %>%
+  summarise(across(everything(), first_non_NA), .groups = "drop")
+
+marker_data_admission <- marker_data_admission_all %>%
+  select(-ends_with("censored"),-breathing, -breathing_low, -breathing_high, -breathing_s_high, -breathing_s_low, -pcr_value, -hcq, -favipiravir, -convalescent_plasma, -remdesivir,-dexamethasone, -day) %>%
+  select( -all_of(c(all_antibiotics, other_drugs)), -kaletra, -tocilizumab)
+```
+
+```{r}
+data_risk <- data$patient_data %>%
+  mutate(mortality  = case_when(
+    last_record >= 30 ~ "alive",
+    outcome == "Discharged" ~ "alive",
+    outcome == "Death" ~ "dead",
+    TRUE ~ "alive")) %>%
+  inner_join(marker_data_admission, by = c("patient_id", "hospital_id")) %>%
+  mutate(creatinin = if_else(is.na(creatinin.x), creatinin.y, creatinin.x),
+         pt_inr = if_else(is.na(pt_inr.x), pt_inr.y, pt_inr.x),
+         albumin = if_else(is.na(albumin.x), albumin.y, albumin.x),
+         ) %>%
+  select(-creatinin.x, -creatinin.y, -pt_inr.x, -pt_inr.y, -albumin.x, -albumin.y) %>%
+  #avoid including some derived quantities
+  select(-age_norm, -high_creatinin, -high_pt_inr, -low_albumin, -heart_problems, -lung_problems, -markers_out_of_range, -antibiotics, -macrolides) %>%
+  #avoid including indicators that are not available at hospitalization 
+  select(-discontinued_medication, -last_record, -outcome,  -best_supportive_care_from,
+         -starts_with("ever_"), -starts_with("any_"), -starts_with("worst"), -had_invasive,
+         -first_day_invasive, -last_day_invasive) %>%
+  #avoid columns that are not useful
+  select(-hospital_id, -patient_id, -pcr_positive, -FiO2, -urea,
+         -took_convalescent_plasma, -obesity, -took_favipiravir, -took_az,
+         -took_dexamethasone, -took_remdesivir, -IgG, -Horowitz_index,
+         -has_hypertension_drugs
+         ) %>%
+  #convert to factors to use with mice
+  mutate(sex = factor(sex), 
+         breathing_s = factor(breathing_s, ordered = FALSE), 
+         requires_oxygen = breathing_s != "AA",
+         across(all_of(names(.)[sapply(., typeof) == "logical"]), factor))
+```
+
+
+```{r}
+where_impute <- is.na(data_risk)
+columns_to_impute <- c("lactate_dehydrogenase", 
+                       "lymphocyte_count",
+                       "SpO2",
+                       "SpO2_native",
+                       "CRP",
+                       "d_dimer",
+                       "COPD",
+                       "other_lung_disease",
+                       "has_hypertension_drugs",
+                       "ischemic_heart_disease",
+                       "heart_failure")
+                       
+where_impute[, setdiff(names(data_risk), columns_to_impute)] <- FALSE
+
+# predictor_matrix <- matrix(1, ncol = ncol(data_risk), 
+#                            nrow = ncol(data_risk),  dimnames = list(paste0("b_", names(data_risk), names(data_risk))))
+
+block_vars <- setdiff(names(data_risk), "mortality")
+blocks <- make.blocks(block_vars)
+predictor_matrix <- make.predictorMatrix(data_risk, blocks)
+
+predictor_matrix[, "requires_oxygen"] <- 0
+low_obs_count <- c("lactate_dehydrogenase", "AST", "ferritin", "IL_6", "leukocyte_count", "PEEP")
+predictor_matrix[low_obs_count, ] <- 0
+predictor_matrix[low_obs_count, c("age","sex")] <- 1
+
+mid_obs_count <- c("neutrophile_count", "platelet_count", "procalcitonin")
+predictor_matrix[mid_obs_count, ] <- 0
+predictor_matrix[mid_obs_count, c("age","sex", "requires_oxygen", "admitted_for_covid", "comorbidities_sum", "BMI")] <- 1
+predictor_matrix["procalcitonin", "admitted_for_covid"] <- 0
+
+
+```
+
+
+```{r}
+setup_imp <- mice(data_risk, maxit=0, blocks = blocks, predictorMatrix = predictor_matrix)
+setup_imp$loggedEvents
+```
+
+```{r}
+setup_imp$method
+```
+```{r}
+set.seed(22546824)
+data_risk_imp <- mice(data_risk, method = setup_imp$method, m = 50, maxit = 10, blocks = blocks, predictorMatrix = predictor_matrix, printFlag = F )
+```
+
+```{r}
+if(!is.null(data_risk_imp$loggedEvents)) {
+  data_risk_imp$loggedEvents %>% select(-it, -im) %>% distinct() %>% arrange(dep)
+}
+```
+
+# Define prediction models
+
+
+## Hu
+
+The units in our dataset are:
+
+```{r}
+data$marker_data %>% filter(marker %in% c("CRP", "d_dimer", "lymphocyte_count")) %>%
+  select(marker, unit) %>% distinct()
+```
+
+So only need to conver D-dimer from ng/ml DDU to ug/ml FEU
+
+```{r}
+hu <- function(data) {
+  lp <- data %>%
+    mutate(d_dimer_converted = d_dimer * 2 / 1000,
+           lp = -4.21167 + 0.058699 * age + 0.013391 * CRP + 0.112055 * d_dimer_converted - 1.983733 * lymphocyte_count) %>%
+    pull(lp)
+  
+  lp
+}
+```
+
+## Xie
+
+```{r}
+xie <- function(data) {
+  lp <- data %>%
+    mutate(lp = 4.559 + 0.047 * age + 0.003 * lactate_dehydrogenase -1.094 * lymphocyte_count - 0.098 * SpO2) %>%
+    pull(lp)
+  
+  lp
+}
+```
+
+
+## Wang clinicial
+
+```{r}
+wang_clinical <- function(data) {
+  data %>%
+    mutate(hypertension = n_hypertension_drugs > 0,
+           lp =
+  -2.6551 + 0.10 * age + 0.60 * hypertension + 1.11 * (ischemic_heart_disease == "TRUE")) %>%
+    pull(lp)
+}
+```
+
+
+## Age baseline
+
+```{r}
+age_baseline <- function(data) {
+  data %>% mutate(age_norm = (age - 65) / 20 - 2) %>%
+    pull(age_norm)
+}
+```
+
+
+# Model validation
+
+
+
+
+```{r}
+validation_res <- list()
+for(model in c("hu", "xie", "wang_clinical", "age_baseline")) {
+  cat("\n===== Validating ", model, " ==============\n")
+  single_res <- list()
+  cat("- AUC\n")
+  single_res$est_auc <- validate.mids(data = data_risk_imp,
+                       model = model,
+                       measure = auc,
+                       quiet = F)
+
+  cat("- Calibration slope\n")
+  single_res$est_slope <- validate.mids(data = data_risk_imp,
+                       model = model,
+                       measure = calibration_slope)
+  
+  cat("- Calibration intercept\n")
+  single_res$est_int <- validate.mids(data = data_risk_imp,
+                       model = model,
+                       measure = calibration_intercept)
+  
+  cat("- OE ratio\n")
+  single_res$est_log_oe <- validate.mids(data = data_risk_imp,
+                              model = model,
+                              measure = oe_ratio,
+                              log = TRUE)
+  
+  cat("- Net benefit\n")
+  single_res$est_nb <- validate.mids(data = data_risk_imp,
+                       model = model,
+                       measure = net_benefit_bootstrap)
+  
+  validation_res[[model]] <- single_res
+}
+saveRDS(validation_res, file = here::here("local_temp_data", "validation_res.rds"))
+```
+
+```{r}
+aucs <- list()
+slopes <- list()
+oes <- list()
+nbs <- list()
+
+for(model in names(validation_res)) {
+  auc_pooled <- pool.auc.mids(validation_res[[model]]$est_auc)$pooled$auc
+  print(auc_pooled)
+  aucs[[model]] <- auc_pooled 
+    
+  slope_pooled <- pool.validate.mids(validation_res[[model]]$est_slope)$pooled  
+  print(slope_pooled)
+  slopes[[model]] <- slope_pooled
+  
+  print(pool.validate.mids(validation_res[[model]]$est_int)$pooled)
+  
+  oe_pooled <- pool.oe.mids(validation_res[[model]]$est_log_oe)$oe$pooled 
+  print(oe_pooled)
+  oes[[model]] <- oe_pooled
+  
+  nb_pooled <- pool.validate.mids(validation_res[[model]]$est_nb)$pooled
+  print(nb_pooled)
+  nbs[[model]] <- nb_pooled
+}
+```
+
+
+
+```{r}
+plot_results <- function(results_list, title, estimate_column) {
+  purrr::imap_dfr(results_list, ~ .x %>% mutate(model = .y)) %>% 
+    ggplot(aes(x = model, y = {{estimate_column}}, ymin = ci.lb, ymax = ci.ub)) + geom_pointrange()  + scale_y_continuous(title)
+}
+
+plot_results(aucs, "AUC", est)
+plot_results(slopes, "Calibration slope", estimate)
+plot_results(oes, "OE", estimate)
+plot_results(nbs, "Net benefit", estimate)
+
+```
+
+
+```{r}
+```
+
+
+Xie - not sure if using SpO2 or SpO2 native
+DDU vs FEU D-dimer

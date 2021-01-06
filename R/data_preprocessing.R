@@ -1,5 +1,5 @@
 read_data_for_analysis <- function() {
-  patient_data <- read_csv(here::here("private_data", "patient_data.csv"),
+  patient_data <- readr::read_csv(here::here("private_data", "patient_data.csv"),
                            col_types = cols(
                              hospital_id = col_character(),
                              patient_id = col_character(),
@@ -44,7 +44,7 @@ read_data_for_analysis <- function() {
   collapse_breathing <- function(x) {
     fct_collapse(x, Ventilated = c("NIPPV", "MV", "ECMO"))
   }
-  breathing_data <- read_csv(here::here("private_data", "breathing_data.csv"),
+  breathing_data <- readr::read_csv(here::here("private_data", "breathing_data.csv"),
                            col_types = cols(
                             patient_id = col_character(),
                             hospital_id = col_character(),
@@ -57,7 +57,7 @@ read_data_for_analysis <- function() {
            breathing_s_low = collapse_breathing(breathing_low),
            breathing_s_high = collapse_breathing(breathing_low))
 
-  marker_data <- read_csv(here::here("private_data", "marker_data.csv"),
+  marker_data <- readr::read_csv(here::here("private_data", "marker_data.csv"),
                              col_types = cols(
                               patient_id = col_character(),
                               marker = col_character(),

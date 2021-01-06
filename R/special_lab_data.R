@@ -36,6 +36,9 @@ special_lab_data_markers_to_collect <-
     "Ddim" = "d_dimer",
     "Ly#" = "lymphocyte_count",
     "LYa" = "lymphocyte_count",
+    "Ne#" = "neutrophile_count",
+    "NEa" = "neutrophile_count",
+    "PLT" = "platelet_count",
     "Kre" = "creatinin",
     "CRP" = "CRP",
     "PCT" = "procalcitonin",
@@ -43,6 +46,8 @@ special_lab_data_markers_to_collect <-
     "Ferr" = "ferritin",
     "IL-6" = "IL_6",
     "IL6" = "IL_6",
+    "AST" = "AST",
+    "LD" = "lactate_dehydrogenase",
     "Vyska" = "height",
     "Vaha" = "weight"
   )
@@ -52,6 +57,9 @@ special_lab_data_markers_to_collect_units <-
     "Ddim" = "ng/ml DDU",
     "Ly#" = "10^9/l",
     "LYa" = "10^9/l",
+    "Ne#" = "10^9/l",
+    "NEa" = "10^9/l",
+    "PLT" = "10^9/l",
     "Kre" = "\U03BCmol/l",
     "CRP" = "mg/l",
     "PCT" = "\U03BCg/l",
@@ -59,6 +67,8 @@ special_lab_data_markers_to_collect_units <-
     "Ferr" = "\U03BCg/l",
     "IL-6" = "ng/l",
     "IL6" = "ng/l",
+    "AST" = "\U03BCkat/l",
+    "LD" = "\U03BCkat/l",
     "Vyska" = "cm",
     "Vaha" = "kg"
   )
@@ -155,11 +165,11 @@ read_special_lab_data <- function(input_file, patient_id, hospital_id, first_day
             vals <- strsplit(marker_value_part[2], "; ", fixed = TRUE)[[1]]
 
             #Ignored values
-            vals <- vals[!grepl("^(Txt\\+Hisviz koment..|krev sra.en.)$", vals)]
+            vals <- vals[!grepl("^(Txt\\+Hisviz koment..|krev sra.en.|hemol.za|chyl.zn.|nelze)$", vals)]
             if(length(vals) == 0) {
               next
             }
-            value_pattern <- "^(<?-?[0-9]+,?[0-9]*|(Txt\\+His)?v.ce ne. [0-9]+ .*)$"
+            value_pattern <- "^(<?>?-?[0-9]+,?[0-9]*|(Txt\\+His)?v.ce ne. [0-9]+ .*)$"
             if(!all(grepl(value_pattern, vals))) {
               print(paste0("Line ", line_numbers[i]))
               print(s)
@@ -167,7 +177,7 @@ read_special_lab_data <- function(input_file, patient_id, hospital_id, first_day
             }
 
             values <- as.numeric(
-              gsub("^<","",
+              gsub("^(<|>)","",
                 gsub("(Txt\\+His)?v.ce ne. ([0-9]+) [^;]*", "\\2",
                                   gsub(",", ".", vals, fixed = TRUE))))
 
@@ -180,6 +190,7 @@ read_special_lab_data <- function(input_file, patient_id, hospital_id, first_day
             }
             all_censored <- case_when(
               grepl("v.ce ne.", vals) ~  "right",
+              grepl("^>", vals) ~  "right",
               grepl("^<", vals) ~ "left",
               TRUE ~ "none"
             )

@@ -1,0 +1,33 @@
+---
+title: "Collaboration on risk scores"
+output: html_notebook
+---
+
+```{r setup, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
+knitr::opts_chunk$set(echo = FALSE)
+
+devtools::load_all()
+library(tidyverse)
+library(patchwork)
+theme_set(cowplot::theme_cowplot())
+data <- read_data_for_analysis()
+```
+
+Get marker counts
+
+```{r}
+relevant_markers <- c("lactate_dehydrogenase", "d_dimer", "platelet_count", "neutrophile_count", "lymphocyte_count", "AST")
+
+subset_data <- data$marker_data %>% 
+  filter(marker %in% relevant_markers & !is.na(value)) %>%
+  group_by(marker, patient_id) %>% summarise(present = TRUE, .groups = "drop") %>%
+  pivot_wider(names_from = "marker", values_from = "present") %>%
+  mutate(across(all_of(relevant_markers), ~ if_else(is.na(.x), 0L, 1L)))
+
+UpSetR::upset(subset_data %>% as.data.frame(), sets = relevant_markers)
+```
+
+
+
+No GFR (no Wang lab)
+
