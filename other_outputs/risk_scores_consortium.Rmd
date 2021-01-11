@@ -59,13 +59,18 @@ data_risk <- data$patient_data %>%
          ) %>%
   select(-creatinin.x, -creatinin.y, -pt_inr.x, -pt_inr.y, -albumin.x, -albumin.y) %>%
   #avoid including some derived quantities
-  select(-age_norm, -high_creatinin, -high_pt_inr, -low_albumin, -heart_problems, -lung_problems, -markers_out_of_range, -antibiotics, -macrolides) %>%
-  #avoid including indicators that are not available at hospitalization 
-  select(-discontinued_medication, -last_record, -outcome,  -best_supportive_care_from,
-         -starts_with("ever_"), -starts_with("any_"), -starts_with("worst"), -had_invasive,
-         -first_day_invasive, -last_day_invasive) %>%
+  select(-age_norm, -high_creatinin, -high_pt_inr, -low_albumin, -heart_problems, -lung_problems, -markers_out_of_range, -antibiotics, -macrolides, -comorbidities_sum_na) %>%
   #avoid columns that are not useful
   select(-hospital_id, -patient_id, -pcr_positive, -FiO2, -urea,
+          -discontinued_medication, -last_record, -outcome,  
+         #-best_supportive_care_from,
+         -starts_with("ever_"), ever_hcq,
+         -starts_with("any_"), 
+         -starts_with("worst"), worst_breathing_s,
+         -had_invasive,
+         -first_day_invasive, -last_day_invasive,
+      #   -startsWith("took"),
+         -took_hcq,
          -took_convalescent_plasma, -obesity, -took_favipiravir, -took_az,
          -took_dexamethasone, -took_remdesivir, -IgG, -Horowitz_index,
          -has_hypertension_drugs
@@ -73,8 +78,15 @@ data_risk <- data$patient_data %>%
   #convert to factors to use with mice
   mutate(sex = factor(sex), 
          breathing_s = factor(breathing_s, ordered = FALSE), 
+         worst_breathing_s = factor(worst_breathing_s, ordered = FALSE), 
          requires_oxygen = breathing_s != "AA",
          across(all_of(names(.)[sapply(., typeof) == "logical"]), factor))
+```
+
+
+These are the final columns used:
+```{r}
+names(data_risk)
 ```
 
 
@@ -97,11 +109,14 @@ where_impute[, setdiff(names(data_risk), columns_to_impute)] <- FALSE
 # predictor_matrix <- matrix(1, ncol = ncol(data_risk), 
 #                            nrow = ncol(data_risk),  dimnames = list(paste0("b_", names(data_risk), names(data_risk))))
 
+# I don't use mortality as it is already included in worst_breathing_s
 block_vars <- setdiff(names(data_risk), "mortality")
 blocks <- make.blocks(block_vars)
 predictor_matrix <- make.predictorMatrix(data_risk, blocks)
 
 predictor_matrix[, "requires_oxygen"] <- 0
+predictor_matrix[, "mortality"] <- 0
+predictor_matrix["oxygen_flow", "worst_breathing_s"] <- 0
 low_obs_count <- c("lactate_dehydrogenase", "AST", "ferritin", "IL_6", "leukocyte_count", "PEEP")
 predictor_matrix[low_obs_count, ] <- 0
 predictor_matrix[low_obs_count, c("age","sex")] <- 1
@@ -208,7 +223,7 @@ for(model in c("hu", "xie", "wang_clinical", "age_baseline")) {
   cat("- AUC\n")
   single_res$est_auc <- validate.mids(data = data_risk_imp,
                        model = model,
-                       measure = auc,
+                       measure = covid19retrospective::auc,
                        quiet = F)
 
   cat("- Calibration slope\n")
@@ -219,7 +234,8 @@ for(model in c("hu", "xie", "wang_clinical", "age_baseline")) {
   cat("- Calibration intercept\n")
   single_res$est_int <- validate.mids(data = data_risk_imp,
                        model = model,
-                       measure = calibration_intercept)
+                       measure = calibration_intercept,
+                       use_logistf = (model == "hu"))
   
   cat("- OE ratio\n")
   single_res$est_log_oe <- validate.mids(data = data_risk_imp,

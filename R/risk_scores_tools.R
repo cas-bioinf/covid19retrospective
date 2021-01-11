@@ -1,9 +1,13 @@
 inv_logit <- function(x) {  1/(1+exp(-x)) }
 
-calibration_intercept <- function(lp, y, family = binomial, ...) {
+calibration_intercept <- function(lp, y, family = binomial, use_logistf = FALSE, ...) {
   #lp <- log(p / (1 - p))
   resp = y == "dead"
-  fit <- glm(resp ~ 1, family = family, offset = lp, ...)
+  if(use_logistf){
+    fit <- logistf::logistf(resp ~ 1, data = data.frame(resp = resp), offset = lp, ...)
+  } else {
+    fit <- glm(resp ~ 1, family = family, offset = lp, ...)
+  }
   variance <- diag(vcov(fit))
   c(estimate = coef(fit), se = sqrt(variance), var = variance)
 }
@@ -17,7 +21,9 @@ calibration_slope <- function(lp, y, family = binomial, ...) {
 }
 
 auc <- function(lp, y, method = "delong", direction = "<", ...) {
-  fit <- pROC::auc(response = y, predictor = lp, direction = direction, method = method,  ...)
+  a = 5
+  fit <- pROC::auc(response = y, predictor = lp, direction = direction,
+                   method = method, levels = c("alive","dead"), ...)
   variance <- var(fit)
   ci <- confint(fit)
   c(estimate = fit[[1]][[1]], se = sqrt(variance), var = variance, ci.lb = ci$ci.lb, ci.ub = ci$ci.ub)
@@ -39,10 +45,10 @@ net_benefit_bootstrap <- function(lp, y, threshold = .50, test_harm = 0, case_la
   nb <- rep(NA, I)
   for (i in seq_len(I)) {
     s <- sample.int(length(p), length(p), replace = TRUE)
-    nb[i] <- net_benefit(p[s], y[s], threshold, test_harm, case_label, ...)
+    nb[i] <- net_benefit(lp[s], y[s], threshold, test_harm, case_label, ...)
   }
   se <- sd(nb)
-  est <- net_benefit(p, y, threshold, test_harm, case_label, ...)
+  est <- net_benefit(lp, y, threshold, test_harm, case_label, ...)
 
   c(estimate = est, se = se, var = se^2)
 }
