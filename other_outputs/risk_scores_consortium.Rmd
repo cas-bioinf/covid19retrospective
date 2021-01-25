@@ -16,22 +16,28 @@ library(pROC)
 library(metamisc)
 
 data <- read_data_for_analysis()
+
+columns_to_impute <- c("lactate_dehydrogenase", 
+                       "lymphocyte_count",
+                       "SpO2",
+                       "SpO2_native",
+                       "CRP",
+                       "d_dimer",
+                       "COPD",
+                       "other_lung_disease",
+                       "has_hypertension_drugs",
+                       "ischemic_heart_disease",
+                       "heart_failure")
 ```
 
 ```{r}
 first_non_NA <- function(x) {
-  if(length(x) > 2) {
-    stop("Wrong length")
-  } else if(length(x) == 1) {
-    x
+  if(all(is.na(x))) {
+    NA
   } else {
-    if(is.na(x[1])) {
-      x[2]
-    } else {
-      x[1]
-    }
+    ind <- which(!is.na(x))[1]
+    x[ind]
   }
-  
 } 
 
 marker_data_admission_all <- data$marker_data_wide %>% 
@@ -39,6 +45,16 @@ marker_data_admission_all <- data$marker_data_wide %>%
   arrange(hospital_id, patient_id,  day) %>%
   group_by(patient_id, hospital_id) %>%
   summarise(across(everything(), first_non_NA), .groups = "drop")
+
+marker_data_2_5_to_impute <- data$marker_data_wide %>%
+  select(hospital_id, patient_id,  day, any_of(columns_to_impute)) %>%
+  filter(day >= 2 & day <= 5) %>%
+  arrange(hospital_id, patient_id,  day) %>%
+  group_by(patient_id, hospital_id) %>%
+  summarise(across(everything(), first_non_NA), .groups = "drop") %>%
+  select(-day)
+
+columns_2_5 <- setdiff(names(marker_data_2_5_to_impute), c("day", "hospital_id", "patient_id"))
 
 marker_data_admission <- marker_data_admission_all %>%
   select(-ends_with("censored"),-breathing, -breathing_low, -breathing_high, -breathing_s_high, -breathing_s_low, -pcr_value, -hcq, -favipiravir, -convalescent_plasma, -remdesivir,-dexamethasone, -day) %>%
@@ -57,18 +73,26 @@ data_risk <- data$patient_data %>%
          pt_inr = if_else(is.na(pt_inr.x), pt_inr.y, pt_inr.x),
          albumin = if_else(is.na(albumin.x), albumin.y, albumin.x),
          ) %>%
-  select(-creatinin.x, -creatinin.y, -pt_inr.x, -pt_inr.y, -albumin.x, -albumin.y) %>%
+  select(-creatinin.x, -creatinin.y, -pt_inr.x, -pt_inr.y, -albumin.x, -albumin.y) 
+
+# Add data 2 to 5
+data_risk <- data_risk %>%
+  inner_join(marker_data_2_5_to_impute, by = c("patient_id", "hospital_id"),
+           suffix = c("", "_2_5")) 
+
   #avoid including some derived quantities
+data_risk <- data_risk %>%
   select(-age_norm, -high_creatinin, -high_pt_inr, -low_albumin, -heart_problems, -lung_problems, -markers_out_of_range, -antibiotics, -macrolides, -comorbidities_sum_na) %>%
   #avoid columns that are not useful
   select(-hospital_id, -patient_id, -pcr_positive, -FiO2, -urea,
-          -discontinued_medication, -last_record, -outcome,  
+          -discontinued_medication, -outcome,  
          #-best_supportive_care_from,
          -starts_with("ever_"), ever_hcq,
          -starts_with("any_"), 
          -starts_with("worst"), worst_breathing_s,
          -had_invasive,
          -first_day_invasive, -last_day_invasive,
+         -first_wave,
       #   -startsWith("took"),
          -took_hcq,
          -took_convalescent_plasma, -obesity, -took_favipiravir, -took_az,
@@ -81,6 +105,14 @@ data_risk <- data$patient_data %>%
          worst_breathing_s = factor(worst_breathing_s, ordered = FALSE), 
          requires_oxygen = breathing_s != "AA",
          across(all_of(names(.)[sapply(., typeof) == "logical"]), factor))
+
+
+# Nelson-Aalen for outcome
+data_risk <- data_risk %>% 
+  mutate(mortality_l = mortality == "dead") %>%
+  mutate(
+         nelsonaalen = mice::nelsonaalen(., timevar = "last_record", statusvar = "mortality_l")) %>%
+  select(-last_record, -mortality_l)
 ```
 
 
@@ -92,22 +124,15 @@ names(data_risk)
 
 ```{r}
 where_impute <- is.na(data_risk)
-columns_to_impute <- c("lactate_dehydrogenase", 
-                       "lymphocyte_count",
-                       "SpO2",
-                       "SpO2_native",
-                       "CRP",
-                       "d_dimer",
-                       "COPD",
-                       "other_lung_disease",
-                       "has_hypertension_drugs",
-                       "ischemic_heart_disease",
-                       "heart_failure")
+
                        
 where_impute[, setdiff(names(data_risk), columns_to_impute)] <- FALSE
 
 # predictor_matrix <- matrix(1, ncol = ncol(data_risk), 
 #                            nrow = ncol(data_risk),  dimnames = list(paste0("b_", names(data_risk), names(data_risk))))
+
+
+
 
 # I don't use mortality as it is already included in worst_breathing_s
 block_vars <- setdiff(names(data_risk), "mortality")
@@ -120,12 +145,25 @@ predictor_matrix["oxygen_flow", "worst_breathing_s"] <- 0
 low_obs_count <- c("lactate_dehydrogenase", "AST", "ferritin", "IL_6", "leukocyte_count", "PEEP")
 predictor_matrix[low_obs_count, ] <- 0
 predictor_matrix[low_obs_count, c("age","sex")] <- 1
+predictor_matrix["lactate_dehydrogenase", "sex"] <- 0
 
 mid_obs_count <- c("neutrophile_count", "platelet_count", "procalcitonin")
 predictor_matrix[mid_obs_count, ] <- 0
 predictor_matrix[mid_obs_count, c("age","sex", "requires_oxygen", "admitted_for_covid", "comorbidities_sum", "BMI")] <- 1
 predictor_matrix["procalcitonin", "admitted_for_covid"] <- 0
 
+no_nelsonaalen <- c("best_supportive_care_from")
+predictor_matrix[no_nelsonaalen, "nelsonaalen"] <- 0
+
+# Use future values only for the corresponding predictors
+for(c in columns_2_5) {
+  c_2_5 <- paste0(c, "_2_5")
+  # The same predictor as for the original column
+  predictor_matrix[c_2_5, ] <- predictor_matrix[c, ] 
+  predictor_matrix[, c_2_5] <- 0 
+  
+  predictor_matrix[c, paste0(c, "_2_5")] <- 1 
+}
 
 ```
 
@@ -204,8 +242,23 @@ wang_clinical <- function(data) {
 
 ```{r}
 age_baseline <- function(data) {
-  data %>% mutate(age_norm = (age - 65) / 20 - 2) %>%
-    pull(age_norm)
+  # Comparison of the characteristics, morbidity, and mortality of COVID-19 and seasonal influenza: a nationwide, population-based retrospective cohort study
+  # DOI: 10.1016/S2213-2600(20)30527-0
+  # https://www.thelancet.com/journals/lanres/article/PIIS2213-2600(2030527-0/fulltext#sec1
+  # Supplementary Table 3
+  data %>% mutate(ifr_perc = case_when(
+    age < 18 ~ 0.7,
+    age <= 30 ~ 0.5,
+    age <= 40 ~ 1.4,
+    age <= 50 ~ 2.7,
+    age <= 60 ~ 6.1,
+    age <= 70 ~ 13.7,
+    age <= 80 ~ 23.1,
+    age <= 90 ~ 32.4,
+    TRUE ~ 36.3),
+    ifr = ifr_perc / 100,
+    lp = log(ifr) - log1p(-ifr)) %>%
+    pull(lp) 
 }
 ```
 
