@@ -232,7 +232,7 @@ wang_clinical <- function(data) {
   data %>%
     mutate(hypertension = n_hypertension_drugs > 0,
            lp =
-  -2.6551 + 0.10 * age + 0.60 * hypertension + 1.11 * (ischemic_heart_disease == "TRUE")) %>%
+  -8.6 + 0.10 * age + 0.60 * hypertension + 1.11 * (ischemic_heart_disease == "TRUE")) %>%
     pull(lp)
 }
 ```
@@ -348,10 +348,92 @@ plot_results(nbs, "Net benefit", estimate)
 
 ```
 
+# Summaries
 
 ```{r}
+data_risk_sum <- data_risk %>% mutate(sex_male = sex == "M",
+                                      hypertension = n_hypertension_drugs > 0,
+                                      deceased = mortality == "dead")
+
+binary_columns <- c(
+ "sex_male",
+ "hypertension",
+ "heart_failure",
+ "COPD",
+ "asthma",
+ "other_lung_disease",
+ "diabetes",
+ "renal_disease",
+ "liver_disease",
+ "smoking",                  
+ "admitted_for_covid",
+ "ischemic_heart_disease",
+ "deceased"
+)
+
+continuous_columns <- c(
+ "age" ,
+ "days_from_symptom_onset",
+ "BMI",                
+ "AST",
+ "CRP",
+ "lymphocyte_count",
+ "neutrophile_count",
+ "platelet_count",
+ "d_dimer",
+ "ferritin",
+ "IL_6",
+ "lactate_dehydrogenase",
+ "procalcitonin",
+ "leukocyte_count",
+ "creatinin",
+ "pt_inr", 
+ "albumin"
+)
+
+summary_binary_list <- list()
+
+for(col in binary_columns) {
+  vals <- data_risk_sum[[col]]
+  if(is.factor(vals)) {
+    if(identical(levels(vals), c("FALSE", "TRUE"))) {
+      vals <- vals == "TRUE"
+    } else {
+      stop("Factor with invalid levels")
+    }
+  }
+  if(!is.logical(vals)) {
+    stop(col, " is not logical")
+  }
+  summary_binary_list[[col]] <- data.frame(
+    name = col,
+    type = "binary",
+    n_missing = sum(is.na(vals)),
+    mean = mean(vals, na.rm = TRUE)
+  )
+}
+
+summary_binary <- do.call(rbind, summary_binary_list)
+
+summary_continuous_list <- list()
+for(col in continuous_columns) {
+  vals <- data_risk_sum[[col]]
+  if(!is.numeric(vals)) {
+    stop(col, " is not numeric")
+  }
+  summary_continuous_list[[col]] <- data.frame(
+    name = col,
+    type = "continuous",
+    n_missing = sum(is.na(vals)),
+    mean = mean(vals, na.rm = TRUE)
+  )
+}
+
+summary_continuous <- do.call(rbind, summary_continuous_list)
+
+summary_all <- rbind(summary_binary, summary_continuous)
+summary_all
+
+write_csv(summary_all, path = here::here("local_temp_data", "table_1_summary.csv"))
 ```
 
-
-Xie - not sure if using SpO2 or SpO2 native
-DDU vs FEU D-dimer
