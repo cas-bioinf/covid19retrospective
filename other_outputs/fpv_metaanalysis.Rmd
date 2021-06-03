@@ -1,0 +1,258 @@
+---
+title: "Favipiravir - data for metaanalysis"
+output: html_notebook
+---
+
+
+```{r setup, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
+knitr::opts_chunk$set(echo = FALSE, fig.width = 8)
+
+devtools::load_all()
+library(tidyverse)
+library(patchwork)
+theme_set(cowplot::theme_cowplot())
+data <- read_data_for_analysis()
+wide <- data$marker_data_wide
+```
+
+```{r}
+fpv_hospital_id <- wide %>% filter(took_favipiravir) %>% pull(hospital_id) %>% unique()
+
+non_censored_patients <- data$patient_data %>% filter(outcome %in% c("Death", "Discharged"))
+data_fpv <- filter_complete_data(data, 
+                                 hospital_id == fpv_hospital_id & 
+                                 patient_id %in% non_censored_patients$patient_id)
+wide_fpv <- data_fpv$marker_data_wide
+```
+
+
+```{r}
+data_fpv$marker_data %>% group_by(marker, patient_id) %>%
+  summarise(n_days = n(), units = unique(unit)) %>%
+  summarise(n_patients = n(), median_days = median(n_days), units = unique(units)) %>%
+  arrange(desc(n_patients))
+```
+
+```{r}
+markers_for_adverse_effects <- tribble(
+  ~marker,            ~low_bound,      ~high_bound,
+  "creatinin",        49,              90,
+ # "CRP",
+  "platelet_count",   150,             450,
+  #"AST"
+  "eosinophile_count",0,               0.5,
+  "lymphocyte_count", 0.8,             4,
+  "neutrophile_count",2,               7,
+ # "albumin",          36,              45, # Removed, too few events/at risk
+  #"pt_inr",                                # Removed - hard to put good bounds 
+ # "procalcitonin",    0,               0.5 # Removed, too few events/at risk
+)
+```
+
+```{r}
+fpv_patients <- wide_fpv %>% 
+  group_by(patient_id) %>%
+  filter(any(took_favipiravir)) %>%
+  summarise(min_day_fpv = min(day[took_favipiravir]), max_day_fpv = max(day[!is.na(favipiravir) & favipiravir > 0])) %>% 
+  inner_join(data_fpv$patient_data, by = "patient_id") %>%
+  select(patient_id, age, sex, min_day_fpv, max_day_fpv) %>%
+  mutate(match_group = 1)
+
+fpv_patients
+```
+```{r}
+patients_matching <- data_fpv$patient_data %>%
+  filter(!ever_favipiravir) %>%
+  inner_join(data_fpv$marker_data, by = "patient_id") %>%
+  group_by(patient_id, age, sex) %>%
+  summarise(days_total.control = max(day), .groups = "drop") %>%
+  mutate(match_group = 1)
+
+potential_matches <- patients_matching %>%
+  inner_join(fpv_patients, by = c("match_group"), suffix = c(".control", ".fpv")) %>%
+  filter(days_total.control > min_day_fpv, abs(age.control - age.fpv) < 15)
+```
+
+
+```{r}
+set.seed(48632485)
+matches <- potential_matches %>%
+  group_by(patient_id.control) %>%
+#  filter(patient_id.fpv == sample(patient_id.fpv, size = 1, prob = exp(-abs(age.control - age.fpv))))
+  filter(patient_id.fpv == sample(patient_id.fpv, size = 1, prob = 1/(1 + abs(age.control - age.fpv))))
+
+
+matches_by_source <- matches %>% group_by(patient_id.fpv) %>% 
+  summarise(count = n(), .groups = "drop") 
+
+if(nrow(matches_by_source) != nrow(fpv_patients)) {
+  stop("Some FPV patients figure in no matching")
+}
+```
+
+```{r}
+groups_and_days_fpv <- 
+  fpv_patients %>% select(patient_id, min_day_fpv, age, sex) %>%
+  rename(exposure_day = min_day_fpv) %>%
+  mutate(group = "FPV")
+
+groups_and_days_control <- 
+  matches %>% select(patient_id.control, min_day_fpv, age.control, sex.control) %>%
+  rename(patient_id = patient_id.control, 
+         age = age.control,
+         sex = sex.control,
+         exposure_day = min_day_fpv) %>%
+  mutate(group = "Control")
+  
+
+groups_and_days <- rbind(groups_and_days_fpv, groups_and_days_control)
+
+data_for_model <- data_fpv$marker_data %>%
+  inner_join(groups_and_days, by = "patient_id") %>%
+  inner_join(markers_for_adverse_effects, by = "marker") %>%
+  ungroup() %>%
+  mutate(outside_bounds = value < low_bound | value > high_bound) %>%
+  group_by(patient_id, group, marker, age, sex) %>%
+  summarise(at_risk = any(!outside_bounds[day <= exposure_day]) & any(!is.na(value[day > exposure_day & day < exposure_day + 10])),
+            event = at_risk & any(outside_bounds[day >= exposure_day]), .groups = "drop") 
+
+  
+data_for_model %>% 
+  group_by(marker) %>%
+  summarise(n_at_risk = sum(at_risk), n_events = sum(event), .groups = "drop")
+
+data_for_model_all <- data_for_model %>% group_by(patient_id, age, sex, group) %>%
+  summarise(at_risk = any(at_risk), event = any(event), .groups = "drop") 
+
+data_for_model_all %>% 
+  summarise(n_at_risk = sum(at_risk), n_events = sum(event), .groups = "drop")
+
+```
+
+```{r}
+fit_adverse_markers <- glm( event ~ age + sex + group, family = "binomial", data = data_for_model_all %>% filter(at_risk))
+
+fpv_ci <-  confint(fit_adverse_markers)["groupFPV", ]
+fpv_coeff <- summary(fit_adverse_markers)$coefficients["groupFPV", ]
+
+other_adverse <- tibble::tribble(
+  ~event, ~estimate, ~se, ~`lower95`, ~`upper95`,
+  "Lab marker out of range", fpv_coeff["Estimate"], fpv_coeff["Std. Error"], fpv_ci[1], fpv_ci[2]
+)
+
+other_adverse
+write_csv(other_adverse, here::here("local_temp_data", "fpv_meta", "lab_events.csv"))
+
+```
+
+```{r}
+all_event_markers <- data_fpv$marker_data %>%
+  inner_join(markers_for_adverse_effects, by = "marker") %>%
+  mutate(outside_bounds = value < low_bound | value > high_bound) %>%
+  group_by()
+
+took_fpv <-  wide_fpv %>% select(patient_id, day,  took_favipiravir) %>%
+  crossing(markers_for_adverse_effects)
+
+all_event_markers_fpv <- took_fpv %>% 
+  left_join(all_event_markers, by = c("patient_id", "day", "low_bound", "high_bound", "marker")) %>%
+  mutate(group = if_else(took_favipiravir, "FPV", "Control"))
+
+if(nrow(all_event_markers_fpv) != nrow(took_fpv)) {
+  stop("bad join")
+}
+```
+
+```{r}
+all_res <- list()
+for(exposure_day in 1:6) {
+
+  all_events_risk <- all_event_markers_fpv %>%
+    group_by(patient_id, marker) %>%
+    summarise(at_risk = any(!outside_bounds[day <= exposure_day]) & any(!is.na(value[day > exposure_day & day < exposure_day + 10])),
+              event = at_risk & any(outside_bounds[day >= exposure_day]), 
+              group = group[day == exposure_day],
+              .groups = "drop")
+  
+  
+  by_marker <- all_events_risk %>%
+    group_by(group, marker) %>%
+    summarise(N = n(), at_risk = sum(at_risk, na.rm = TRUE), event = sum(event, na.rm = TRUE), .groups = "drop")
+    
+  
+  any_marker <- all_events_risk %>%
+    group_by(group) %>%
+    summarise(N = length(unique(patient_id)), marker = "Any", at_risk = length(unique(patient_id[at_risk])), event = length(unique(patient_id[event])), .groups = "drop")
+  
+  all_res[[exposure_day]] <- rbind(any_marker, by_marker) %>% mutate(day = exposure_day)
+}
+
+do.call(rbind, all_res)
+
+```
+
+```{r}
+all_event_markers_fpv %>% filter(is.na(group))
+
+all_event_markers_fpv %>% ungroup() %>%
+  group_by(day) %>%
+  summarise(length(unique(patient_id)), sum(took_favipiravir), sum(is.na(took_favipiravir)), .groups = "drop")
+
+dd <- all_event_markers_fpv %>%
+  group_by(patient_id, marker) %>% summarise(at_risk = any(!outside_bounds[day <= exposure_day]) & any(!is.na(value[day > exposure_day & day < exposure_day + 10])), gr = if_else(took_favipiravir[day == exposure_day], "FPV", "Control"))
+
+length(unique(dd$patient_id))
+```
+
+
+## Simple summaries
+
+```{r}
+table_fpv <- data_fpv$patient_data %>% 
+  mutate(group = if_else(ever_favipiravir, "FPV", "Control")) %>% 
+  group_by(group) %>% 
+  summarise(
+    N = n(),
+    Male = sum(sex == "M"),
+    `Age mean` = mean(age),
+    `Age sd` = sd(age),
+    `Age min` = min(age),
+    `Age max` = max(age),
+    `Admitted for Covid` = sum(admitted_for_covid),
+    `Took hydroxychloroquine` = sum(ever_hcq),
+    `Took azithromycin` = sum(ever_az),
+    `Took dexamethasone` = sum(ever_dexamethasone),
+    `Took remdesivir` = sum(ever_remdesivir),
+    `Convalescent plasma` = sum(ever_convalescent_plasma),
+    `Ischemic Heart Disease` = sum(ischemic_heart_disease),
+    `Takes antihypertensives` = sum(has_hypertension_drugs),	
+    `Heart Failure` = sum(heart_failure),
+    COPD = sum(COPD),
+    Asthma = sum(asthma),
+    `Other lung disease` = sum(other_lung_disease),
+    Diabetes = sum(diabetes),
+    `Renal Disease` = sum(renal_disease),
+    `Liver Disease` = sum(liver_disease),
+    `Smoking` = sum(smoking),
+    `BMI mean` = mean(BMI, na.rm = TRUE),
+    `BMI sd` = sd(BMI, na.rm = TRUE),
+    `Best supportive care` = sum(!is.na(best_supportive_care_from)),
+    Deceased = sum(outcome == "Death"),
+    `Required ventilation` = sum(worst_breathing_s >= "Ventilated"),
+    `Required oxygen` = sum(worst_breathing_s >= "Oxygen"),
+    Discharged = sum(outcome == "Discharged"),
+    .groups = "drop"
+  ) %>%
+  as.data.frame()%>%
+  column_to_rownames("group") %>%
+  t() %>% as.data.frame() %>%
+  rownames_to_column("characteristic")
+
+table_fpv 
+
+write_csv(table_fpv, here::here("local_temp_data", "fpv_meta", "characteristics.csv"))
+
+```
+
+
+
