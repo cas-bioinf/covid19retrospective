@@ -987,6 +987,8 @@ if(do_pp_checks) {
 rm(c_trt_m3_fit)
 ```
 
+
+
 ### Treatments + age + sex + hospital, first wave
 
 The same model as above, but using only first wave patients. Fitted coefficients:
@@ -1019,6 +1021,85 @@ if(do_pp_checks) {
 rm(c_trt_m3_fw_fit)
 ```
 
+```{r}
+# Estimates for FPV for metaanalysis
+hmm_fit <- c_trt_m3_fw_fit
+numerator_serie_data <- serie_data_28_fw %>% mutate(took_favipiravir = 1)
+denominator_serie_data <- serie_data_28_fw %>% mutate(took_favipiravir = 0)
+
+
+  combined_data <- hmm_fit$data
+  combined_data$serie_data = rbind(
+    numerator_serie_data %>% mutate(.serie = paste0("__num_", .serie), is_numerator = TRUE),
+    denominator_serie_data %>% mutate(.serie = paste0("__denom_", .serie), is_numerator = FALSE)
+  ) %>%
+    mutate(.serie = factor(.serie))
+
+  combined_data$initial_states = rep(hmm_fit$data$initial_states, 2)
+
+
+  oxygen_states_ids <- which(hmm_fit$data$hidden_state_data$corresponding_obs == "Oxygen")
+  ventilation_states_ids <- which(hmm_fit$data$hidden_state_data$corresponding_obs == "Ventilated")
+
+  numerator_indices <- 1:length(hmm_fit$data$initial_states) + length(hmm_fit$data$initial_states)
+  denominator_indices <- 1:length(hmm_fit$data$initial_states)
+  
+  numerator_indices_oxygen <- numerator_indices[hmm_fit$data$initial_states == "AA_worsening"]
+  denominator_indices_oxygen <- denominator_indices[hmm_fit$data$initial_states == "AA_worsening"]
+
+  numerator_indices_ventilated <- numerator_indices[hmm_fit$data$initial_states != "Ventilated_worsening"]
+  denominator_indices_ventilated <- denominator_indices[hmm_fit$data$initial_states != "Ventilated_worsening"]
+  
+  
+states_rep <- 4
+states_list <- list()
+for(i in 1:states_rep) {
+  states_list[[i]] <- posterior_epred_rect(hmm_fit, newdata = combined_data, method = posterior_epred_rect_simulate, cores = 6)
+}
+
+states <- do.call(abind::abind, args = c(states_list, list(along = 3)))
+
+  needed_ventilation <- apply(states, MARGIN = c(2,3), FUN = function(x) { any(x %in% ventilation_states_ids) })
+  needed_oxygen <- apply(states, MARGIN = c(2,3), FUN = function(x) { any(x %in% oxygen_states_ids) })
+  
+  samples_oxygen_probs_numerator <- 
+    colMeans(needed_oxygen[numerator_indices_oxygen, ])
+  samples_oxygen_probs_denominator <- 
+    colMeans(needed_oxygen[denominator_indices_oxygen, ])
+  
+  log_oxygen_odds_numerator <- log(samples_oxygen_probs_numerator) - log1p(-samples_oxygen_probs_numerator)
+  log_oxygen_odds_denominator <- log(samples_oxygen_probs_denominator) - log1p(-samples_oxygen_probs_denominator)
+
+
+  log_OR_oxygen <- log_oxygen_odds_numerator - log_oxygen_odds_denominator  
+
+  
+    samples_ventilation_probs_numerator <- 
+    colMeans(needed_ventilation[numerator_indices_ventilated, ])
+  samples_ventilation_probs_denominator <- 
+    colMeans(needed_ventilation[denominator_indices_ventilated, ])
+  
+  log_ventilation_odds_numerator <- log(samples_ventilation_probs_numerator) - log1p(-samples_ventilation_probs_numerator)
+  log_ventilation_odds_denominator <- log(samples_ventilation_probs_denominator) - log1p(-samples_ventilation_probs_denominator)
+
+
+  log_OR_ventilation <- log_ventilation_odds_numerator - log_ventilation_odds_denominator  
+
+  # There is a very tiny fraction of NaNs where no patient is predicted to need ventilation. remove those.
+  log_OR_ventilation <- log_OR_ventilation[is.finite(log_OR_ventilation)]
+  
+  death_res <- hmm_hypothesis_res_list[["c_trt_rate_m3_fw"]] %>% filter(hypothesis == "favipiravir_death")
+  
+res_fpv <- tibble::tribble(
+  ~event, ~estimate, ~se, ~`lower95`, ~`upper95`,
+  "Death",  death_res$point_estimate, NA, death_res$ci_low, death_res$ci_high,
+  "Oxygen", mean(log_OR_oxygen), sd(log_OR_oxygen), quantile(log_OR_oxygen, 0.025), quantile(log_OR_oxygen, 0.975),
+  "Ventilated", mean(log_OR_ventilation), sd(log_OR_ventilation), quantile(log_OR_ventilation, 0.025, na.rm=TRUE), quantile(log_OR_ventilation, 0.975, na.rm=TRUE)
+  )
+
+write_csv(res_fpv, file = here::here("local_temp_data", "fpv_meta","main_events.csv"))
+```
+
 
 ### Treatment + age + sex + hospital + comorbidities
 
@@ -1034,7 +1115,7 @@ Fitted coefficients - note the divergent transitions, indicating the results are
 ```{r c_trt_m4}
 c_trt_m4 <- brmshmmdata(trt_group_m4_formula, serie_data, 
                   complex_rate_data, complex_hidden_state_data, complex_initial_states, prior = trt_group_m1_prior,
-                  observed_state_data = base_observed_state_data)
+                  observed_state_data = base_observed_state_data)  
 
 
 c_trt_m4_fit <- brmhmm(c_trt_m4, cache_file = paste0(cache_dir,"/c_trt_m4.rds"), init = 0.1, control = default_control, iter = 1200)

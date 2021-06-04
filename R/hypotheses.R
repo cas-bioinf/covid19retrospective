@@ -79,6 +79,7 @@ bayesian_hypothesis_res_from_draws <- function(
              widest_CI_excl_reference = abs(reference_location - 0.5) * 2,
              point_estimate = mean(draws),
              ci_low = quantile(draws, 0.025),
+             sd = sd(draws),
              ci_high = quantile(draws, 0.975),
              model_check = model_check,
              data_version = get_data_version(),

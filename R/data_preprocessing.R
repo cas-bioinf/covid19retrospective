@@ -20,7 +20,7 @@ read_data_for_analysis <- function() {
                              smoking = col_logical(),
                              BMI = col_double(),
                              obesity = col_character(),
-                             NYHA = col_factor(levels = c(1,2,3,4), ordered = TRUE),
+                             NYHA = col_factor(levels = c("1","2","3","4"), ordered = TRUE),
                              creatinin = col_double(),
                              pt_inr = col_double(),
                              albumin = col_double(),
