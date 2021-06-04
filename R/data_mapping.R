@@ -1,5 +1,5 @@
 dummy_markers <- c("Drugs", "Other marker (optional)", "Other Covid drug", "Yet another drug",
-                   "Rosuvastatin")
+                   "Rosuvastatin", "RTG S+P", "Rtg S+P")
 
 
 marker_map <- c(
@@ -24,8 +24,8 @@ marker_map <- c(
         "creatinine" = "creatinine",
         "urea" = "urea",
         "IgG" = "IgG",
-        "RTG S+P" = "rtg",
-        "Rtg S+P" = "rtg",
+        #"RTG S+P" = "rtg",
+        #"Rtg S+P" = "rtg",
       ## Covid-specific drugs
         "Hydroxychloroquine" = "hcq",
         "Kaletra" = "kaletra",

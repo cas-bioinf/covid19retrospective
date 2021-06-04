@@ -1,0 +1,145 @@
+---
+title: "Eosinophile"
+output: html_notebook
+---
+
+```{r setup, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
+knitr::opts_chunk$set(echo = FALSE, fig.width = 8)
+
+devtools::load_all()
+library(tidyverse)
+library(patchwork)
+library(tsiMisc) # devtools::install_github("tsieger/tsiMisc")
+theme_set(cowplot::theme_cowplot())
+data <- read_data_for_analysis()
+wide <- data$marker_data_wide
+
+```
+
+```{r}
+wide %>% filter(!is.na(eosinophile_count)) %>% pull(patient_id) %>% unique() %>% length()
+wide %>% filter(!is.na(eosinophile_count)) %>% group_by(patient_id) %>% summarise(count = n()) %>% group_by(count) %>% summarise(n())
+```
+
+```{r}
+wide %>% filter(!is.na(eosinophile_count)) %>% group_by(eosinophile_count == 0) %>% summarise(n())
+```
+
+
+```{r}
+plot_marker_data <- function(markers, log_transform, smooth = FALSE, max_patients = NULL, max_day = NULL) {
+
+  if(length(markers) > 1) {
+    facet = facet_grid(marker ~ worst_breathing_s, scales = "free_y")
+    scale_y_name = "Value"
+  } else {
+    facet = facet_wrap( ~ worst_breathing_s, ncol = 1)
+    unit <- data$marker_data %>% filter(marker == names(markers)) %>% pull(unit) %>% unique()
+    scale_y_name <- markers
+  }
+  
+  data_for_plot <- data$marker_data %>% 
+    filter(marker %in% names(markers), day >= 0) %>% 
+    group_by(marker, patient_id) %>%
+    filter(n() > 1) %>%
+    ungroup() %>%
+    mutate(marker = markers[marker]) 
+  
+  if(!is.null(max_patients)) {
+    patient_markers_to_use <- data_for_plot %>% 
+      select(marker, patient_id) %>%
+      distinct() %>%
+      group_by(marker) %>%
+      slice_sample(n = max_patients) 
+    
+    data_for_plot <- data_for_plot %>%
+      semi_join(patient_markers_to_use, by = c("patient_id", "marker"))
+  }
+  
+  if(log_transform) {
+    scale_y <- scale_y_log10(scale_y_name)
+    data_for_plot <- data_for_plot %>% 
+      group_by(marker) %>%
+      mutate(value = if_else(value == 0, min(value[value > 0]) / 2, value)) %>%
+      ungroup()
+  } else {
+    scale_y <- scale_y_continuous(scale_y_name)
+  }
+  
+  if(smooth) {
+    main_geom <- geom_smooth(aes(group = outcome))
+  } else {
+    main_geom <- geom_line(alpha = 0.5)
+  }
+  
+  if(!is.null(max_day)) {
+    expand <- expand_limits(x = max_day)
+  } else {
+    expand <- NULL
+  }
+  
+  data_for_plot %>%
+    inner_join(data$patient_data, by = c("hospital_id", "patient_id")) %>%
+    mutate(outcome = fct_relevel(fct_collapse(outcome, Hospitalized = c("Hospitalized", "Transferred")),
+            "Discharged", "Hospitalized", "Death"),
+           worst_breathing_s =fct_recode(worst_breathing_s, `Ambient Air` = "AA")) %>%
+    ggplot(aes(x = day, y = value,  group = patient_id)) + 
+    main_geom +
+    facet + 
+    expand +
+    #scale_color_brewer(type = "qual", palette = 2, guide = guide_legend(override.aes = list(alpha = 1, size = 2))) + 
+    scale_y +
+    scale_x_continuous("Days since hospitalization") +
+    scale_color_discrete(guide = FALSE)
+    #scale_color_viridis_d(guide = guide_legend(override.aes = list(alpha = 1, size = 2))) + scale_y
+}
+
+max_day <- data$marker_data_wide %>% filter(!is.na(CRP)) %>% pull(day) %>% max()
+hide_axis_theme <- theme(axis.text.x = element_blank(),
+                         axis.line.x = element_blank(),
+                         axis.title.x = element_blank(),
+                         axis.ticks.x = element_blank())
+hide_strip_theme <- theme(strip.background = element_blank(), strip.text = element_blank())
+title_theme <- theme(axis.title.y = element_text(size = 10))
+
+
+#  (plot_marker_data(c("eosinophile_count" = "Eo"), log_transform = TRUE, max_day = max_day))
+
+fig_eo <-   (plot_marker_data(c("eosinophile_count" = "Eo"), log_transform = FALSE, max_day = max_day))
+
+fig_eo
+
+ggsave(here::here("local_temp_data/fig_eo.png"), plot = fig_eo, width = 8, heigh = 6)
+
+```
+
+
+```{r}
+names(data$marker_data_wide)
+```
+
+```{r}
+fig_neu <-   (plot_marker_data(c("neutrophile_count" = "Neu"), log_transform = FALSE, max_day = max_day))
+
+fig_neu
+
+ggsave(here::here("local_temp_data/fig_neu.png"), plot = fig_neu, width = 8, heigh = 6)
+
+
+```
+
+```{r}
+eos_age <- wide %>% filter(!is.na(eosinophile_count)) %>%
+  group_by(patient_id) %>% summarise(first_eos = eosinophile_count[day == min(day)], max_eos = max(eosinophile_count)) %>% inner_join(data$patient_data, by = "patient_id")
+
+
+fig_eos_age <- ggplot(eos_age, aes(x = age, y = first_eos, color = worst_breathing_s, shape = worst_breathing_s, group = 1)) + geom_point()  + scale_color_brewer("Worst condition", type = "qual", palette = 2) + scale_shape("Worst condition") + scale_y_continuous("First measured Eos")
+
+fig_eos_age
+
+ggsave(here::here("local_temp_data/fig_eos_age.png"), plot = fig_eos_age, width = 8, heigh = 6)
+
+ggplot(eos_age, aes(x = age, y = max_eos, color = worst_breathing_s, shape = worst_breathing_s)) + geom_point()  + scale_color_brewer(type = "qual", palette = 2)
+
+```
+
