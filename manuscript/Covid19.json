@@ -8343,5 +8343,1154 @@
 				]
 			]
 		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/JCV6R3RC",
+		"type": "article-journal",
+		"container-title": "JAMA",
+		"DOI": "10.1001/jama.2021.2747",
+		"ISSN": "0098-7484",
+		"issue": "12",
+		"journalAbbreviation": "JAMA",
+		"language": "en",
+		"page": "1185",
+		"source": "DOI.org (Crossref)",
+		"title": "Association of Convalescent Plasma Treatment With Clinical Outcomes in Patients With COVID-19: A Systematic Review and Meta-analysis",
+		"title-short": "Association of Convalescent Plasma Treatment With Clinical Outcomes in Patients With COVID-19",
+		"URL": "https://jamanetwork.com/journals/jama/fullarticle/2777060",
+		"volume": "325",
+		"author": [
+			{
+				"family": "Janiaud",
+				"given": "Perrine"
+			},
+			{
+				"family": "Axfors",
+				"given": "Cathrine"
+			},
+			{
+				"family": "Schmitt",
+				"given": "Andreas M."
+			},
+			{
+				"family": "Gloy",
+				"given": "Viktoria"
+			},
+			{
+				"family": "Ebrahimi",
+				"given": "Fahim"
+			},
+			{
+				"family": "Hepprich",
+				"given": "Matthias"
+			},
+			{
+				"family": "Smith",
+				"given": "Emily R."
+			},
+			{
+				"family": "Haber",
+				"given": "Noah A."
+			},
+			{
+				"family": "Khanna",
+				"given": "Nina"
+			},
+			{
+				"family": "Moher",
+				"given": "David"
+			},
+			{
+				"family": "Goodman",
+				"given": "Steven N."
+			},
+			{
+				"family": "Ioannidis",
+				"given": "John P. A."
+			},
+			{
+				"family": "Hemkens",
+				"given": "Lars G."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					4
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2021",
+					3,
+					23
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/YA3UAMVY",
+		"type": "article",
+		"publisher": "Společnost infekčního lékařství ČLS JEP",
+		"title": "Covid-19: diagnostika a léčba",
+		"URL": "https://www.infekce.cz/Covid2019/DPcovid-19_SIL_0421.pdf",
+		"author": [
+			{
+				"family": "Štefan",
+				"given": "Marek"
+			},
+			{
+				"family": "Chrdle",
+				"given": "Aleš"
+			},
+			{
+				"family": "Husa",
+				"given": "Petr"
+			},
+			{
+				"family": "Beneš",
+				"given": "Jan"
+			},
+			{
+				"family": "Dlouhý",
+				"given": "Pavel"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					4
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2021",
+					4,
+					15
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/PCJBPPW7",
+		"type": "article",
+		"publisher": "National Institutes of Health",
+		"title": "Coronavirus Disease 2019 (COVID-19)Treatment Guidelines",
+		"URL": "https://www.covid19treatmentguidelines.nih.gov/",
+		"author": [
+			{
+				"family": "COVID-19 Treatment Guidelines Panel",
+				"given": ""
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					4,
+					6
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/SWNTWFLU",
+		"type": "article",
+		"publisher": "Ministry of Health of the Czech Republic",
+		"title": "COVID-19 v ČR: Otevřené datové sady a sady ke stažení",
+		"URL": "https://onemocneni-aktualne.mzcr.cz",
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					5
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/W8KK3TX2",
+		"type": "report",
+		"abstract": "ABSTRACT\n          \n            Background\n            Coronavirus disease 2019 (COVID-19) is associated with diffuse lung damage. Corticosteroids may modulate immune-mediated lung injury and reducing progression to respiratory failure and death.\n          \n          \n            Methods\n            The Randomised Evaluation of COVID-19 therapy (RECOVERY) trial is a randomized, controlled, open-label, adaptive, platform trial comparing a range of possible treatments with usual care in patients hospitalized with COVID-19. We report the preliminary results for the comparison of dexamethasone 6 mg given once daily for up to ten days vs. usual care alone. The primary outcome was 28-day mortality.\n          \n          \n            Results\n            2104 patients randomly allocated to receive dexamethasone were compared with 4321 patients concurrently allocated to usual care. Overall, 454 (21.6%) patients allocated dexamethasone and 1065 (24.6%) patients allocated usual care died within 28 days (age-adjusted rate ratio [RR] 0.83; 95% confidence interval [CI] 0.74 to 0.92; P<0.001). The proportional and absolute mortality rate reductions varied significantly depending on level of respiratory support at randomization (test for trend p<0.001): Dexamethasone reduced deaths by one-third in patients receiving invasive mechanical ventilation (29.0% vs. 40.7%, RR 0.65 [95% CI 0.51 to 0.82]; p<0.001), by one-fifth in patients receiving oxygen without invasive mechanical ventilation (21.5% vs. 25.0%, RR 0.80 [95% CI 0.70 to 0.92]; p=0.002), but did not reduce mortality in patients not receiving respiratory support at randomization (17.0% vs. 13.2%, RR 1.22 [95% CI 0.93 to 1.61]; p=0.14).\n          \n          \n            Conclusions\n            In patients hospitalized with COVID-19, dexamethasone reduced 28-day mortality among those receiving invasive mechanical ventilation or oxygen at randomization, but not among patients not receiving respiratory support.\n          \n          \n            Trial registrations\n            \n              The RECOVERY trial is registered with ISRCTN (50189673) and clinicaltrials.gov (\n              NCT04381936\n              ).\n            \n          \n          \n            Funding\n            Medical Research Council and National Institute for Health Research (Grant ref: MC_PC_19056).",
+		"genre": "preprint",
+		"language": "en",
+		"note": "DOI: 10.1101/2020.06.22.20137273",
+		"publisher": "Infectious Diseases (except HIV/AIDS)",
+		"source": "DOI.org (Crossref)",
+		"title": "Effect of Dexamethasone in Hospitalized Patients with COVID-19 – Preliminary Report",
+		"URL": "http://medrxiv.org/lookup/doi/10.1101/2020.06.22.20137273",
+		"author": [
+			{
+				"family": "Horby",
+				"given": "Peter"
+			},
+			{
+				"family": "Lim",
+				"given": "Wei Shen"
+			},
+			{
+				"family": "Emberson",
+				"given": "Jonathan"
+			},
+			{
+				"family": "Mafham",
+				"given": "Marion"
+			},
+			{
+				"family": "Bell",
+				"given": "Jennifer"
+			},
+			{
+				"family": "Linsell",
+				"given": "Louise"
+			},
+			{
+				"family": "Staplin",
+				"given": "Natalie"
+			},
+			{
+				"family": "Brightling",
+				"given": "Christopher"
+			},
+			{
+				"family": "Ustianowski",
+				"given": "Andrew"
+			},
+			{
+				"family": "Elmahi",
+				"given": "Einas"
+			},
+			{
+				"family": "Prudon",
+				"given": "Benjamin"
+			},
+			{
+				"family": "Green",
+				"given": "Christopher"
+			},
+			{
+				"family": "Felton",
+				"given": "Timothy"
+			},
+			{
+				"family": "Chadwick",
+				"given": "David"
+			},
+			{
+				"family": "Rege",
+				"given": "Kanchan"
+			},
+			{
+				"family": "Fegan",
+				"given": "Christopher"
+			},
+			{
+				"family": "Chappell",
+				"given": "Lucy C"
+			},
+			{
+				"family": "Faust",
+				"given": "Saul N"
+			},
+			{
+				"family": "Jaki",
+				"given": "Thomas"
+			},
+			{
+				"family": "Jeffery",
+				"given": "Katie"
+			},
+			{
+				"family": "Montgomery",
+				"given": "Alan"
+			},
+			{
+				"family": "Rowan",
+				"given": "Kathryn"
+			},
+			{
+				"family": "Juszczak",
+				"given": "Edmund"
+			},
+			{
+				"family": "Baillie",
+				"given": "J Kenneth"
+			},
+			{
+				"family": "Haynes",
+				"given": "Richard"
+			},
+			{
+				"family": "Landray",
+				"given": "Martin J"
+			},
+			{
+				"literal": "RECOVERY Collaborative Group"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					5
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					6,
+					22
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/E76N3Y5U",
+		"type": "article-journal",
+		"container-title": "PLoS Medicine",
+		"DOI": "10.1371/journal.pmed.1001381",
+		"ISSN": "1549-1676",
+		"issue": "2",
+		"journalAbbreviation": "PLoS Med",
+		"language": "en",
+		"page": "e1001381",
+		"source": "DOI.org (Crossref)",
+		"title": "Prognosis Research Strategy (PROGRESS) 3: Prognostic Model Research",
+		"title-short": "Prognosis Research Strategy (PROGRESS) 3",
+		"URL": "https://dx.plos.org/10.1371/journal.pmed.1001381",
+		"volume": "10",
+		"author": [
+			{
+				"family": "Steyerberg",
+				"given": "Ewout W."
+			},
+			{
+				"family": "Moons",
+				"given": "Karel G. M."
+			},
+			{
+				"family": "Windt",
+				"given": "Danielle A.",
+				"non-dropping-particle": "van der"
+			},
+			{
+				"family": "Hayden",
+				"given": "Jill A."
+			},
+			{
+				"family": "Perel",
+				"given": "Pablo"
+			},
+			{
+				"family": "Schroter",
+				"given": "Sara"
+			},
+			{
+				"family": "Riley",
+				"given": "Richard D."
+			},
+			{
+				"family": "Hemingway",
+				"given": "Harry"
+			},
+			{
+				"family": "Altman",
+				"given": "Douglas G."
+			},
+			{
+				"literal": "for the PROGRESS Group"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					5
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2013",
+					2,
+					5
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/9XLSLVWJ",
+		"type": "article-journal",
+		"abstract": "The number of proposed prognostic models for coronavirus disease 2019 (COVID-19) is growing rapidly, but it is unknown whether any are suitable for widespread clinical implementation.\n            We independently externally validated the performance of candidate prognostic models, identified through a living systematic review, among consecutive adults admitted to hospital with a final diagnosis of COVID-19. We reconstructed candidate models as per original descriptions and evaluated performance for their original intended outcomes using predictors measured at the time of admission. We assessed discrimination, calibration and net benefit, compared to the default strategies of treating all and no patients, and against the most discriminating predictors in univariable analyses.\n            We tested 22 candidate prognostic models among 411 participants with COVID-19, of whom 180 (43.8%) and 115 (28.0%) met the endpoints of clinical deterioration and mortality, respectively. Highest areas under receiver operating characteristic (AUROC) curves were achieved by the NEWS2 score for prediction of deterioration over 24 h (0.78, 95% CI 0.73–0.83), and a novel model for prediction of deterioration <14 days from admission (0.78, 95% CI 0.74–0.82). The most discriminating univariable predictors were admission oxygen saturation on room air for in-hospital deterioration (AUROC 0.76, 95% CI 0.71–0.81), and age for in-hospital mortality (AUROC 0.76, 95% CI 0.71–0.81). No prognostic model demonstrated consistently higher net benefit than these univariable predictors, across a range of threshold probabilities.\n            Admission oxygen saturation on room air and patient age are strong predictors of deterioration and mortality among hospitalised adults with COVID-19, respectively. None of the prognostic models evaluated here offered incremental value for patient stratification to these univariable predictors.",
+		"container-title": "European Respiratory Journal",
+		"DOI": "10.1183/13993003.03498-2020",
+		"ISSN": "0903-1936, 1399-3003",
+		"issue": "6",
+		"journalAbbreviation": "Eur Respir J",
+		"language": "en",
+		"page": "2003498",
+		"source": "DOI.org (Crossref)",
+		"title": "Systematic evaluation and external validation of 22 prognostic models among hospitalised adults with COVID-19: an observational cohort study",
+		"title-short": "Systematic evaluation and external validation of 22 prognostic models among hospitalised adults with COVID-19",
+		"URL": "http://erj.ersjournals.com/lookup/doi/10.1183/13993003.03498-2020",
+		"volume": "56",
+		"author": [
+			{
+				"family": "Gupta",
+				"given": "Rishi K."
+			},
+			{
+				"family": "Marks",
+				"given": "Michael"
+			},
+			{
+				"family": "Samuels",
+				"given": "Thomas H.A."
+			},
+			{
+				"family": "Luintel",
+				"given": "Akish"
+			},
+			{
+				"family": "Rampling",
+				"given": "Tommy"
+			},
+			{
+				"family": "Chowdhury",
+				"given": "Humayra"
+			},
+			{
+				"family": "Quartagno",
+				"given": "Matteo"
+			},
+			{
+				"family": "Nair",
+				"given": "Arjun"
+			},
+			{
+				"family": "Lipman",
+				"given": "Marc"
+			},
+			{
+				"family": "Abubakar",
+				"given": "Ibrahim"
+			},
+			{
+				"family": "Smeden",
+				"given": "Maarten",
+				"non-dropping-particle": "van"
+			},
+			{
+				"family": "Wong",
+				"given": "Wai Keong"
+			},
+			{
+				"family": "Williams",
+				"given": "Bryan"
+			},
+			{
+				"family": "Noursadeghi",
+				"given": "Mahdad"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					5
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					12
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/YM2LGA3Y",
+		"type": "article-journal",
+		"container-title": "Biometrics",
+		"DOI": "10.1111/j.0006-341X.2003.00109.x",
+		"ISSN": "0006-341X, 1541-0420",
+		"issue": "4",
+		"journalAbbreviation": "Biometrics",
+		"language": "en",
+		"page": "947-954",
+		"source": "DOI.org (Crossref)",
+		"title": "Discrete Proportional Hazards Models for Mismeasured Outcomes",
+		"URL": "https://onlinelibrary.wiley.com/doi/abs/10.1111/j.0006-341X.2003.00109.x",
+		"volume": "59",
+		"author": [
+			{
+				"family": "Meier",
+				"given": "Amalia S."
+			},
+			{
+				"family": "Richardson",
+				"given": "Barbra A."
+			},
+			{
+				"family": "Hughes",
+				"given": "James P."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					6
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2003",
+					12
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/RTERDC3X",
+		"type": "article-journal",
+		"container-title": "Therapeutic Innovation & Regulatory Science",
+		"DOI": "10.1007/s43441-020-00206-3",
+		"ISSN": "2168-4790, 2168-4804",
+		"issue": "1",
+		"journalAbbreviation": "Ther Innov Regul Sci",
+		"language": "en",
+		"page": "197-211",
+		"source": "DOI.org (Crossref)",
+		"title": "Methods for Employing Information About Uncertainty of Ascertainment of Events in Clinical Trials",
+		"URL": "http://link.springer.com/10.1007/s43441-020-00206-3",
+		"volume": "55",
+		"author": [
+			{
+				"family": "Chen",
+				"given": "Yiming"
+			},
+			{
+				"family": "Lawrence",
+				"given": "John"
+			},
+			{
+				"family": "Hung",
+				"given": "H. M. James"
+			},
+			{
+				"family": "Stockbridge",
+				"given": "Norman"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					6
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2021",
+					1
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/ES7EXX6D",
+		"type": "article-journal",
+		"container-title": "Nature Medicine",
+		"DOI": "10.1038/s41591-020-1088-9",
+		"ISSN": "1078-8956, 1546-170X",
+		"issue": "11",
+		"journalAbbreviation": "Nat Med",
+		"language": "en",
+		"page": "1708-1713",
+		"source": "DOI.org (Crossref)",
+		"title": "Convalescent plasma treatment of severe COVID-19: a propensity score–matched control study",
+		"title-short": "Convalescent plasma treatment of severe COVID-19",
+		"URL": "http://www.nature.com/articles/s41591-020-1088-9",
+		"volume": "26",
+		"author": [
+			{
+				"family": "Liu",
+				"given": "Sean T. H."
+			},
+			{
+				"family": "Lin",
+				"given": "Hung-Mo"
+			},
+			{
+				"family": "Baine",
+				"given": "Ian"
+			},
+			{
+				"family": "Wajnberg",
+				"given": "Ania"
+			},
+			{
+				"family": "Gumprecht",
+				"given": "Jeffrey P."
+			},
+			{
+				"family": "Rahman",
+				"given": "Farah"
+			},
+			{
+				"family": "Rodriguez",
+				"given": "Denise"
+			},
+			{
+				"family": "Tandon",
+				"given": "Pranai"
+			},
+			{
+				"family": "Bassily-Marcus",
+				"given": "Adel"
+			},
+			{
+				"family": "Bander",
+				"given": "Jeffrey"
+			},
+			{
+				"family": "Sanky",
+				"given": "Charles"
+			},
+			{
+				"family": "Dupper",
+				"given": "Amy"
+			},
+			{
+				"family": "Zheng",
+				"given": "Allen"
+			},
+			{
+				"family": "Nguyen",
+				"given": "Freddy T."
+			},
+			{
+				"family": "Amanat",
+				"given": "Fatima"
+			},
+			{
+				"family": "Stadlbauer",
+				"given": "Daniel"
+			},
+			{
+				"family": "Altman",
+				"given": "Deena R."
+			},
+			{
+				"family": "Chen",
+				"given": "Benjamin K."
+			},
+			{
+				"family": "Krammer",
+				"given": "Florian"
+			},
+			{
+				"family": "Mendu",
+				"given": "Damodara Rao"
+			},
+			{
+				"family": "Firpo-Betancourt",
+				"given": "Adolfo"
+			},
+			{
+				"family": "Levin",
+				"given": "Matthew A."
+			},
+			{
+				"family": "Bagiella",
+				"given": "Emilia"
+			},
+			{
+				"family": "Casadevall",
+				"given": "Arturo"
+			},
+			{
+				"family": "Cordon-Cardo",
+				"given": "Carlos"
+			},
+			{
+				"family": "Jhang",
+				"given": "Jeffrey S."
+			},
+			{
+				"family": "Arinsburg",
+				"given": "Suzanne A."
+			},
+			{
+				"family": "Reich",
+				"given": "David L."
+			},
+			{
+				"family": "Aberg",
+				"given": "Judith A."
+			},
+			{
+				"family": "Bouvier",
+				"given": "Nicole M."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					6
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2020",
+					11
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/WK8XQTZQ",
+		"type": "article-journal",
+		"container-title": "Journal of Clinical Epidemiology",
+		"DOI": "10.1016/j.jclinepi.2016.04.014",
+		"ISSN": "08954356",
+		"journalAbbreviation": "Journal of Clinical Epidemiology",
+		"language": "en",
+		"page": "70-75",
+		"source": "DOI.org (Crossref)",
+		"title": "Specifying a target trial prevents immortal time bias and other self-inflicted injuries in observational analyses",
+		"URL": "https://linkinghub.elsevier.com/retrieve/pii/S0895435616301366",
+		"volume": "79",
+		"author": [
+			{
+				"family": "Hernán",
+				"given": "Miguel A."
+			},
+			{
+				"family": "Sauer",
+				"given": "Brian C."
+			},
+			{
+				"family": "Hernández-Díaz",
+				"given": "Sonia"
+			},
+			{
+				"family": "Platt",
+				"given": "Robert"
+			},
+			{
+				"family": "Shrier",
+				"given": "Ian"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					6
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2016",
+					11
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/XRTF2VCR",
+		"type": "article-journal",
+		"abstract": "Abstract\n            Effect estimates from randomized trials and observational studies might not be directly comparable because of differences in study design, other than randomization, and in data analysis. We propose a 3-step procedure to facilitate meaningful comparisons of effect estimates from randomized trials and observational studies: 1) harmonization of the study protocols (eligibility criteria, treatment strategies, outcome, start and end of follow-up, causal contrast) so that the studies target the same causal effect, 2) harmonization of the data analysis to estimate the causal effect, and 3) sensitivity analyses to investigate the impact of discrepancies that could not be accounted for in the harmonization process. To illustrate our approach, we compared estimates of the effect of immediate with deferred initiation of antiretroviral therapy in individuals positive for the human immunodeficiency virus from the Strategic Timing of Antiretroviral Therapy (START) randomized trial and the observational HIV-CAUSAL Collaboration.",
+		"container-title": "American Journal of Epidemiology",
+		"DOI": "10.1093/aje/kwz100",
+		"ISSN": "0002-9262, 1476-6256",
+		"issue": "8",
+		"language": "en",
+		"page": "1569-1577",
+		"source": "DOI.org (Crossref)",
+		"title": "Effect Estimates in Randomized Trials and Observational Studies: Comparing Apples With Apples",
+		"title-short": "Effect Estimates in Randomized Trials and Observational Studies",
+		"URL": "https://academic.oup.com/aje/article/188/8/1569/5486454",
+		"volume": "188",
+		"author": [
+			{
+				"family": "Lodi",
+				"given": "Sara"
+			},
+			{
+				"family": "Phillips",
+				"given": "Andrew"
+			},
+			{
+				"family": "Lundgren",
+				"given": "Jens"
+			},
+			{
+				"family": "Logan",
+				"given": "Roger"
+			},
+			{
+				"family": "Sharma",
+				"given": "Shweta"
+			},
+			{
+				"family": "Cole",
+				"given": "Stephen R"
+			},
+			{
+				"family": "Babiker",
+				"given": "Abdel"
+			},
+			{
+				"family": "Law",
+				"given": "Matthew"
+			},
+			{
+				"family": "Chu",
+				"given": "Haitao"
+			},
+			{
+				"family": "Byrne",
+				"given": "Dana"
+			},
+			{
+				"family": "Horban",
+				"given": "Andrzej"
+			},
+			{
+				"family": "Sterne",
+				"given": "Jonathan A C"
+			},
+			{
+				"family": "Porter",
+				"given": "Kholoud"
+			},
+			{
+				"family": "Sabin",
+				"given": "Caroline"
+			},
+			{
+				"family": "Costagliola",
+				"given": "Dominique"
+			},
+			{
+				"family": "Abgrall",
+				"given": "Sophie"
+			},
+			{
+				"family": "Gill",
+				"given": "John"
+			},
+			{
+				"family": "Touloumi",
+				"given": "Giota"
+			},
+			{
+				"family": "Pacheco",
+				"given": "Antonio G"
+			},
+			{
+				"family": "Sighem",
+				"given": "Ard",
+				"non-dropping-particle": "van"
+			},
+			{
+				"family": "Reiss",
+				"given": "Peter"
+			},
+			{
+				"family": "Bucher",
+				"given": "Heiner C"
+			},
+			{
+				"family": "Montoliu Giménez",
+				"given": "Alexandra"
+			},
+			{
+				"family": "Jarrin",
+				"given": "Inmaculada"
+			},
+			{
+				"family": "Wittkop",
+				"given": "Linda"
+			},
+			{
+				"family": "Meyer",
+				"given": "Laurence"
+			},
+			{
+				"family": "Perez-Hoyos",
+				"given": "Santiago"
+			},
+			{
+				"family": "Justice",
+				"given": "Amy"
+			},
+			{
+				"family": "Neaton",
+				"given": "James D"
+			},
+			{
+				"family": "Hernán",
+				"given": "Miguel A"
+			},
+			{
+				"literal": "INSIGHT START Study Group and the HIV-CAUSAL Collaboration"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					6
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2019",
+					8,
+					1
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/HUSZBEA6",
+		"type": "article-journal",
+		"container-title": "Epidemiology",
+		"DOI": "10.1097/EDE.0000000000001033",
+		"ISSN": "1044-3983",
+		"issue": "4",
+		"language": "en",
+		"page": "517-520",
+		"source": "DOI.org (Crossref)",
+		"title": "Analyzing Selection Bias for Credible Causal Inference: When in Doubt, DAG It Out",
+		"title-short": "Analyzing Selection Bias for Credible Causal Inference",
+		"URL": "https://journals.lww.com/00001648-201907000-00008",
+		"volume": "30",
+		"author": [
+			{
+				"family": "Arah",
+				"given": "Onyebuchi A."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					6
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2019",
+					7
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/IERDIX65",
+		"type": "article-journal",
+		"container-title": "Epidemiology",
+		"DOI": "10.1097/00001648-199901000-00008",
+		"ISSN": "1044-3983",
+		"issue": "1",
+		"journalAbbreviation": "Epidemiology",
+		"language": "en",
+		"page": "37-48",
+		"source": "DOI.org (Crossref)",
+		"title": "Causal Diagrams for Epidemiologic Research:",
+		"title-short": "Causal Diagrams for Epidemiologic Research",
+		"URL": "http://journals.lww.com/00001648-199901000-00008",
+		"volume": "10",
+		"author": [
+			{
+				"family": "Greenland",
+				"given": "Sander"
+			},
+			{
+				"family": "Pearl",
+				"given": "Judea"
+			},
+			{
+				"family": "Robins",
+				"given": "James M."
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					6
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"1999",
+					1
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/59L7MJPE",
+		"type": "article-journal",
+		"container-title": "BMJ",
+		"DOI": "10.1136/bmj.332.7549.1080",
+		"ISSN": "0959-8138, 1468-5833",
+		"issue": "7549",
+		"journalAbbreviation": "BMJ",
+		"language": "en",
+		"page": "1080.1",
+		"source": "DOI.org (Crossref)",
+		"title": "The cost of dichotomising continuous variables",
+		"URL": "https://www.bmj.com/lookup/doi/10.1136/bmj.332.7549.1080",
+		"volume": "332",
+		"author": [
+			{
+				"family": "Altman",
+				"given": "Douglas G"
+			},
+			{
+				"family": "Royston",
+				"given": "Patrick"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					6
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2006",
+					5,
+					6
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/N4552Y8Q",
+		"type": "article-journal",
+		"container-title": "BMC Medical Research Methodology",
+		"DOI": "10.1186/s12874-019-0667-2",
+		"ISSN": "1471-2288",
+		"issue": "1",
+		"journalAbbreviation": "BMC Med Res Methodol",
+		"language": "en",
+		"page": "28",
+		"source": "DOI.org (Crossref)",
+		"title": "Spurious interaction as a result of categorization",
+		"URL": "https://bmcmedresmethodol.biomedcentral.com/articles/10.1186/s12874-019-0667-2",
+		"volume": "19",
+		"author": [
+			{
+				"family": "Thoresen",
+				"given": "Magne"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					6
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2019",
+					12
+				]
+			]
+		}
+	},
+	{
+		"id": "http://zotero.org/users/5567156/items/J5VWRSEJ",
+		"type": "article-journal",
+		"container-title": "Journal of Big Data",
+		"DOI": "10.1186/s40537-018-0143-6",
+		"ISSN": "2196-1115",
+		"issue": "1",
+		"journalAbbreviation": "J Big Data",
+		"language": "en",
+		"page": "32",
+		"source": "DOI.org (Crossref)",
+		"title": "Step away from stepwise",
+		"URL": "https://journalofbigdata.springeropen.com/articles/10.1186/s40537-018-0143-6",
+		"volume": "5",
+		"author": [
+			{
+				"family": "Smith",
+				"given": "Gary"
+			}
+		],
+		"accessed": {
+			"date-parts": [
+				[
+					"2021",
+					6,
+					6
+				]
+			]
+		},
+		"issued": {
+			"date-parts": [
+				[
+					"2018",
+					12
+				]
+			]
+		}
 	}
 ]

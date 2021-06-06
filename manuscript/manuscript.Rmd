@@ -1,5 +1,5 @@
 ---
-title: "Disease progression of 213 patients hospitalized with Covid-19 in the Czech Republic in early 2020: An exploratory analysis" 
+title: "Disease progression of 213 patients hospitalized with Covid-19 in the Czech Republic in March - October 2020: An exploratory analysis" 
 output: 
   #rticles::arxiv_article
   #pdf_document
@@ -10,7 +10,7 @@ output:
     number_sections: false
     reference_docx: "output_template.docx"
 abstract: |  
-  **Abstract:** We collected a multi-centric retrospective dataset of patients (N = 213) who were admitted to ten hospitals in Czech Republic and tested positive for SARS-CoV-2 during the early phases of the pandemic in March - October 2020. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. Patients in the dataset were treated with hydroxychloroquine (N = 108), azithromycin (N = 72), favipiravir (N = 9), convalescent plasma (N = 7), dexamethasone (N = 4) and remdesivir (N = 3), often in combination. Most patients were admitted during the first wave of the epidemic. To explore association between treatments and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom.  Weak evidence to constrain the potential efficacy of azithromycin and favipiravir can be extracted from the data. Additionally, we performed external validation of several proposed prognostic models for Covid-19 severity showing that they mostly perform unsatisfactorily on our dataset.
+  **Abstract:** We collected a multi-centric retrospective dataset of patients (N = 213) who were admitted to ten hospitals in Czech Republic and tested positive for SARS-CoV-2 during the early phases of the pandemic in March - October 2020. The dataset contains baseline patient characteristics, breathing support required, pharmacological treatment received and multiple markers on daily resolution. Patients in the dataset were treated with hydroxychloroquine (N = 108), azithromycin (N = 72), favipiravir (N = 9), convalescent plasma (N = 7), dexamethasone (N = 4) and remdesivir (N = 3), often in combination. To explore association between treatments and patient outcomes we performed multiverse analysis, observing how the conclusions change between defensible choices of statistical model, predictors included in the model and other analytical degrees of freedom.  Weak evidence to constrain the potential efficacy of azithromycin and favipiravir can be extracted from the data. Additionally, we performed external validation of several proposed prognostic models for Covid-19 severity showing that they mostly perform unsatisfactorily on our dataset.
 bibliography: Covid19.json
 csl: journal-of-medical-virology.csl
 #date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
@@ -30,20 +30,51 @@ wide <- data$marker_data_wide
 
 n_patients <- nrow(data$patient_data)
 n_hospitals <- length(unique(data$patient_data$hospital_id))
+
+epidemiology_cz <- read_csv(here::here("public_data", "nakazeni-vyleceni-umrti-testy.csv"), col_types = cols(
+  datum = col_date(format = ""),
+  kumulativni_pocet_nakazenych = col_double(),
+  kumulativni_pocet_vylecenych = col_double(),
+  kumulativni_pocet_umrti = col_double(),
+  kumulativni_pocet_testu = col_double(),
+  kumulativni_pocet_ag_testu = col_double()
+))
+
+epidemiology_cz_october <- epidemiology_cz %>% filter(datum == "2020-10-01")
+
+# hospitalized_cz <- read_csv(here::here("public_data", "hospitalizace.csv"), col_types = cols(
+#   datum = col_date(format = ""),
+#   pacient_prvni_zaznam = col_double(),
+#   kum_pacient_prvni_zaznam = col_double(),
+#   pocet_hosp = col_double(),
+#   stav_bez_priznaku = col_double(),
+#   stav_lehky = col_double(),
+#   stav_stredni = col_double(),
+#   stav_tezky = col_double(),
+#   jip = col_double(),
+#   kyslik = col_double(),
+#   hfno = col_double(),
+#   upv = col_double(),
+#   ecmo = col_double(),
+#   tezky_upv_ecmo = col_double(),
+#   umrti = col_double(),
+#   kum_umrti = col_double()
+# ))
+# 
+# hospitalized_cz_october <- hospitalized_cz %>% filter(datum == "2020-10-01")
+# hospitalized_cz_october$kum_pacient_prvni_zaznam
+
+# epidemiology_cz_october$kumulativni_pocet_nakazenych
+# epidemiology_cz_october$kumulativni_pocet_umrti
 ```
 
 # Introduction 
 
-The Covid-19 pandemic caused by severe acute respiratory syndrome coronavirus (SARS-CoV-2) has, as of November 2020, led to over 46 million cases and over 1.1 million deaths. Proposed treatments include antivirals approved for other indications (chloroquine, hydroxychloroquine, lopinavir/ritonavir, remdesivir, favipiravir, umifenovir), azithromycin, corticosteroids, immunoglobulins, tocilizumab and convalescent plasma [@http://zotero.org/users/5567156/items/8XWTUMUI; @http://zotero.org/users/5567156/items/6Q8Z8VJR]. 
-As of this writing, the only treatment that exhibited positive effects in published randomized trials is the corticosteroid dexamethasone for severe cases [@http://zotero.org/users/5567156/items/IW6VZ53Q; @http://zotero.org/users/5567156/items/5VAKEW58], Janus kinase inhibitor baricitinib for hospitalized patients[@http://zotero.org/users/5567156/items/PDEPFSAU] and the monoclonal antibody bamlanivimab for non-hospitalized patients [@http://zotero.org/users/5567156/items/TZFUM6JH]. 
-Other monoclonal antibodies have also announced, but not yet published positive results of randomized trials, including tocilizumab[@http://zotero.org/users/5567156/items/4SLQXUJM] and combination of casirivimab and imdevimab[@http://zotero.org/users/5567156/items/VTR54LI9].
-Remdesivir, previously designed and approved for Ebola, SARS and MERS, is currently the only antiviral against SARS-CoV-2 approved by the FDA. However, during spring and summer it was available only in limited amounts via compassionate use programme. Randomized clinical trials on remdesivir have provided  conflicting evidence [@http://zotero.org/users/5567156/items/MFS3IPPU; @http://zotero.org/users/5567156/items/KB5UDZH3]. Despite initial promise, hydroxychloroquine has failed to show benefit for hospitalized patients [@http://zotero.org/users/5567156/items/9X3UH8ZM; @http://zotero.org/users/5567156/items/KB5UDZH3], as an early treatment [@http://zotero.org/users/5567156/items/G6KZKVMI], as well as pre- and post-exposure prophylaxis [@http://zotero.org/users/5567156/items/7C23YCV5; @http://zotero.org/users/5567156/items/GMR9FX9Z; @http://zotero.org/users/5567156/items/H4CLJNUR]. Further, no improvement could be discerned when adding azithromycin to hydroxychloroquine therapy [@http://zotero.org/users/5567156/items/BQLRZGTQ]. Similarly, lopinavir/ritonavir did not show benefit [@http://zotero.org/users/5567156/items/6I6GAVWU]. No benefit was observed for convalescent plasma [@http://zotero.org/users/5567156/items/UEXLDJCB; @http://zotero.org/users/5567156/items/BHGT88US]. 
+The Covid-19 pandemic caused by severe acute respiratory syndrome coronavirus (SARS-CoV-2) has, as of June 2021, led to over 172 million cases and over 3.7 million deaths. The present study was designed and conducted during March - October 2020, when Czech Republic experienced a relatively mild first wave of the pandemic due to early and strict lockdowns. Low numbers of cases continued throughout the summer but during September and October, after most of the data collection for this study concluded, the number of cases was raising again. On October 1st 2020, Czech Republic had accumulated `r as.character(epidemiology_cz_october$kumulativni_pocet_nakazenych)` total confirmed Covid-19 cases and `r epidemiology_cz_october$kumulativni_pocet_umrti` confirmed Covid-19 related deaths [@http://zotero.org/users/5567156/items/SWNTWFLU].
 
-Interestingly, in observational studies, hydroxychloroquine was often found to be associated with better outcomes [e. g., @http://zotero.org/users/5567156/items/WZPNBRYN; @http://zotero.org/users/5567156/items/4HR7MUJ6; @http://zotero.org/users/5567156/items/NXC9CDI9].
+At the time the study was conducted, the proposed treatments included antivirals approved for other indications (chloroquine, hydroxychloroquine, lopinavir/ritonavir, remdesivir, favipiravir, umifenovir), azithromycin, corticosteroids, immunoglobulins, tocilizumab and convalescent plasma [@http://zotero.org/users/5567156/items/8XWTUMUI; @http://zotero.org/users/5567156/items/6Q8Z8VJR]. Notably, the anti-malarial and anti-rheumatic drug hydroxychloroquine and the macrolide antibiotic  azithromycin showed promise in early data and were broadly available and thus were frequently used in the early stages of the pandemic. Remdesivir, previously designed and approved for Ebola, SARS and MERS, also reported good initial results. However, during spring and summer 2020 remdesivir was available in Czech Republic only in limited amounts via compassionate use programme. The RECOVERY trial reported positive results of croticosteriod dexamethasone for severe cases in June 2020 [@http://zotero.org/users/5567156/items/W8KK3TX2], but at this point the number of Covid-19 patients hospitalized in Czech Republic was low and dexamethasone thus did not see wider use until later in the pandemic.
 
-
-Favipiravir is one of the less explored experimental treatments, previously used for influenza including avian types, with only one larger RCT in Covid- 19 known to us [@http://zotero.org/users/5567156/items/ISLSL7UC], the study however has many potentially severe problems [@http://zotero.org/users/5567156/items/7HDXLWEA]. Other studies are scarce - even when considering very small studies and case series [@http://zotero.org/users/5567156/items/F3VNTQ92; @http://zotero.org/users/5567156/items/FSUQMUP8; @http://zotero.org/users/5567156/items/894H9N9B]. None of the results allow strong conclusions about benefits or harms of favipiravir, although a  metaanalysis of all available small studies showed an effect of favipiravir on clinical improvement in mild and moderate disease [@http://zotero.org/users/5567156/items/7595KBWR].
-For additional summary of treatments under investigation see Siemieniuk et al. [@http://zotero.org/users/5567156/items/YP62P6XJ]. There is also an emerging consensus on the importance of prophylactic anticoagulation therapy in managing hospitalized patients with Covid-19, although clinical trials to validate this approach are still ongoing[@http://zotero.org/users/5567156/items/5ZW5JM8R].
+Our understanding of the efficacy of Covid-19 treatments has improved substantially since the present study was conducted. As of April 2021, the pharmacological treatments that were deemed to be beneficial for at least one outcome in a systematic review of randomized trials  were the corticosteroid dexamethasone (mortality, mechanical ventilation), colchicine (mortality, length of hospital stay),  the antiviral remdesivir (mechanical ventilation), Janus kinase inhibitors (mechanical ventilation, duration of ventilation), IL-6 inhibitors (mechanical ventilation, length of hospital stay), the antiviral favipiravir (length of hospital stay, resolution of symptoms) and the anti-androgen proxalutimide (admission to hospital). Hydroxychloroquine, interferon beta, lopinavir-ritonavir, azithromycin, vitamin C, vitamin D, anticoagulants and ACE inhibitors  were considered to not be better than standard of care and lopinvair-ritonavir showed evidence of harm, although most of the conclusions were considered to be of low certainty [@http://zotero.org/users/5567156/items/YP62P6XJ]. Interestingly, in observational studies, hydroxychloroquine was often found to be associated with better outcomes [e. g., @http://zotero.org/users/5567156/items/WZPNBRYN; @http://zotero.org/users/5567156/items/4HR7MUJ6; @http://zotero.org/users/5567156/items/NXC9CDI9]. No benefit was also observed in a meta-analysis of randomized trials of convalescent plasma treatment [@http://zotero.org/users/5567156/items/JCV6R3RC]. 
 
 
 High IL-6, D-dimer values were observed to be associated with worse outcome and increased disease severity [@http://zotero.org/users/5567156/items/K3N3VG2X].
@@ -53,12 +84,12 @@ An ongoing challenge in evaluating Covid-19 treatments is that the analysis and 
 
 Additionally, many methods for predicting disease severity of Covid-19 were published, but the methods are at high risk of bias and lack external validation [@http://zotero.org/users/5567156/items/TS57HJ3T].
 
-The present study aims to describe the outcomes and disease course of hospitalized patients with mild to severe clinical presentation in a multicentric Czech cohort, explore the association between the outcomes and pharmacological interventions and to provide external validation to previously published prognostic models for Covid-19 severity.
+The present study aims to describe the outcomes and disease course of hospitalized patients with mild to severe clinical presentation in a multicentric Czech cohort during the early stages of the pandemic, explore the association between the outcomes and pharmacological interventions and to provide external validation to previously published prognostic models for Covid-19 severity.
 
-# Patients and Methods
+# Methods
 
 
-## Data Collection
+## Patients and study design
 
 ```{r}
 ethics_data <- readxl::read_excel(here::here("manuscript", "ethics.xlsx"), sheet = "Sheet1", na = "NA")
@@ -68,25 +99,31 @@ n_ecmo <- data$marker_data_wide %>% filter(breathing == "ECMO") %>% pull(patient
 n_nippv <- data$marker_data_wide %>% filter(breathing == "NIPPV") %>% pull(patient_id) %>% unique() %>% length()
 
 n_second_wave <- data$patient_data %>% filter(!first_wave) %>% nrow()
+
+
 ```
 
 
-A convenience sample of patients from `r n_hospitals` sites was collected. For each site, the dataset contains all patients hospitalized in the participating wards over the data collection period. The data collection started at the onset of the Covid-19 pandemic in March 2020 (except for one site where some older records were inaccessible), but the end date for collection differs between sites due to time constraints of the participating physicians. Three sites included total of `r n_second_wave` patients that could be considered part of "second wave", i.e. admitted after September 1st, last patient included in the dataset was admitted on October 12th. See Supplementary Figure 1 for per-site data collection periods. Patients over the age of 18 were included if they had PCR-confirmed infection of SARS-CoV-2 and were not participating in a clinical trial of any Covid-19 pharmacotherapy. 
-
-We collected data on comorbidities and information about disease progression on daily resolution including breathing support required, oxygen flow rate, experimental anti-Covid-19 and antimicrobial drugs taken and several laboratory markers (PCR positivity for SARS-CoV-2, C-reactive protein, D-dimer, Interleukin 6, Ferritin, lymphocyte count). Full protocol for data collection is attached in the supplementary material. Due to very low number of patients using extra-corporeal membrane oxygenation (N = `r n_ecmo`) or non-invasive positive pressure ventilation (N = `r n_nippv`) in our sample, we merged those categories with mechanical ventilation.
+A convenience sample of patients from `r n_hospitals` sites was collected. The study sites span the whole spectrum of sizes from large university hospitals in major cities with multiple dedicated Covid-19 wards (Thomayer Hospital in Prague, Motol University Hospital in Prague,  Kralovské Vinohrady University Hospital in Prague, General University Hospital in Prague, University Hospital in Pilsen) through major regional/specialized hospitals  (Na Homolce Hospital in Prague, Military Hospital Olomouc) as well as smaller hospitals caring for just several Covid-19 patients at a time (AGEL Hospital Nový Jičín, Hořovice Hospital, Třebíč Hospital). The sites were chosen based on availability and willingness of the personnel to participate in data collection. None of the study sites was exclusively dedicated to treating Covid-19 patients. For each site, the dataset contains all patients hospitalized in the participating wards over the data collection period. The data collection started at the onset of the Covid-19 pandemic in March 2020 (except for one site where some older records were inaccessible), but the end date for collection differs between sites due to time constraints of the participating physicians. Three sites included total of `r n_second_wave` patients that could be considered part of "second wave" (admitted after September 1st). Last patient included in the dataset was admitted on October 12th. See Supplementary Figure 1 for per-site data collection periods. Patients over the age of 18 were included if they had PCR-confirmed infection of SARS-CoV-2 and were not participating in a clinical trial of any Covid-19 pharmacotherapy. 
 
 Not all patients developed pneumonia or other symptoms of Covid-19. All patients received the standard of care which could include supplemental oxygen and ventilation and antibiotics for bacterial superinfections, as determined by the attending physician. Some patients were not indicated for all treatment modalities (especially mechanical ventilation) based on decision of the attending physician and underlying patient condition. We note that the participating sites were not homogeneous in either patient population or treatment protocols. The choice of pharmacological treatment was based on the decision of the attending clinician and its availability.
 
-The study was approved by the Ethical committees of `r ethics_string`.
+The study was approved by the Ethical committees of `r ethics_string`, all data were collected in fully anonymized form. Data was collected between June and October 2020 for patients that were treated between March and October 2020.
+
+
+## Data collection 
+
+We collected data on comorbidities and information about disease progression on daily resolution including breathing support required, oxygen flow rate, experimental anti-Covid-19 and antimicrobial drugs taken and several laboratory markers (PCR positivity for SARS-CoV-2, C-reactive protein, D-dimer, Interleukin 6, Ferritin, lymphocyte count). Full protocol for data collection is attached in the supplementary material. Due to very low number of patients using extra-corporeal membrane oxygenation (N = `r n_ecmo`) or non-invasive positive pressure ventilation (N = `r n_nippv`) in our sample, we merged those categories with mechanical ventilation.
+
 
 ## Statistical analysis
 
 The character of the convenience sample does not allow for a proper assessment of
 the association between treatments and patient outcomes,
-because the treatments had not been assigned to patients at random, 
+because the treatments had not been assigned to patients at random 
 but were only observed retrospectively. This can be partially remedied by adjusting for patient characteristics in the analysis, but such adjustments will always be imperfect and the analysis  needs to be treated as exploratory and interpreted cautiously.
 
-Since many details of analysis may influence the conclusions made, we performed multiverse analysis [@http://zotero.org/users/5567156/items/DXWM259V] and report results for all the hypothesis tested across multiple different models using both frequentist and Bayesian paradigms. For each model class we worked with several possible sets of adjustments. All analyses were performed in the R language [@http://zotero.org/users/5567156/items/67XKBC2W], visualizations and data cleaning was run with the `tidyverse` package [@http://zotero.org/users/5567156/items/8EWY8TKM]. 
+Since many details of analysis may influence the conclusions made, we performed multiverse analysis [@http://zotero.org/users/5567156/items/DXWM259V] and report results for all the hypothesis tested across multiple different models using both frequentist and Bayesian paradigms. For each model class we worked with several possible sets of adjustments. All analyses were performed in the R language [@http://zotero.org/users/5567156/items/67XKBC2W], visualization and data cleaning was run with the `tidyverse` package [@http://zotero.org/users/5567156/items/8EWY8TKM]. 
 
 ```{r}
  # and - where applicable - with multiple estimands of the outcome as different tasks require different estimands [@http://zotero.org/users/5567156/items/MH797GNC]
@@ -94,7 +131,7 @@ Since many details of analysis may influence the conclusions made, we performed 
 
 First class of models are frequentist survival and multistate models under the proportional hazards assumption as implemented in the `coxph` function from the `survival` package [@http://zotero.org/users/5567156/items/I9UVTUJF]. We primarily use a model with competing risks for death and discharge from hospital (see Figure&nbsp;\@ref(fig:modelstates)a).
 
-Second class of models are Bayesian hidden Markov models (HMM) of disease progression implemented via a custom extension to the `brms` package [@http://zotero.org/users/5567156/items/7ER3ZSER]. The parametrization of the HMM is inspired by Williams et al.[@http://zotero.org/users/5567156/items/F9K2L5Q8]: the actual process of disease is assumed to be continuous and allow only for transitions between neighboring states (as shown in Figure&nbsp;\@ref(fig:modelstates)b, c). The total probability of transition between any two states over the period of a day is then computed as the total probability of transition across all possible paths. This class of models does not satisfy the proportional hazards assumption, instead, it is assumed the process has the Markov property - i.e. that the (potentially unobserved) state and the covariates at a given day contain all the information to determine probabilities of the states on the next day. We use two versions of such models, one working solely with the observed breathing support and one assuming a hidden improving/worsening distinction. All of the hidden Markov models take into account whether best supportive care was initiated and a patient was thus not indicated to progress to more intensive treatment modalities.
+Second class of models are Bayesian hidden Markov models (HMM) of disease progression implemented via a custom extension to the `brms` package [@http://zotero.org/users/5567156/items/7ER3ZSER]. The parametrization of the HMM is inspired by Williams et al.[@http://zotero.org/users/5567156/items/F9K2L5Q8]: the actual process of disease is assumed to be continuous and allow only for transitions between neighboring states (as shown in Figure&nbsp;\@ref(fig:modelstates)b, c). The total probability of transition between any two states over the period of a day is then computed as the total probability of transition across all possible paths. This class of models does not satisfy the proportional hazards assumption, instead, it is assumed the process has the Markov property - i.e., that the (potentially unobserved) state and the covariates at a given day contain all the information to determine probabilities of the states on the next day. We use two versions of such models, one working solely with the observed breathing support and one assuming a hidden improving/worsening distinction. All of the hidden Markov models take into account whether best supportive care was initiated and a patient was thus not indicated to progress to more intensive treatment modalities.
 
 
 ```{r modelstates, fig.cap="States used in the competing risk model (a) and in the two hidden Markov model variants (b,c). AA = Ambient air, Oxygen = Nasal oxygen, Ventilated = any form of ventilation (non-invasive positive-pressure ventilation, mechanical ventilation and extra-corporeal membrane oxygenation). In all models the 'Death' and 'Discharged' states are terminal. In the second hidden Markov model (c), the 'Improving' and 'Worsening' variants of each non-terminal state are not observable - only the breathing support is observed and improving/worsening is inferred from progression of the disease." }
@@ -105,7 +142,7 @@ knitr::include_graphics(here::here("manuscript","static_figs","model_states.png"
 
 <!-- Additionally we used joint models for longitudinal and time-to-event data via the `stan_jm` function in the `rstanarm` package [@http://zotero.org/users/5567156/items/KHJGLQS5]. Those models include a longitudinal component to model the evolution over time of marker for each patient and a time-to-event component which assumes proportional-hazards for an event. The estimated value of the marker is then used as one of the predictors in the time-to-event component.  -->
 
-Finally we used a set of Bayesian regression models implemented with the `brms` package [@http://zotero.org/users/5567156/items/7ER3ZSER]. Those included overall survival, state at day 7 or 28 as either binary or categorical outcome and a Bayesian version of the Cox proportional-hazards model.
+Finally, we used a set of Bayesian regression models implemented with the `brms` package [@http://zotero.org/users/5567156/items/7ER3ZSER]. Those included overall survival, state at day 7 or 28 as either binary or categorical outcome and a Bayesian version of the Cox proportional-hazards model.
 
 ```{r}
 #Since `stan_jm` does not support competing risks, we imputed the second event...
@@ -119,12 +156,14 @@ Except for age, sex and comorbidities, all covariates are treated as time-varyin
 
 ## Evaluating prognostic models
 
-We searched the living systematic review of Covid-19 prognostic models [@http://zotero.org/users/5567156/items/TS57HJ3T] for those that could be applied to our dataset (i.e. where we have gathered all the input features).  We primarily focused on the Area Under Receiver Operating Characteristic Curve (AUC), and its bootstrapped 95% confidence intervals which we computed using the `pROC` package [@http://zotero.org/users/5567156/items/UN6BIC67]. When there were multiple reasonable ways to evaluate the outcome or a predictor in our dataset, we computed and reported all of those options. We used two simple scores with age or the decade of age as the sole predictor to have a baseline to compare the scores against.
+We searched the living systematic review of Covid-19 prognostic models [@http://zotero.org/users/5567156/items/TS57HJ3T] for those that could be applied to our dataset (i.e., where we have gathered all the input features).  We primarily focused on the Area Under Receiver Operating Characteristic Curve (AUC), and its bootstrapped 95% confidence intervals which we computed using the `pROC` package [@http://zotero.org/users/5567156/items/UN6BIC67]. When there were multiple reasonable ways to evaluate the outcome or a predictor in our dataset, we computed and reported all of those options. We used two simple scores with age or the decade of age as the sole predictor to have a baseline to compare the scores against.
 
 Complete code for all analyses is available at https://github.com/cas-bioinf/covid19retrospective/.
 
 # Results
 
+
+## Baseline characteristics
 
 In total, we were able to gather data for `r n_patients` patients, see Table \@ref(tab:summarytable) for the overall characteristics of the patient sample and several subgroups we used in the analysis, including treatments taken. 
 Counts of all treatment combinations are shown in Supplementary Figure 2 and Supplementary Figure 3 shows outcomes by study site, demonstrating quite large hospital-specific differences.
@@ -149,6 +188,7 @@ data_table_1 %>% group_by(group) %>%
     Male = sum_percent(sex == "M"),
     `Age (mean, IQR)` = mean_iqr(age),
     `Admitted for Covid` = sum_percent(admitted_for_covid),
+    `Took hydroxychloroquine` = sum_percent(ever_hcq),
     `Took azithromycin` = sum_percent(ever_az),
     `Took dexamethasone` = sum_percent(ever_dexamethasone),
     `Took favipiravir` = sum_percent(ever_favipiravir),
@@ -166,7 +206,7 @@ data_table_1 %>% group_by(group) %>%
     `Smoking` = sum_percent(smoking),
     `BMI (mean, IQR)` = mean_iqr(BMI),
     `Best supportive care` = sum_percent(!is.na(best_supportive_care_from)),
-    Deceased = sum_percent(outcome == "Death"),
+    Death = sum_percent(outcome == "Death"),
     Discharged = sum_percent(outcome == "Discharged"),
     .groups = "drop"
   ) %>%
@@ -193,7 +233,9 @@ median_ratios <-  data$marker_data %>%
 ```
 
 
-In Figure&nbsp;\@ref(fig:progression) we show the overall disease progression for all patients and in Figure&nbsp;\@ref(fig:selectedmarkers) we show the time-course of a subset of the markers we have measured. The data show some interesting patterns: patients with low Interleukin-6 or D-dimer values are overrepresented among patients with better outcomes, most patients had high CRP upon admission and for many the CRP levels stayed elevated over the whole hospitalization. However, the limited nature of the data does not allow for any statistically robust conclusions. We also see that the marker levels were not substantially stratified by study site.  Those patterns should however be interpreted with care due to systematic missingness of the data - in particular, patients that fared worse were probably more likely to have the markers measured. However we believe this kind of patient-level view is useful to appreciate the extent of both between-patient and within-patient variability. 
+## Disease progression
+
+In Figure&nbsp;\@ref(fig:progression) we show the overall disease progression for all patients and in Figure&nbsp;\@ref(fig:selectedmarkers) we show the time-course of a subset of the markers we have measured. The data show some interesting patterns: patients with low Interleukin-6 or D-dimer values are overrepresented among patients with better outcomes, most patients had high CRP upon admission and for many the CRP levels stayed elevated over the whole hospitalization. However, the limited nature of the data does not allow for any statistically robust conclusions. We also see that the marker levels were not substantially stratified by study site.  Those patterns should however be interpreted with care due to systematic missingness of the data - in particular, patients that fared worse were probably more likely to have the markers measured. However, we believe this kind of patient-level view is useful to appreciate the extent of both between-patient and within-patient variability. 
 
 The between-patient variability is notable even across outcomes - when ordering the patients by the highest CRP levels experienced throughout the hospital stay, the top 20% of patients that breathed ambient air for the whole hospitalization experienced higher levels than the bottom 20% of patients that required ventilation or died. This overlap is even larger when comparing only against the patients that died and D-dimer, Interleukin-6 and lymphocyte count also show a notably larger overlap than CRP (Supplementary Figure 4). 
 
@@ -433,7 +475,7 @@ Here, we focus on hydroxychloroquine and azithromycin as those are the only trea
 
 
 
-The results of the multiverse analysis for association between hydroxochloroquine, azithromycin and favipiravir usage and death is shown in Figure&nbsp;\@ref(fig:multiverseresultsdrugs) - here, we only show models that were not found to have immediate problems representing the data well or computational issues (see Supplementary statistical analysis for details). Results for all models we tested are reported in  supplementary Figures `r supplementary_figures_multiverse`, with additional details in supplementary statistical analysis. The results do not change noticeably when only patients from the first wave are included (supplementary Figures `r supplementary_figures_multiverse`).
+The results of the multiverse analysis for association between hydroxychloroquine, azithromycin and favipiravir usage and death is shown in Figure&nbsp;\@ref(fig:multiverseresultsdrugs) - here, we only show models that were not found to have immediate problems representing the data well or computational issues (see Supplementary statistical analysis for details). Results for all models we tested are reported in  supplementary Figures `r supplementary_figures_multiverse`, with additional details in supplementary statistical analysis. The results do not change noticeably when only patients from the first wave are included (supplementary Figures `r supplementary_figures_multiverse`).
 
 Most models report that using hydroxychloroquine is associated with lower risk of death. We must however bear in mind the potential bias noted in the previous section. Also, we see that for the HMM models, as we add adjustments the credible intervals do not widen but instead shift towards zero. This is a weak indication that further adjustments could drive the effect towards zero. We did not attempt to model additional adjustments as the models became computationally unstable. The case of hydroxychloroquine serves as a "control group" for our other results - since randomized trials give us high confidence that hydroxychloroquine does not substantially reduce mortality, we can be quite certain the associations we observe for hydroxychloroquine are just a measure of bias in the data. Additionally, our models either cannot determine the sign of association between azithromycin and  risk of death or even show an increase in risk of death. This serves as a weak evidence that a substantial improvement in mortality from azithromycin is unlikely.  
 
@@ -495,18 +537,28 @@ compare_auc_to_orig(all_auc_orig,
 
 ```
 
+# Discussion
 
+Our data show the extent of between-patient variability in progression of the disease in terms of both length of hospital stay, duration of various types of breathing support and basic markers. A direct comparison with other studies is hard to perform as almost always only summaries of measurements are reported. 
+
+For multiple candidate Covid-19 treatments, observational data repeatedly contradicted results of randomized controlled trials (contrast e.g. Catteau et al. [@http://zotero.org/users/5567156/items/WZPNBRYN] to the RECOVERY trial [@http://zotero.org/users/5567156/items/9X3UH8ZM] for hydroxychloroquine and Liu et al. [@http://zotero.org/users/5567156/items/ES7EXX6D] to Agarwal et al. [@http://zotero.org/users/5567156/items/UEXLDJCB] for convalescent plasma). Our results for hydroxychloroquine also fit into this pattern. This should make us wary about over-interpreting the results of this study for azithromycin and favipiravir, although some higher-quality evidence that suggests clinical benefit of favipiravir has been reported  [@http://zotero.org/users/5567156/items/YP62P6XJ]. 
+
+The current (April 2021) Covid-19 treatment guidelines in Czech Republic recommend monoclonal antibodies and in some cases convalescent plasma or favipiravir as early treatment for high-risk patients with mild or no symptoms. For more severe cases dexamethason and anticoagulants are recommended while remdesivir is recommended only for patients that have severe disease but do not require mechanical ventilation [@http://zotero.org/users/5567156/items/YA3UAMVY]. This is similar to recommendations from the National Institute of Health in the USA who additionally recommend tocilizumab in some cases while not recommending convalescent plasma and favipiravir [@http://zotero.org/users/5567156/items/PCJBPPW7]. We do not believe our results should directly inform clinical decision, though we see some potential for inclusion of our results in future meta-analyses.
+
+Regarding methodology, there are multiple approaches that are - at least in principle - capable of deriving causal conclusions from observational data, most notably the DAG framework [@http://zotero.org/users/5567156/items/IERDIX65; @http://zotero.org/users/5567156/items/HUSZBEA6] and target trial framework [@http://zotero.org/users/5567156/items/XRTF2VCR; @http://zotero.org/users/5567156/items/WK8XQTZQ]. In all approaches - and also in some randomized designs - it is common that substantial uncertainty about the best statistical model for the task at hand remains and cannot be eliminated. Nevertheless, most published papers present results only from a single statistical model. We believe that this uncertainty about model choice should not be ignored, rather we should embrace the uncertainty and employ a multiverse analysis or other forms of robustness checks to explore how our conclusions would differ had different assumptions been adopted. In this work we tried to show how such an analysis could be performed and reported in practice. We note that modelling choices that are often made semi-arbitrarily, e.g., logistic regression for survival at 28 days vs. a Cox proportional hazards model for time to event, did in our case lead to substantially different results.
+
+The hidden-Markov models (HMMs) used in this study are of some interest because they fitted the data well and allowed for inclusion of a larger number of predictors than the Cox proportional hazards model without making the posterior uncertainty unreasonably large. We believe this is because such models make better use of the available detailed data. Additionally, HMMs can be used even when the outcomes are observed only indirectly or noisily --- as in the original study that motivated our models which concerns the progression of Alzheimer's disease [@http://zotero.org/users/5567156/items/F9K2L5Q8]. Noisily observed outcomes can pose problems for the proportional hazards model and require some special care [@http://zotero.org/users/5567156/items/YM2LGA3Y; @http://zotero.org/users/5567156/items/RTERDC3X]. We should however note that the Markov property assumed in HMMs is likely to be a reasonable approximation in fewer settings than the proportional hazards assumption of the Cox model.
+
+Common problems with prognostic models in medicine are small sample sizes used to develop the models, weak or problematic statistical methods and lack of external validation on independent datasets [@http://zotero.org/users/5567156/items/E76N3Y5U]. Those problems are prevalent also in prediction models for Covid-19 [@http://zotero.org/users/5567156/items/TS57HJ3T]. We used our dataset to validate several models and observed very poor performance for four out of the five models tested. In fact, the simple assumption that older patients tend to have worse outcomes provides better or similar results to all of the models we were able to implement. This is despite all of the scores including age as a predictor. There seem to be two causes - three of the models dichotomize the age into just two groups which is known to lose information [@http://zotero.org/users/5567156/items/59L7MJPE; @http://zotero.org/users/5567156/items/N4552Y8Q]. Of the other two models Chen & Liu [@http://zotero.org/users/5567156/items/4DDUVEKS] use stepwise variable selection which is known to be a problematic approch [@http://zotero.org/users/5567156/items/J5VWRSEJ]. The resulting model puts largest relative weight on laboratory markers and deemphasizes age. Caramelo et al. [@http://zotero.org/users/5567156/items/3A2RN4ZS] take the decade of age as a very strong predictor and  perform the best on our data. Still their results are not distinguishable from just using age. Our findings are almost the same as in a similar but larger validation study using 22 models and 411 patients from the United Kingdom where no tested model provided better prediction for mortality than age alone [@http://zotero.org/users/5567156/items/9XLSLVWJ]. 
 
 # Conclusions
-
-Our data show the extent of between-patient variability in progression of the disease in terms of both length of hospital stay, duration of various types of breathing support and basic markers.
 
 We provide very weak observational evidence against a substantial beneficiary effect of using azithromycin (both with or without hydroxychloroquine) and against substantial negative effect of using favipiravir in hospitalized Covid-19 patients. We also observed better outcomes associated with taking hydroxychloroquine, which is likely linked to substantial confounding by indication.
 Where our results contradict randomized trials, the most likely explanation is systematic bias in our dataset.
 
-A lesson from our analysis is that the assessment of treatment efficacy from observational data is very sensitive to modelling assumptions while it is usually almost impossible to determine which of the models is more likely to reflect reality (if any). We believe that using multiverse analysis is an appropriate way to explore data in such contexts as it lets us be transparent about this sensitivity. We further believe that using hidden Markov models is a promising complement to the standard Cox proportional hazards analysis when detailed information on disease progression is available, particularly because it lets us impose additional structure on the model and thus make inferences with more disease states than would be possible to handle in the Cox framework, making better use of the available data.
+A lesson from our analysis is that the assessment of treatment efficacy from observational data is sensitive to modelling assumptions while it is usually almost impossible to determine which of the models is more likely to reflect reality (if any). We believe that using multiverse analysis is an appropriate way to explore data in such contexts as it lets us be transparent about this sensitivity. We further believe that using hidden Markov models is a promising complement to the standard Cox proportional hazards analysis when detailed information on disease progression is available, particularly because it lets us impose additional structure on the model and thus make inferences with more disease states than would be possible to handle in the Cox framework, making better use of the available data.
 
-Additionally, our experience indicates that a substantial fraction of published prognostic models will perform much worse on new patients than on the datasets they were built for and that external validation is crucial. We suggest that comparing the prognostic models against simple baselines (e.g. decade of age as the single predictor) should be a first step in validation. Furthermore, some of the published scores lack enough information to let others implement the score in the same way.
+Additionally, our experience indicates that a substantial fraction of published prognostic models will perform much worse on new patients than on the datasets they were built for and that external validation is crucial. We suggest that comparing the prognostic models against simple baselines (e.g., decade of age as the single predictor) should be a first step in validation. Furthermore, some of the published scores lack enough information to let others implement the score in the same way.
 
 # Conflict of Interest
 
