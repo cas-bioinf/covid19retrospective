@@ -1092,7 +1092,7 @@ states <- do.call(abind::abind, args = c(states_list, list(along = 3)))
   
 res_fpv <- tibble::tribble(
   ~event, ~estimate, ~se, ~`lower95`, ~`upper95`,
-  "Death",  death_res$point_estimate, NA, death_res$ci_low, death_res$ci_high,
+  "Death",  death_res$point_estimate, death_res$sd, death_res$ci_low, death_res$ci_high,
   "Oxygen", mean(log_OR_oxygen), sd(log_OR_oxygen), quantile(log_OR_oxygen, 0.025), quantile(log_OR_oxygen, 0.975),
   "Ventilated", mean(log_OR_ventilation), sd(log_OR_ventilation), quantile(log_OR_ventilation, 0.025, na.rm=TRUE), quantile(log_OR_ventilation, 0.975, na.rm=TRUE)
   )

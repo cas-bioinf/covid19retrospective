@@ -165,7 +165,7 @@ if(nrow(all_event_markers_fpv) != nrow(took_fpv)) {
 
 ```{r}
 all_res <- list()
-for(exposure_day in 1:6) {
+for(exposure_day in 0:6) {
 
   all_events_risk <- all_event_markers_fpv %>%
     group_by(patient_id, marker) %>%
@@ -184,10 +184,14 @@ for(exposure_day in 1:6) {
     group_by(group) %>%
     summarise(N = length(unique(patient_id)), marker = "Any", at_risk = length(unique(patient_id[at_risk])), event = length(unique(patient_id[event])), .groups = "drop")
   
-  all_res[[exposure_day]] <- rbind(any_marker, by_marker) %>% mutate(day = exposure_day)
+  all_res[[exposure_day + 1]] <- rbind(any_marker, by_marker) %>% mutate(day = exposure_day)
 }
 
-do.call(rbind, all_res)
+res_to_write <- do.call(rbind, all_res) %>%
+  select(marker, day, group, N, at_risk, event) %>%
+  arrange(marker, day)
+
+write_csv(res_to_write, here::here("local_temp_data", "fpv_meta", "lab_events_detailed.csv"))
 
 ```
 
