@@ -14,7 +14,104 @@ output:
   #     in_header: preamble.tex
 csl: plos.csl
 #date: "Version: `r format(Sys.time(), '%Y-%m-%d')`"
-author: "`r { source(here::here('manuscript', 'authors.R')); get_authors_string() }`"
+author: 
+  - name: Martin Modrák
+    email: martin.modrak@biomed.cas.cz
+    corresponding: martin.modrak@biomed.cas.cz
+    affiliation: Institute of Microbiology of the Czech Academy of Sciences
+  - name: Paul-Christian Bürkner
+    affiliation: University of Stuttgart
+  - name: Tomáš Sieger
+    affiliation: cvutCyber
+  - name: Tomáš Slisz
+    affiliation: 
+      - resp1st
+      - thomayer
+  - name: Martina Vašáková
+    affiliation: 
+      - resp1st
+      - thomayer
+  - name: Grigorij Mesežnikov
+    affiliation: Motol
+  - name: Luis Fernando Casas-Mendez
+    affiliation: Motol
+  - name: Jaromír Vajter
+    affiliation: Motol
+  - name: Jan Táborský
+    affiliation: AGEL
+  - name: Viktor Kubricht
+    affiliation: FNKV
+  - name: Daniel Suk
+    affiliation: VFN
+  - name: Jan Horejsek
+    affiliation: VFN
+  - name: Martin Jedlička
+    affiliation: Olomouc
+  - name: Adriana Mifková
+    affiliation: Olomouc
+  - name: Adam Jaroš
+    affiliation: Homolka
+  - name: Miroslav Kubiska
+    affiliation: Pilsen
+  - name: Jana Váchalová
+    affiliation: Pilsen
+  - name: Robin Šín
+    affiliation: Pilsen
+  - name: Markéta Veverková
+    affiliation: Horovice
+  - name: Zbyšek Pospíšil
+    affiliation: Trebic
+  - name: Julie Vohryzková
+    affiliation: charles2nd 
+  - name: Rebeka Pokrievková
+    affiliation: charles3rd
+  - name: Kristián Hrušák
+    affiliation: charles2nd
+  - name: Kristína Christozova
+    affiliation: charles2nd
+  - name: Vianey Leos-Barajas
+    affiliation: toronto
+  - name: Karel Fišer
+    affiliation: bioinfo
+  - name: Tomáš Hyánek
+    affiliation: Homolka
+address:
+  - code: Institute of Microbiology of the Czech Academy of Sciences
+    address: Institute of Microbiology of the Czech Academy of Sciences, Bioinformatics Core Facility, Vídeňská 1083, Prague, Czech Republic, 142 20
+  - code: University of Stuttgart
+    address: University of Stuttgart, Cluster of Excellence SimTech, 	Universitätsstraße 32, Stuttgart, Deutschland, 70569
+  - code: cvutCyber
+    address: Dept. of Cybernetics, Faculty of Electrical Engineering, Czech Technical University in Prague, Technická 1902/2, Prague, Czech Republic, 166 27
+  - code: resp1st
+    address: Department of Respiratory Medicine, 1st Faculty of Medicine, Charles University in Prague, Vídeňská 800, Prague, Czech Republic, 140 59
+  - code: thomayer  
+    address: Thomayer University Hospital, Vídeňská 800, Prague, Czech Republic, 140 59
+  - code: Motol
+    address: Motol University Hospital, V Úvalu 84/1, Prague, Czech Republic, 150 06
+  - code: AGEL
+    address: AGEL Hospital Nový Jičín, Purkyňova 2138/16, Nový Jičín, Czech Republic, 741 01  
+  - code: FNKV
+    address: Kralovské Vinohrady University Hospital, Šrobárova 1150/50, Prague, Czech Republic, 100 34
+  - code: VFN
+    address: General University Hospital in Prague, U Nemocnice 499/2, Prague, Czech Republic, 128 08
+  - code: Olomouc
+    address: Military Hospital Olomouc, Sušilovo nám. 5, Olomouc, Czech Republic, 771 11
+  - code: Homolka
+    address: Na Homolce Hospital, Roentgenova 37, Prague, Czech Republic, 150 00
+  - code: Pilsen
+    address: Department of Infectious Diseases and Travel Medicine, Faculty of Medicine in Pilsen, Charles University, University Hospital in Pilsen, Edvarda Beneše 13, Pilsen, Czech Republic, 305 99
+  - code: Horovice
+    address: Hořovice Hospital, K Nemocnici 1106/14, Hořovice, Czech Republic, 268 01
+  - code: Trebic
+    address: Třebíč Hospital,  Purkyňovo nám. 133, Třebíč, Czech Republic, 674 01
+  - code: charles2nd 
+    address: 2nd Faculty of Medicine, Charles University in Prague, V Úvalu 84, Prague, Czech Republic, 150 06
+  - code: charles3rd
+    address: 3rd Faculty of Medicine, Charles University in Prague, Ruská 2411, Prague, Czech Republic, 100 00
+  - code: toronto
+    address: Department of Statistical Sciences, University of Toronto,  100 St George St, Toronto, Canada, ON M5S 3G3
+  - code: bioinfo
+    address: Department of Bioinformatics, 2nd Faculty of Medicine, Charles University in Prague, V Úvalu 84, Prague, Czech Republic, 150 06
 ---
 
 ```{r setup, echo=FALSE, message=FALSE, warning = FALSE, results = "hide"}
