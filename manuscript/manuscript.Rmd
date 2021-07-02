@@ -567,7 +567,7 @@ The authors declare that there is no conflict of interest.
 
 # Data availability
 
-The data that support the findings of this study are available on request from the corresponding author, if legal obligations under GDPR can be met. The data are not publicly available due to privacy restrictions. We will be happy to arrange to run any analytical code locally and share the results, provided the code and the results do not leak personal information.
+The data that support the findings of this study are available on request from the corresponding author or the secretariat of the Institute of Microbiology of the Czech Academy of Sciences (contact via mbu@biomed.cas.cz) for researchers who meet the criteria for access to confidential data. The data are not publicly available due to privacy restrictions imposed by the Ethical committee of General University Hospital in Prague and the GDPR regulation of the European Union.  We will be happy to arrange to run any analytical code locally and share the results, provided the code and the results do not leak personal information.
 
 # Acknowledgements
 
