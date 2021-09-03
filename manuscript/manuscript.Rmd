@@ -368,6 +368,7 @@ fig_progression <- data_for_fig_progression %>%
   theme(axis.title.x = element_blank(), axis.ticks.x = element_blank(), axis.line.x = element_blank())
 
 fig_progression
+ggsave(fig_progression, filename = "supp_figs_production/fig2.tiff", width = 7.5)
 ```
 
 
@@ -456,6 +457,8 @@ fig_markers <- ((plot_marker_data(c("CRP" = "CRP"), log_transform = TRUE, max_da
 (plot_marker_data(c("IL_6" = "IL-6"), log_transform = TRUE, max_day = max_day) + title_theme + hide_strip_theme)) 
 
 fig_markers
+
+ggsave(fig_markers, filename = "supp_figs_production/fig3.tiff", width = 7.5)
   #plot_marker_data(c("d_dimer" = "D-dimer", "IL_6" = "IL 6", "CRP" = "CRP"), log_transform = TRUE)
 #plot_marker_data(c("d_dimer", "IL_6", "CRP"), log_transform = FALSE)
 
@@ -525,7 +528,7 @@ for (i in rev(seq(along=models))) {
   gtmp<-rbind(gtmp,data.frame(est=coef(m)[2],low=ci[1],high=ci[2],name=modelNames[i],type='outcome'))
   gtmp<-rbind(gtmp,data.frame(est=-coef(m2)[2],low=-ci2[1],high=-ci2[2],name=modelNames[i],type='hcq'))
 }
-ggplot(gtmp,aes(y=name,x=est,xmin=low,xmax=high,color=type))+
+fig_assoc <- ggplot(gtmp,aes(y=name,x=est,xmin=low,xmax=high,color=type))+
   geom_vline(xintercept=0,color='blue')+
   geom_point(position=position_dodge(width=0.5))+
   geom_errorbarh(position=position_dodge(width=0.5),height= 0.5)+
@@ -533,6 +536,9 @@ ggplot(gtmp,aes(y=name,x=est,xmin=low,xmax=high,color=type))+
   scale_y_discrete('')+
   scale_color_manual('Model of:',values=c('black','red'),labels=c('Death','No HCQ'))+
   theme(legend.background = element_rect(fill="gray95"),legend.position=c(.83,.7))
+
+fig_assoc 
+ggsave(fig_assoc, filename = "supp_figs_production/fig4.tiff", width = 7, height = 4.5)
 ```
 
 ```{r}
@@ -602,9 +608,11 @@ fpv_lims <- c(-12,2)
 
 multiverse_fpv1 <- plot_multiverse(all_hypo_drugs %>% filter(hypothesis == "favipiravir_death"), x_limits = fpv_lims, adjustments_to_hide = "FPV")
 
-((multiverse_hcq1 & hide_axis_theme) / (multiverse_az1 & theme(axis.title.x = element_blank())) / multiverse_fpv1)  + plot_layout(heights = c(0.8, 0.7,0.70)) & theme(axis.title.y = element_blank())
+fig_drugs <- ((multiverse_hcq1 & hide_axis_theme) / (multiverse_az1 & theme(axis.title.x = element_blank())) / multiverse_fpv1)  + plot_layout(heights = c(0.8, 0.7,0.70)) & theme(axis.title.y = element_blank())
 
+fig_drugs
 
+ggsave(fig_drugs, filename = "supp_figs_production/fig5.tiff", width = 7.5, height = 7 * (7.5/8))
 ```
 
 ## Published prognostic models are not better than using age as the sole predictor of outcome
@@ -628,10 +636,11 @@ col_types_auc <- cols(
 all_auc <- read_csv(here::here("manuscript", "all_auc.csv"), col_types = col_types_auc, na = "NA") %>% filter(subgroup != "(admission)")
 all_auc_orig <- read_csv(here::here("manuscript", "all_auc_orig.csv"), col_types = col_types_auc, na = "NA") %>% filter(subgroup != "(admission)")
 
-compare_auc_to_orig(all_auc_orig,
+fig_risk <- compare_auc_to_orig(all_auc_orig,
                     all_auc, show_outcome = FALSE)
 
-
+fig_risk
+ggsave(fig_risk, filename = "supp_figs_production/fig6.tiff", width = 7.5)
 ```
 
 # Discussion
@@ -660,15 +669,6 @@ Additionally, our experience indicates that a substantial fraction of published 
 # Conflict of Interest
 
 The authors declare that there is no conflict of interest.
-
-
-# Data availability
-
-The data that support the findings of this study are available on request from the corresponding author or the secretariat of the Institute of Microbiology of the Czech Academy of Sciences (contact via mbu@biomed.cas.cz) for researchers who meet the criteria for access to confidential data. The data are not publicly available due to privacy restrictions imposed by the Ethical committee of General University Hospital in Prague and the GDPR regulation of the European Union.  We will be happy to arrange to run any analytical code locally and share the results, provided the code and the results do not leak personal information.
-
-# Acknowledgements
-
-This work was supported by ELIXIR CZ research infrastructure project (MEYS Grant No: LM2018131) including access to computing and storage facilities.
 
 # Supporting information
 

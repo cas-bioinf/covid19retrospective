@@ -33,8 +33,11 @@ data_collection_period <- read_csv(here::here("manuscript", "data_collection_per
   hospital_id_anon = col_integer()
 ))
 
-data_collection_period %>% ggplot(aes(xmin = first_admission, xmax = last_admission, y = hospital_id_anon)) + geom_linerange(size = 3) + scale_y_continuous("Study site")+
+s1_fig <- data_collection_period %>% ggplot(aes(xmin = first_admission, xmax = last_admission, y = hospital_id_anon)) + geom_linerange(size = 3) + scale_y_continuous("Study site")+
   scale_x_date("Data collection period", date_breaks = "2 weeks")  + theme(axis.text.y = element_blank(), axis.ticks.y = element_blank(), axis.text.x = element_text(angle = 45, hjust = 1, vjust = 1)  )
+
+s1_fig
+ggsave(s1_fig, filename = "supp_figs_production/S1_fig.tiff", width = 7.5, height = 2.5 * (7.5/8))
 ```
 
 
@@ -45,7 +48,11 @@ names(upset_data) <- gsub("ever_", "", names(upset_data)) %>% gsub("_", " ", .) 
 
 names(upset_data) <- paste0(toupper(substring(names(upset_data),1,1)), substring(names(upset_data),2))
 
-UpSetR::upset(upset_data, sets = names(upset_data), text.scale = 2)
+s2_fig <- UpSetR::upset(upset_data, sets = names(upset_data), text.scale = 2)
+s2_fig
+tiff(filename = "supp_figs_production/S2_fig.tiff", width = 7.5, height = 5.8 * (7.5/8), units = "in", res = 300)
+s2_fig
+dev.off()
 ```
 
 
@@ -64,7 +71,7 @@ levels(tmp$hospital_id)<-paste('H',1:length(levels(tmp$hospital_id)),sep='')
 ```
 
 ```{r hospitaloutcomes,fig.cap="Number of patients and outcomes at the individual sites. The numbers above bars are the exact counts. Hospitalized = still hospitalized at the end of data collection at the site or transferred to other site and lost to followup. Sites are anonymized to preserve patient privacy.", fig.height=3.5}
-data$patient_data %>% mutate(
+s3_fig <- data$patient_data %>% mutate(
   hospital_label = factor(paste0("H", as.integer(factor(hospital_id))), levels = paste0("H", 1:10)),
   outcome = fct_collapse(outcome, Hospitalized = c("Hospitalized", "Transferred")) %>% fct_relevel("Death", "Hospitalized", "Discharged")
 ) %>%
@@ -75,11 +82,14 @@ data$patient_data %>% mutate(
   scale_x_discrete("Study site") +
   scale_y_continuous("Count") +
   expand_limits(y = 36)
+
+s3_fig
+ggsave(s3_fig, filename = "supp_figs_production/S3_fig.tiff", width = 7.5, height = 3.5 * (7.5/8))
 ```
 
 ```{r markeroverlaps, fig.cap = "Density plots of worst marker values per patient, stratified by worst condition experienced by the patient. For each patient that had a given marker measured, the worst value was taken. Additionally the patients are classified by the worst condition (regardless of the timing relative to the worst marker levels). For each set of patients and marker an empirical density plot of the worst marker values is shown.", fig.height=6}
 frac <- 0.2
-data$marker_data %>% filter(marker %in% c("lymphocyte_count", "d_dimer", "CRP", "IL_6")) %>%
+s4_fig <- data$marker_data %>% filter(marker %in% c("lymphocyte_count", "d_dimer", "CRP", "IL_6")) %>%
   inner_join(data$patient_data, by = c("hospital_id", "patient_id")) %>%
   #filter(worst_breathing %in% c("AA", "Death")) %>%
   group_by(marker, patient_id, worst_breathing_s) %>%
@@ -97,7 +107,8 @@ data$marker_data %>% filter(marker %in% c("lymphocyte_count", "d_dimer", "CRP", 
   scale_x_continuous("Marker value") +
   facet_wrap(~marker, scales = "free", ncol = 1)
 
-
+s4_fig
+ggsave(s4_fig, filename = "supp_figs_production/S4_fig.tiff", width = 7.5, height = 6 * (7.5/8))
 #Validating the claim about overlapping proportions
 # frac <- 0.2
 # data$marker_data %>% filter(marker %in% c("lymphocyte_count", "d_dimer", "CRP")) %>%
@@ -135,27 +146,36 @@ data$marker_data %>% filter(marker %in% c("lymphocyte_count", "d_dimer", "CRP", 
 
 marker_map <- c("hcq" = "Hydroxychloroquine", "az" = "Azithromycin", "favipiravir" = "Favipiravir", "convalescent_plasma" = "Conv. plasma")
 
-data$marker_data %>% 
+s5_fig <- data$marker_data %>% 
   filter(marker %in% c("az", "hcq", "favipiravir"), !is.na(value), value > 0) %>%
   mutate(marker = factor(marker_map[marker], levels = marker_map)) %>%
   group_by(marker, patient_id) %>% 
   summarise(first_day = min(day), .groups = "drop") %>% 
   ggplot(aes(x = first_day)) + geom_histogram(binwidth = 1) + facet_wrap(~marker, scales = "free_y", nrow = 1) + scale_x_continuous("First day of treatment relative to admission")
+
+s5_fig
+ggsave(s5_fig, filename = "supp_figs_production/S5_fig.tiff", width = 7.5, height = 2 * (7.5/8))
 ```
 
 
 ```{r allmulthcq, fig.height=11, fig.cap = "Estimates of model coefficients for association between hydroxychloroquine and main outcomes. The \"Suspicious\" section shows models that were found to not fit the data well or have computational issues - see supplementary statistical analysis for details.  Each row represents a model - Categorical All/7/28 = Bayesian categorical regression for state at last observed day/day 7/day 28, Binary All/7/28 = Bayesian logistic regression for state at last observed day/day 7/day 28, Bayes Cox = Bayesian version of the Cox proportional hazards model with a binary outcome, Cox (single) = frequentist Cox model with a binary outcome, Cox (competing) = frequentist Cox model using competing risks (as in Figure 1a), HMM A = Bayesian hidden-Markov model as in Figure 1b with predictors for rate groups, HMM B = Bayesian hidden-markov model as in Figure 1b with predictors for individual rates, HMM C = Bayesian hidden-Markov model as in Figure 1c. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. The estimands are either log odds-ratio (Categorical, HMM) or log hazard ratio (Cox variants) or log ratio of mean duration of hospitalization (HMM duration). In all cases coefficient < 0 means better patient outcome in the treatment group. Vertical lines indicate zero (blue) and substantial increase or decrease with odds or hazard ratio of 3:2 or 2:3 (green). Additionally the factors the model adjusted for are listed - Site = the study site, admitted = Admitted for Covid-19, Supportive = best supportive care initiated, Comorb. = total number of comorbidities, AZ = took azithromycin, HCQ = took hydroxychloroquine, FPV = took favipiravir, C. plasma = received convalescent plasma, first wave = only patients admitted before September 1st were included. "}
-plot_multiverse(read_all_multiverse_res() %>% filter(grepl("hcq", hypothesis)), show_check = TRUE)
+s6_fig <- plot_multiverse(read_all_multiverse_res() %>% filter(grepl("hcq", hypothesis)), show_check = TRUE)
+s6_fig
+ggsave(s6_fig, filename = "supp_figs_production/S6_fig.tiff", width = 7.5, height = 11 * (7.5/8))
 ```
 
 
 ```{r allmultaz, fig.height=11, fig.cap = "Estimates of model coefficients for association between azithromycin and main outcomes. The \"Suspicious\" section shows models that were found to not fit the data well or have computational issues - see supplementary statistical analysis for details.  Each row represents a model - Categorical All/7/28 = Bayesian categorical regression for state at last observed day/day 7/day 28, Binary All/7/28 = Bayesian logistic regression for state at last observed day/day 7/day 28, Bayes Cox = Bayesian version of the Cox proportional hazards model with a binary outcome, Cox (single) = frequentist Cox model with a binary outcome, Cox (competing) = frequentist Cox model using competing risks (as in Figure 1a), HMM A = Bayesian hidden-Markov model as in Figure 1b with predictors for rate groups, HMM B = Bayesian hidden-markov model as in Figure 1b with predictors for individual rates, HMM C = Bayesian hidden-Markov model as in Figure 1c. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. The estimands are either log odds-ratio (Categorical, HMM) or log hazard ratio (Cox variants) or log ratio of mean duration of hospitalization (HMM duration). In all cases coefficient < 0 means better patient outcome in the treatment group. Vertical lines indicate zero (blue) and substantial increase or decrease with odds or hazard ratio of 3:2 or 2:3 (green). Additionally the factors the model adjusted for are listed - Site = the study site, admitted = Admitted for Covid-19, Supportive = best supportive care initiated, Comorb. = total number of comorbidities, AZ = took azithromycin, HCQ = took hydroxychloroquine, FPV = took favipiravir, C. plasma = received convalescent plasma, first wave = only patients admitted before September 1st were included. "}
-plot_multiverse(read_all_multiverse_res() %>% filter(grepl("az", hypothesis)), show_check = TRUE)
+s7_fig <- plot_multiverse(read_all_multiverse_res() %>% filter(grepl("az", hypothesis)), show_check = TRUE)
+s7_fig
+ggsave(s7_fig, filename = "supp_figs_production/S7_fig.tiff", width = 7.5, height = 11 * (7.5/8))
 ```
 
 
 ```{r allmultfpv, fig.height=11, fig.cap = "Estimates of model coefficients for association between favipiravir and main outcomes. The \"Suspicious\" section shows models that were found to not fit the data well or have computational issues - see supplementary statistical analysis for details.  Each row represents a model - Categorical All/7/28 = Bayesian categorical regression for state at last observed day/day 7/day 28, Binary All/7/28 = Bayesian logistic regression for state at last observed day/day 7/day 28, Bayes Cox = Bayesian version of the Cox proportional hazards model with a binary outcome, Cox (single) = frequentist Cox model with a binary outcome, Cox (competing) = frequentist Cox model using competing risks (as in Figure 1a), HMM A = Bayesian hidden-Markov model as in Figure 1b with predictors for rate groups, HMM B = Bayesian hidden-markov model as in Figure 1b with predictors for individual rates, HMM C = Bayesian hidden-Markov model as in Figure 1c. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. The estimands are either log odds-ratio (Categorical, HMM) or log hazard ratio (Cox variants) or log ratio of mean duration of hospitalization (HMM duration). In all cases coefficient < 0 means better patient outcome in the treatment group. Vertical lines indicate zero (blue) and substantial increase or decrease with odds or hazard ratio of 3:2 or 2:3 (green). Additionally the factors the model adjusted for are listed - Site = the study site, admitted = Admitted for Covid-19, Supportive = best supportive care initiated, Comorb. = total number of comorbidities, AZ = took azithromycin, HCQ = took hydroxychloroquine, FPV = took favipiravir, C. plasma = received convalescent plasma, first wave = only patients admitted before September 1st were included. "}
-plot_multiverse(read_all_multiverse_res() %>% filter(grepl("favipiravir", hypothesis), model_check != "Problematic"), show_check = TRUE)
+s8_fig <- plot_multiverse(read_all_multiverse_res() %>% filter(grepl("favipiravir", hypothesis), model_check != "Problematic"), show_check = TRUE)
+s8_fig
+ggsave(s8_fig, filename = "supp_figs_production/S8_fig.tiff", width = 7.5, height = 11 * (7.5/8))
 ```
 
 ```{r multiverseresultsmarkers, fig.height=5, fig.width=8.5, fig.cap="Estimates of model coefficients (log hazard ratios) for association between markers and death. The \"Suspicious\" section shows models that were found to not fit the data well or have computational issues, \"Problematic\" section shows models that were completely broken - see supplementary statistical analysis for details. Each row represents a model - Cox (competing) =  frequentist Cox model using competing risks (as in Figure 1a), HMM A = Bayesian hidden-markov model as in Figure 1b with predictors for rate groups, JM = Bayesian joint longitudinal and time-to-event model. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. Additionally the factors the model adjusted for are listed - Site = the study site, Supportive = best supportive care initiated, HCQ = took Hydroxychloroquine. We show posterior mean and 95% credible interval."}
