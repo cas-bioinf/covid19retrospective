@@ -666,10 +666,6 @@ A lesson from our analysis is that the assessment of treatment efficacy from obs
 
 Additionally, our experience indicates that a substantial fraction of published prognostic models will perform much worse on new patients than on the datasets they were built for and that external validation is crucial. We suggest that comparing the prognostic models against simple baselines (e.g., decade of age as the single predictor) should be a first step in validation. Furthermore, some of the published scores lack enough information to let others implement the score in the same way.
 
-# Conflict of Interest
-
-The authors declare that there is no conflict of interest.
-
 # Supporting information
 
 * **S1 Fig. Data collection timeline.** Data collection periods at individual sites, showing the range of admission dates of patients included in the study. Note that we cannot provide additional information to link the sites here with data shown elsewhere as that would  increase the risk of deanonymization of the patients.

@@ -179,6 +179,9 @@ ggsave(s8_fig, filename = "supp_figs_production/S8_fig.tiff", width = 7.5, heigh
 ```
 
 ```{r multiverseresultsmarkers, fig.height=5, fig.width=8.5, fig.cap="Estimates of model coefficients (log hazard ratios) for association between markers and death. The \"Suspicious\" section shows models that were found to not fit the data well or have computational issues, \"Problematic\" section shows models that were completely broken - see supplementary statistical analysis for details. Each row represents a model - Cox (competing) =  frequentist Cox model using competing risks (as in Figure 1a), HMM A = Bayesian hidden-markov model as in Figure 1b with predictors for rate groups, JM = Bayesian joint longitudinal and time-to-event model. For frequentist models, we show maximum likelihood estimate and 95% confidence interval, for Bayesian models we show posterior mean and 95% credible interval. Additionally the factors the model adjusted for are listed - Site = the study site, Supportive = best supportive care initiated, HCQ = took Hydroxychloroquine. We show posterior mean and 95% credible interval."}
-plot_multiverse(read_all_multiverse_res() %>% filter(group == "markers"), adjustments_to_hide = c("admitted", "smoking", "obesity", "comorbidities \\(sum\\)", "az", "favipiravir", "convalescent_plasma"), show_check = TRUE)
+s9_fig <- plot_multiverse(read_all_multiverse_res() %>% filter(group == "markers"), adjustments_to_hide = c("admitted", "smoking", "obesity", "comorbidities \\(sum\\)", "az", "favipiravir", "convalescent_plasma"), show_check = TRUE)
 
+
+s9_fig
+ggsave(s9_fig, filename = "supp_figs_production/S9_fig.tiff", width = 8.5, height = 5)
 ```
